@@ -14,7 +14,7 @@
 * **Mobile App:** Flutter (Dart)
 * **Database:** MySQL
 
-## 👥 Tim Pengembang (Kelompok 5)
+## 👥 Tim Pengembang (Kelompok 1)
 Berikut adalah pembagian peran dalam pengembangan sistem ITIK:
 
 | Nama Anggota | Peran / Tugas Spesifik |
@@ -40,3 +40,28 @@ Berikut adalah pembagian peran dalam pengembangan sistem ITIK:
 5. Generate app key: `php artisan key:generate`
 6. Jalankan migrasi database: `php artisan migrate`
 7. Jalankan server lokal: `php artisan serve`
+
+### 🔄 SOP Harian GitHub (Penggunaan Branch)
+1. Ambil Kode Terbaru Dulu:
+   `git checkout main`
+   `git pull origin main`
+2. Buat Cabang (Branch) Baru
+   `git checkout -b (perlu isi nama-tugas/halaman/fitur)`
+3. mulailah coding 
+4. jika sudah Mulai Ngoding & Simpan (Commit)
+   `git add .`
+   `git commit -m "(perlu isi nama-tugas/halaman/fitur)"`
+5. Kirim Branch ke GitHub (Push)
+   `git push origin (perlu isi nama-tugas/halaman/fitur)`
+
+### 📝 Aturan Penulisan Pesan Commit
+Agar riwayat pengembangan proyek tetap rapi dan mudah dilacak, tim wajib menggunakan standar awalan (*prefix*) berikut saat melakukan `git commit -m "..."`:
+
+| Awalan (Prefix) | Fungsi / Penjelasan | Contoh Penggunaan |
+| :--- | :--- | :--- |
+| **`feat:`** | **(Feature)** Menambah fitur, halaman, atau fungsi baru pada sistem. | `feat: membuat halaman dashboard siswa` |
+| **`fix:`** | **(Bug Fix)** Memperbaiki *error* atau *bug* pada aplikasi. | `fix: memperbaiki tombol login yang tidak berfungsi` |
+| **`docs:`** | **(Documentation)** Mengubah dokumen non-kode seperti file `README.md`. | `docs: menambahkan cara instalasi database` |
+| **`style:`** | **(Styling)** Merapikan format kode (spasi, indentasi) tanpa mengubah logika. | `style: merapikan spasi pada file controller` |
+| **`refactor:`** | **(Refactoring)** Merombak atau mengoptimalkan struktur kode agar lebih bersih. | `refactor: menyederhanakan logika perhitungan nilai` |
+| **`chore:`** | **(Chores)** Tugas pemeliharaan teknis (install package, ubah konfigurasi). | `chore: install package bootstrap untuk frontend` |

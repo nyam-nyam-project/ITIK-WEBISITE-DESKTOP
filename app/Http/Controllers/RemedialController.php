@@ -296,7 +296,7 @@ class RemedialController extends Controller
 
         $request->validate([
             'id_mengerjakan' => 'required|array|min:1',
-            'id_mengerjakan.*' => 'required|integer|exists:mengerjakans,id_mengerjakan',
+            'id_mengerjakan.*' => 'required|integer|exists:mengerjakan,id_mengerjakan',
         ]);
 
         DB::transaction(function () use ($request, $remedial) {

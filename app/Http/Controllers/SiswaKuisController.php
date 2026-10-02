@@ -47,7 +47,7 @@ class SiswaKuisController extends Controller
                 ->exists();
         })->values();
 
-        return view('siswa.kuis.index', compact('kuis','remedial'));
+        return view('siswa.kuis.index', compact('kuis', 'remedial'));
     }
 
     public function mulai(Kuis $kuis)
@@ -169,14 +169,15 @@ class SiswaKuisController extends Controller
         */
         if (!$sesi) {
 
-            $percobaanTerakhir = SesiKuis::where(
-                'id_kuis',
-                $kuis->id_kuis
-            )
+            $percobaanSesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
                 ->where('id_user', $user->id_user)
                 ->max('percobaan_ke');
 
-            $percobaanKe = ($percobaanTerakhir ?? 0) + 1;
+            $percobaanNilai = Mengerjakan::where('id_kuis', $kuis->id_kuis)
+                ->where('id_user', $user->id_user)
+                ->max('percobaan_ke');
+
+            $percobaanKe = max($percobaanSesi ?? 0, $percobaanNilai ?? 0) + 1;
 
             $sesi = SesiKuis::create([
                 'id_kuis' => $kuis->id_kuis,
@@ -241,11 +242,11 @@ class SiswaKuisController extends Controller
         }
 
         /*
-        * KHUSUS KUIS REMEDIAL
-        *
-        * Pastikan siswa memang mendapatkan
-        * tugas remedial dari guru.
-        */
+         * KHUSUS KUIS REMEDIAL
+         *
+         * Pastikan siswa memang mendapatkan
+         * tugas remedial dari guru.
+         */
         if ($kuis->kategori === 'remedial') {
 
             $tugasRemedial = RemedialSiswa::where(
@@ -288,22 +289,22 @@ class SiswaKuisController extends Controller
         }
 
         /*
-        * Cari sesi siswa untuk kuis ini.
-        */
+         * Cari sesi siswa untuk kuis ini.
+         */
         $sesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
             ->where('id_user', $user->id_user)
             ->firstOrFail();
 
         /*
-        * Hitung batas waktu.
-        */
+         * Hitung batas waktu.
+         */
         $batasWaktu = $sesi->waktu_mulai
             ->copy()
             ->addMinutes($kuis->alokasi_waktu);
 
         /*
-        * Backend tetap mengecek timer.
-        */
+         * Backend tetap mengecek timer.
+         */
         if (now()->greaterThanOrEqualTo($batasWaktu)) {
 
             return redirect()
@@ -315,15 +316,15 @@ class SiswaKuisController extends Controller
         }
 
         /*
-        * Ambil soal.
-        */
+         * Ambil soal.
+         */
         $soal = $kuis->soal()
             ->orderBy('id_soal')
             ->get();
 
         /*
-        * Ambil draft jawaban siswa.
-        */
+         * Ambil draft jawaban siswa.
+         */
         $draftJawaban = DraftJawaban::where(
             'id_kuis',
             $kuis->id_kuis
@@ -348,8 +349,8 @@ class SiswaKuisController extends Controller
         $user = Auth::user();
 
         /*
-        * Pastikan kuis sudah terbit dan aktif.
-        */
+         * Pastikan kuis sudah terbit dan aktif.
+         */
         if ($kuis->status_publikasi !== 'terbit' || !$kuis->is_aktif) {
             return response()->json([
                 'success' => false,
@@ -358,8 +359,8 @@ class SiswaKuisController extends Controller
         }
 
         /*
-        * Pastikan siswa mempunyai sesi.
-        */
+         * Pastikan siswa mempunyai sesi.
+         */
         $sesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
             ->where('id_user', $user->id_user)
             ->first();
@@ -391,16 +392,16 @@ class SiswaKuisController extends Controller
         }
 
         /*
-        * Validasi data jawaban.
-        */
+         * Validasi data jawaban.
+         */
         $request->validate([
             'id_soal' => ['required', 'string'],
             'jawaban' => ['nullable', 'in:A,B,C,D,E'],
         ]);
 
         /*
-        * Pastikan soal memang milik kuis tersebut.
-        */
+         * Pastikan soal memang milik kuis tersebut.
+         */
         $soal = Soal::where('id_soal', $request->id_soal)
             ->where('id_kuis', $kuis->id_kuis)
             ->first();
@@ -413,8 +414,8 @@ class SiswaKuisController extends Controller
         }
 
         /*
-        * Simpan / update jawaban.
-        */
+         * Simpan / update jawaban.
+         */
         $draft = DraftJawaban::updateOrCreate(
             [
                 'id_kuis' => $kuis->id_kuis,
@@ -435,8 +436,8 @@ class SiswaKuisController extends Controller
     }
 
     /*
-    * Detail Hasil Satu Kuis
-    */
+     * Detail Hasil Satu Kuis
+     */
     public function submit(Request $request, Kuis $kuis)
     {
         $user = Auth::user();
@@ -527,7 +528,7 @@ class SiswaKuisController extends Controller
                     $jawabanSiswa->jawaban_dipilih &&
                     $item->jawaban &&
                     strtoupper($jawabanSiswa->jawaban_dipilih)
-                        === strtoupper($item->jawaban)
+                    === strtoupper($item->jawaban)
                 ) {
                     $bobotBenar += (float) $item->bobot;
                 }
@@ -558,7 +559,12 @@ class SiswaKuisController extends Controller
                 'id_user' => $user->id_user,
                 'nilai' => $nilai,
                 'tanggal' => now()->toDateString(),
-                'percobaan_ke' => $sesi->percobaan_ke,
+                'percobaan_ke' => max(
+                    $sesi->percobaan_ke,
+                    (int) Mengerjakan::where('id_kuis', $kuis->id_kuis)
+                        ->where('id_user', $user->id_user)
+                        ->max('percobaan_ke') + 1
+                ),
                 'status_pengerjaan' => 'final',
                 'status_validasi' => 'belum divalidasi',
                 'id_validator' => null,
@@ -654,12 +660,12 @@ class SiswaKuisController extends Controller
             }
         }
 
-        return view('siswa.kuis.hasil',compact('kuis','hasil','remedial','nilaiAsal'));
+        return view('siswa.kuis.hasil', compact('kuis', 'hasil', 'remedial', 'nilaiAsal'));
     }
 
     /*
-    * Daftar Seluruh Hasil Nilai Siswa
-    */
+     * Daftar Seluruh Hasil Nilai Siswa
+     */
     public function daftarNilai()
     {
         $user = Auth::user();

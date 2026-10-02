@@ -12,27 +12,32 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('sesi_kuis', function (Blueprint $table) {
-            $table->integer('id_sesi')->autoIncrement();
+            $table->id('id_sesi');
+
             $table->string('id_kuis', 50);
-            $table->string('id_user', 50)
-                ->comment('Siswa yang memulai kuis');
+            $table->string('id_user', 50);
+
+            $table->unsignedInteger('percobaan_ke')->default(1);
+
             $table->timestamp('waktu_mulai')->useCurrent();
 
-            $table->primary('id_sesi');
-            $table->unique(['id_kuis', 'id_user'], 'uq_sesi_kuis_siswa');
-            $table->index('id_user', 'fk_sesi_user');
+            $table->timestamp('waktu_selesai')->nullable();
 
-            $table->foreign('id_kuis', 'fk_sesi_kuis')
+            $table->foreign('id_kuis')
                 ->references('id_kuis')
                 ->on('kuis')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+                ->cascadeOnDelete();
 
-            $table->foreign('id_user', 'fk_sesi_user')
+            $table->foreign('id_user')
                 ->references('id_user')
                 ->on('users')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+                ->cascadeOnDelete();
+
+            $table->unique([
+                'id_kuis',
+                'id_user',
+                'percobaan_ke'
+            ]);
         });
     }
 

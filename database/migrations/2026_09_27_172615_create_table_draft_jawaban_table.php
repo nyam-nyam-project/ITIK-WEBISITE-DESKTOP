@@ -24,7 +24,7 @@ return new class extends Migration
                 ->useCurrent()
                 ->useCurrentOnUpdate();
 
-            $table->primary('id_draft');
+            
             $table->unique(['id_kuis', 'id_user', 'id_soal'], 'uq_draft');
             $table->index('id_user', 'fk_draft_user');
             $table->index('id_soal', 'fk_draft_soal');

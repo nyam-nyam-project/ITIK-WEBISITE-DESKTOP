@@ -15,13 +15,12 @@ return new class extends Migration
             $table->string('id_soal', 50)->primary();
             $table->string('id_kuis', 50);
             $table->text('pertanyaan');
-            $table->string('opsi_a', 255)->nullable();
-            $table->string('opsi_b', 255)->nullable();
-            $table->string('opsi_c', 255)->nullable();
-            $table->string('opsi_d', 255)->nullable();
+            $table->string('opsi_a', 255)->nullable(false);
+            $table->string('opsi_b', 255)->nullable(false);
+            $table->string('opsi_c', 255)->nullable(false);
+            $table->string('opsi_d', 255)->nullable(false);
             $table->string('opsi_e', 255)->nullable();
             $table->string('jawaban', 5)
-                ->nullable()
                 ->comment('Contoh: A/B/C/D/E');
             $table->string('tingkat_kesulitan', 50)->nullable();
 

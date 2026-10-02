@@ -22,6 +22,11 @@ return new class extends Migration
                 ->index('fk_progress_user')
                 ->comment('Siswa pemilik progress ini');
 
+            $table->unique(
+                ['id_materi', 'id_user'],
+                'uq_progress_materi_user'
+            );
+            
             $table->foreign('id_materi', 'fk_progress_materi')
                 ->references('id_materi')
                 ->on('materis')

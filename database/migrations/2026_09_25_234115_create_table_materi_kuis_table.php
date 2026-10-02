@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('id_materi', 50);
             $table->string('id_kuis', 50);
 
-            $table->primary('id_materi_kuis');
+            // HAPUS $table->primary('id_materi_kuis');
+
             $table->unique(['id_materi', 'id_kuis'], 'uq_materi_kuis');
             $table->index('id_kuis', 'fk_materikuis_kuis');
 

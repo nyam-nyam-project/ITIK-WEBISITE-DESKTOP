@@ -23,7 +23,7 @@ return new class extends Migration
                 ->default('ditugaskan')
                 ->comment('ditugaskan/selesai');
 
-            $table->primary('id_remedial_siswa');
+            
             $table->unique(
                 ['id_kuis_remedial', 'id_mengerjakan_asal'],
                 'uq_remedial_siswa'

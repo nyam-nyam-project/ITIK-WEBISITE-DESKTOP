@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Soal extends Model
 {
-    protected $table = 'soals';
+    protected $table = 'soal';
 
     protected $primaryKey = 'id_soal';
 
@@ -26,7 +26,12 @@ class Soal extends Model
         'opsi_d',
         'opsi_e',
         'jawaban',
+        'bobot',
         'tingkat_kesulitan',
+    ];
+
+    protected $casts = [
+        'bobot' => 'decimal:2',
     ];
 
     public function kuis()

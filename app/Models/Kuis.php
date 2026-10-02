@@ -55,13 +55,32 @@ class Kuis extends Model
 
     public function materi()
     {
-        return $this->belongsToMany(
-            Materi::class,
+        return $this->belongsToMany(Materi::class,
             'materi_kuis',
             'id_kuis',
             'id_materi',
             'id_kuis',
             'id_materi'
         );
+    }
+
+    public function sesi()
+    {
+        return $this->hasMany(SesiKuis::class,'id_kuis','id_kuis');
+    }
+
+    public function remedial()
+    {
+        return $this->hasOne(Remedial::class,'id_kuis_remedial','id_kuis');
+    }
+
+    public function remedialSebagaiAsal()
+    {
+        return $this->hasMany(Remedial::class,'id_kuis_asal','id_kuis');
+    }
+
+    public function remedialSiswa()
+    {
+        return $this->hasMany(RemedialSiswa::class,'id_kuis_remedial','id_kuis');
     }
 }

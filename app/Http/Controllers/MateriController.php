@@ -29,7 +29,22 @@ class MateriController extends Controller
             'deskripsi' => 'nullable|string',
             'isi_materi' => 'nullable|string|max:255',
             'link_youtube' => 'nullable|url|max:255',
+        ], [
+            'judul.required' => 'Judul materi wajib diisi.',
+            'judul.max' => 'Judul materi maksimal 150 karakter.',
+            'link_youtube.url' => 'Link YouTube harus berupa URL yang valid.',
         ]);
+
+        $duplikat = Materi::where('kelas', $request->kelas)
+            ->where('bab', $request->bab)
+            ->where('judul', $request->judul)
+            ->exists();
+
+        if ($duplikat) {
+            return back()
+                ->withInput()
+                ->with('error', 'Materi dengan kelas, bab, dan judul tersebut sudah ada.');
+        }
 
         //Sementara
         $validated['id_materi'] = 'M' . str_pad(
@@ -74,6 +89,18 @@ class MateriController extends Controller
             'isi_materi' => 'nullable|string|max:255',
             'link_youtube' => 'nullable|url|max:255',
         ]);
+
+        $duplikat = Materi::where('kelas', $request->kelas)
+            ->where('bab', $request->bab)
+            ->where('judul', $request->judul)
+            ->where('id_materi', '!=', $materi->id_materi)
+            ->exists();
+
+        if ($duplikat) {
+            return back()
+                ->withInput()
+                ->with('error', 'Materi dengan kelas, bab, dan judul tersebut sudah digunakan oleh materi lain.');
+        }
 
         $materi->update($validated);
 

@@ -32,7 +32,7 @@ return new class extends Migration
                 ->nullable()
                 ->comment('Guru yang memvalidasi nilai ini');
 
-            $table->primary('id_mengerjakan');
+            
             $table->unique(
                 ['id_kuis', 'id_user', 'percobaan_ke'],
                 'uq_kuis_siswa_percobaan'

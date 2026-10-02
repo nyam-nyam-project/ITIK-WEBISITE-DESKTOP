@@ -10,7 +10,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $table = 'users';
+    protected $table = 'user';
 
     protected $primaryKey = 'id_user';
 
@@ -52,5 +52,10 @@ class User extends Authenticatable
     public function kuis()
     {
         return $this->hasMany(Kuis::class, 'id_user', 'id_user');
+    }
+
+    public function progressMateri()
+    {
+        return $this->hasMany(Progress::class,'id_user','id_user');
     }
 }

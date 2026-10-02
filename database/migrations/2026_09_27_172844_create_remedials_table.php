@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('id_kuis_asal', 50)
                 ->comment('Kuis asal (misal pass-test) yang jadi alasan remedial');
 
-            $table->primary('id_remedial');
+            
             $table->unique('id_kuis_remedial', 'uq_kuis_remedial');
             $table->index('id_kuis_asal', 'fk_remedial_kuisasal');
 

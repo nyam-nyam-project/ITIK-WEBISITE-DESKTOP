@@ -30,7 +30,11 @@
 
             <p>
                 Kategori:
-                {{ $item->kategori }}
+                {{ $item->kategori_label }}
+            </p>
+
+            <p>
+                Tingkat: {{ $item->tingkat_ujian_label }}
             </p>
 
             <p>
@@ -44,13 +48,24 @@
             </p>
 
             <p>
+                Maksimal percobaan:
+                {{ $item->maks_percobaan ?? 'Tanpa batas' }}
+            </p>
+
+            <p>
                 Jumlah soal:
                 {{ $item->soal()->count() }}
             </p>
 
-            <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
-                <button type="submit">Mulai</button>
-            </form>
+            @if ($item->tingkat_terbuka ?? true)
+                <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
+                    <button type="submit">Mulai</button>
+                </form>
+            @else
+                <p>
+                    Terbuka setelah lulus KKM tingkat {{ $item->tingkat_sebelumnya_label }}.
+                </p>
+            @endif
 
         </div>
 
@@ -95,7 +110,7 @@
                     </td>
 
                     <td>
-                        {{ $item->kuisRemedial->kategori }}
+                        {{ $item->kuisRemedial->kategori_label }}
                     </td>
 
                     <td>

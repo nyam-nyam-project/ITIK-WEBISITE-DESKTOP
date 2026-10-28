@@ -546,11 +546,19 @@
             <form
                 action="{{ route('kuis.soal.update', [$kuis->id_kuis, $soal->id_soal]) }}"
                 method="POST"
+                enctype="multipart/form-data"
             >
 
                 @csrf
                 @method('PUT')
 
+                <div class="form-group">
+                    <label for="tipe_soal">Tipe Soal <span class="required">*</span></label>
+                    <select id="tipe_soal" name="tipe_soal" class="form-control" required>
+                        <option value="pilihan_ganda" @selected(old('tipe_soal', $soal->tipe_soal ?? 'pilihan_ganda') === 'pilihan_ganda')>Pilihan Ganda</option>
+                        <option value="essay" @selected(old('tipe_soal', $soal->tipe_soal) === 'essay')>Essay / Jawaban Teks</option>
+                    </select>
+                </div>
 
                 <!-- PERTANYAAN -->
                 <div class="form-group">
@@ -569,7 +577,19 @@
 
                 </div>
 
+                <div class="form-group">
+                    <label for="gambar_pertanyaan">Gambar Pertanyaan (opsional)</label>
+                    @if ($soal->gambar_pertanyaan)
+                        <div>
+                            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($soal->gambar_pertanyaan) }}" alt="Gambar pertanyaan" style="max-width: 320px; max-height: 220px; object-fit: contain;">
+                            <label><input type="checkbox" name="hapus_gambar_pertanyaan" value="1"> Hapus gambar saat disimpan</label>
+                        </div>
+                    @endif
+                    <input id="gambar_pertanyaan" type="file" name="gambar_pertanyaan" class="form-control" accept="image/jpeg,image/png,image/webp">
+                    <small class="helper">JPG, PNG, atau WebP; maksimal 2 MB.</small>
+                </div>
 
+                <div id="pilihan-ganda-fields">
                 <!-- OPSI A & B -->
                 <div class="form-row">
 
@@ -590,6 +610,14 @@
                             value="{{ old('opsi_a', $soal->opsi_a) }}"
                             required
                         >
+                        @if ($soal->gambar_opsi_a)
+                            <div>
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($soal->gambar_opsi_a) }}" alt="Gambar opsi A" style="max-width: 240px; max-height: 180px; object-fit: contain;">
+                                <label><input type="checkbox" name="hapus_gambar_opsi_a" value="1"> Hapus gambar opsi A</label>
+                            </div>
+                        @endif
+                        <label>Gambar Opsi A (opsional)</label>
+                        <input type="file" name="gambar_opsi_a" class="form-control" accept="image/jpeg,image/png,image/webp">
 
                     </div>
 
@@ -611,6 +639,14 @@
                             value="{{ old('opsi_b', $soal->opsi_b) }}"
                             required
                         >
+                        @if ($soal->gambar_opsi_b)
+                            <div>
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($soal->gambar_opsi_b) }}" alt="Gambar opsi B" style="max-width: 240px; max-height: 180px; object-fit: contain;">
+                                <label><input type="checkbox" name="hapus_gambar_opsi_b" value="1"> Hapus gambar opsi B</label>
+                            </div>
+                        @endif
+                        <label>Gambar Opsi B (opsional)</label>
+                        <input type="file" name="gambar_opsi_b" class="form-control" accept="image/jpeg,image/png,image/webp">
 
                     </div>
 
@@ -637,6 +673,14 @@
                             value="{{ old('opsi_c', $soal->opsi_c) }}"
                             required
                         >
+                        @if ($soal->gambar_opsi_c)
+                            <div>
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($soal->gambar_opsi_c) }}" alt="Gambar opsi C" style="max-width: 240px; max-height: 180px; object-fit: contain;">
+                                <label><input type="checkbox" name="hapus_gambar_opsi_c" value="1"> Hapus gambar opsi C</label>
+                            </div>
+                        @endif
+                        <label>Gambar Opsi C (opsional)</label>
+                        <input type="file" name="gambar_opsi_c" class="form-control" accept="image/jpeg,image/png,image/webp">
 
                     </div>
 
@@ -658,6 +702,14 @@
                             value="{{ old('opsi_d', $soal->opsi_d) }}"
                             required
                         >
+                        @if ($soal->gambar_opsi_d)
+                            <div>
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($soal->gambar_opsi_d) }}" alt="Gambar opsi D" style="max-width: 240px; max-height: 180px; object-fit: contain;">
+                                <label><input type="checkbox" name="hapus_gambar_opsi_d" value="1"> Hapus gambar opsi D</label>
+                            </div>
+                        @endif
+                        <label>Gambar Opsi D (opsional)</label>
+                        <input type="file" name="gambar_opsi_d" class="form-control" accept="image/jpeg,image/png,image/webp">
 
                     </div>
 
@@ -681,6 +733,14 @@
                         class="form-control"
                         value="{{ old('opsi_e', $soal->opsi_e) }}"
                     >
+                    @if ($soal->gambar_opsi_e)
+                        <div>
+                            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($soal->gambar_opsi_e) }}" alt="Gambar opsi E" style="max-width: 240px; max-height: 180px; object-fit: contain;">
+                            <label><input type="checkbox" name="hapus_gambar_opsi_e" value="1"> Hapus gambar opsi E</label>
+                        </div>
+                    @endif
+                    <label>Gambar Opsi E (opsional)</label>
+                    <input type="file" name="gambar_opsi_e" class="form-control" accept="image/jpeg,image/png,image/webp">
 
                     <small class="helper">
                         Opsi E bersifat opsional.
@@ -765,6 +825,7 @@
 
                 </div>
 
+                </div>
 
                 <!-- TINGKAT KESULITAN -->
                 <div class="form-group">
@@ -829,6 +890,22 @@
     </main>
 
 </div>
+
+<script>
+    const questionType = document.getElementById('tipe_soal');
+    const multipleChoiceFields = document.getElementById('pilihan-ganda-fields');
+
+    function toggleMultipleChoiceFields() {
+        const isMultipleChoice = questionType.value === 'pilihan_ganda';
+        multipleChoiceFields.hidden = !isMultipleChoice;
+        multipleChoiceFields.querySelectorAll('input, select').forEach((field) => {
+            field.disabled = !isMultipleChoice;
+        });
+    }
+
+    questionType.addEventListener('change', toggleMultipleChoiceFields);
+    toggleMultipleChoiceFields();
+</script>
 
 </body>
 </html>

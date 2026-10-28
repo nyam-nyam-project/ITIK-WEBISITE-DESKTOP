@@ -12,13 +12,36 @@
 
     <tr>
         <th>Kategori</th>
-        <td>{{ $kuis->kategori }}</td>
+        <td>{{ $kuis->kategori_label }}</td>
+    </tr>
+
+    <tr>
+        <th>Tingkat</th>
+        <td>{{ $kuis->tingkat_ujian_label }}</td>
+    </tr>
+
+    <tr>
+        <th>Durasi pengerjaan</th>
+        <td>
+            @if ($durasiPengerjaan === null)
+                -
+            @else
+                {{ intdiv($durasiPengerjaan, 60) }} menit {{ $durasiPengerjaan % 60 }} detik
+            @endif
+        </td>
     </tr>
 
     <tr>
         <th>Nilai</th>
         <td>
-            <strong>{{ $hasil->nilai }}</strong>
+            @if ($hasil->nilai === null)
+                <strong>Jawaban essay diterima; tidak ada nilai otomatis.</strong>
+            @else
+                <strong>{{ $hasil->nilai }}</strong>
+                @if ($adaSoalEssay)
+                    <p>Nilai ini dihitung dari soal pilihan ganda; jawaban essay tidak dinilai otomatis.</p>
+                @endif
+            @endif
         </td>
     </tr>
 
@@ -30,7 +53,11 @@
     <tr>
         <th>Status</th>
         <td>
-            @if(
+            @if ($hasil->nilai === null)
+
+                <strong>Tidak dinilai otomatis</strong>
+
+            @elseif(
                 $hasil->nilai !== null &&
                 $kuis->kkm !== null &&
                 $hasil->nilai >= $kuis->kkm
@@ -105,6 +132,18 @@
 
     </table>
 
+@endif
+
+<br>
+
+@if ($canRetry)
+    <form action="{{ route('siswa.kuis.mulai', $kuis->id_kuis) }}" method="GET">
+        <button type="submit">Ulangi Kuis</button>
+    </form>
+@elseif ($hasil->nilai !== null && $kuis->kkm !== null && $hasil->nilai >= $kuis->kkm)
+    <p>Kamu telah lulus KKM. Kuis tidak perlu diulang.</p>
+@elseif ($kuis->maks_percobaan !== null && $percobaanTerpakai >= $kuis->maks_percobaan)
+    <p>Batas maksimal percobaan kuis telah tercapai. Hubungi guru untuk remedial.</p>
 @endif
 
 <br>

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Soal extends Model
 {
-    protected $table = 'soal';
+    protected $table = 'soals';
 
     protected $primaryKey = 'id_soal';
 
@@ -19,12 +19,19 @@ class Soal extends Model
     protected $fillable = [
         'id_soal',
         'id_kuis',
+        'tipe_soal',
         'pertanyaan',
+        'gambar_pertanyaan',
         'opsi_a',
+        'gambar_opsi_a',
         'opsi_b',
+        'gambar_opsi_b',
         'opsi_c',
+        'gambar_opsi_c',
         'opsi_d',
+        'gambar_opsi_d',
         'opsi_e',
+        'gambar_opsi_e',
         'jawaban',
         'bobot',
         'tingkat_kesulitan',
@@ -40,6 +47,15 @@ class Soal extends Model
             Kuis::class,
             'id_kuis',
             'id_kuis'
+        );
+    }
+
+    public function jawabanSiswa()
+    {
+        return $this->hasMany(
+            JawabanSiswa::class,
+            'id_soal',
+            'id_soal'
         );
     }
 }

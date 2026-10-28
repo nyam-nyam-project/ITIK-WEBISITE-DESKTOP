@@ -618,7 +618,7 @@
             </h3>
 
             <p>
-                Kategori: {{ $kuis->kategori }}
+                Kategori: {{ $kuis->kategori_label }}
                 &nbsp; • &nbsp;
                 ID Kuis: {{ $kuis->id_kuis }}
             </p>
@@ -674,10 +674,18 @@
             <form
                 action="{{ route('kuis.soal.store', $kuis->id_kuis) }}"
                 method="POST"
+                enctype="multipart/form-data"
             >
 
                 @csrf
 
+                <div class="form-group">
+                    <label for="tipe_soal">Tipe Soal <span class="required">*</span></label>
+                    <select id="tipe_soal" name="tipe_soal" required>
+                        <option value="pilihan_ganda" @selected(old('tipe_soal', 'pilihan_ganda') === 'pilihan_ganda')>Pilihan Ganda</option>
+                        <option value="essay" @selected(old('tipe_soal') === 'essay')>Essay / Jawaban Teks</option>
+                    </select>
+                </div>
 
                 <!-- PERTANYAAN -->
 
@@ -696,7 +704,13 @@
 
                 </div>
 
+                <div class="form-group">
+                    <label for="gambar_pertanyaan">Gambar Pertanyaan (opsional)</label>
+                    <input id="gambar_pertanyaan" type="file" name="gambar_pertanyaan" accept="image/jpeg,image/png,image/webp">
+                    <small class="form-help">JPG, PNG, atau WebP; maksimal 2 MB.</small>
+                </div>
 
+                <div id="pilihan-ganda-fields">
                 <!-- PILIHAN JAWABAN -->
 
                 <div class="section-title">
@@ -729,6 +743,8 @@
                             placeholder="Masukkan opsi A"
                             required
                         >
+                        <label>Gambar Opsi A (opsional)</label>
+                        <input type="file" name="gambar_opsi_a" accept="image/jpeg,image/png,image/webp">
 
                     </div>
 
@@ -755,6 +771,8 @@
                             placeholder="Masukkan opsi B"
                             required
                         >
+                        <label>Gambar Opsi B (opsional)</label>
+                        <input type="file" name="gambar_opsi_b" accept="image/jpeg,image/png,image/webp">
 
                     </div>
 
@@ -781,6 +799,8 @@
                             placeholder="Masukkan opsi C"
                             required
                         >
+                        <label>Gambar Opsi C (opsional)</label>
+                        <input type="file" name="gambar_opsi_c" accept="image/jpeg,image/png,image/webp">
 
                     </div>
 
@@ -807,6 +827,8 @@
                             placeholder="Masukkan opsi D"
                             required
                         >
+                        <label>Gambar Opsi D (opsional)</label>
+                        <input type="file" name="gambar_opsi_d" accept="image/jpeg,image/png,image/webp">
 
                     </div>
 
@@ -835,6 +857,8 @@
                             value="{{ old('opsi_e') }}"
                             placeholder="Masukkan opsi E jika diperlukan"
                         >
+                        <label>Gambar Opsi E (opsional)</label>
+                        <input type="file" name="gambar_opsi_e" accept="image/jpeg,image/png,image/webp">
 
                     </div>
 
@@ -936,6 +960,7 @@
 
                 </div>
 
+                </div>
 
                 <!-- TINGKAT KESULITAN -->
 
@@ -1006,6 +1031,22 @@
     </main>
 
 </div>
+
+<script>
+    const questionType = document.getElementById('tipe_soal');
+    const multipleChoiceFields = document.getElementById('pilihan-ganda-fields');
+
+    function toggleMultipleChoiceFields() {
+        const isMultipleChoice = questionType.value === 'pilihan_ganda';
+        multipleChoiceFields.hidden = !isMultipleChoice;
+        multipleChoiceFields.querySelectorAll('input, select').forEach((field) => {
+            field.disabled = !isMultipleChoice;
+        });
+    }
+
+    questionType.addEventListener('change', toggleMultipleChoiceFields);
+    toggleMultipleChoiceFields();
+</script>
 
 </body>
 

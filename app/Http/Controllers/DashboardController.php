@@ -8,21 +8,21 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $jumlahSiswa = DB::table('user')
+        $jumlahSiswa = DB::table('users')
             ->where('role', 'siswa')
             ->count();
 
-        $jumlahMateri = DB::table('materi')
+        $jumlahMateri = DB::table('materis')
             ->count();
 
         $jumlahKuis = DB::table('kuis')
             ->where('is_aktif', 1)
             ->count();
 
-        $jumlahSoal = DB::table('soal')
+        $jumlahSoal = DB::table('soals')
             ->count();
 
-        $rataNilai = DB::table('mengerjakan')
+        $rataNilai = DB::table('mengerjakans')
             ->whereNotNull('nilai')
             ->avg('nilai');
 
@@ -32,7 +32,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $materiTerbaru = DB::table('materi')
+        $materiTerbaru = DB::table('materis')
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();

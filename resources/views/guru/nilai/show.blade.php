@@ -678,6 +678,37 @@
         </div>
 
 
+        {{-- JAWABAN SISWA --}}
+
+        <div class="card">
+
+            <h3>Jawaban Siswa</h3>
+
+            @forelse ($mengerjakan->jawabanSiswa as $jawaban)
+                <div style="padding: 14px 0; border-bottom: 1px solid #eee;">
+                    <strong>{{ $jawaban->soal->pertanyaan ?? 'Soal tidak tersedia' }}</strong>
+
+                    @if ($jawaban->soal?->gambar_pertanyaan)
+                        <img
+                            src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($jawaban->soal->gambar_pertanyaan) }}"
+                            alt="Gambar pertanyaan"
+                            style="display: block; max-width: 320px; max-height: 220px; object-fit: contain;"
+                        >
+                    @endif
+
+                    @if ($jawaban->jawaban_text !== null)
+                        <pre style="white-space: pre-wrap; font: inherit; margin-top: 8px;">{{ $jawaban->jawaban_text }}</pre>
+                    @else
+                        <p>Jawaban pilihan: {{ $jawaban->jawaban_dipilih ?? 'Tidak dijawab' }}</p>
+                    @endif
+                </div>
+            @empty
+                <p>Belum ada jawaban tersimpan.</p>
+            @endforelse
+
+        </div>
+
+
         {{-- KHUSUS REMEDIAL --}}
 
         @if($mengerjakan->kuis->kategori === 'remedial')

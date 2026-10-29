@@ -9,6 +9,7 @@ class SesiKuis extends Model
     protected $table = 'sesi_kuis';
 
     protected $primaryKey = 'id_sesi';
+
     public $incrementing = true;
 
     protected $keyType = 'int';
@@ -21,21 +22,23 @@ class SesiKuis extends Model
         'percobaan_ke',
         'waktu_mulai',
         'waktu_selesai',
+        'durasi_detik',
     ];
 
     protected $casts = [
         'percobaan_ke' => 'integer',
         'waktu_mulai' => 'datetime',
         'waktu_selesai' => 'datetime',
+        'durasi_detik' => 'integer',
     ];
 
     public function kuis()
     {
-        return $this->belongsTo(Kuis::class, 'id_kuis','id_kuis');
+        return $this->belongsTo(Kuis::class, 'id_kuis', 'id_kuis');
     }
 
     public function siswa()
     {
-        return $this->belongsTo(User::class,'id_user','id_user');
+        return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mengerjakan;
-use App\Models\Remedial;
 use App\Models\RemedialSiswa;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,7 +27,12 @@ class ValidasiNilaiController extends Controller
      */
     public function show($id)
     {
-        $mengerjakan = Mengerjakan::with(['siswa','kuis','validator',])
+        $mengerjakan = Mengerjakan::with([
+            'siswa',
+            'kuis',
+            'validator',
+            'jawabanSiswa.soal',
+        ])
             ->findOrFail($id);
 
         $remedial = null;
@@ -67,10 +71,22 @@ class ValidasiNilaiController extends Controller
      */
     public function validasi(Mengerjakan $mengerjakan)
     {
+        if ($mengerjakan->nilai === null) {
+            return redirect()
+                ->route('guru.nilai.show', $mengerjakan->id_mengerjakan)
+                ->with('error', 'Jawaban essay tidak memiliki nilai otomatis untuk divalidasi.');
+        }
+
         if ($mengerjakan->status_validasi === 'sudah divalidasi') {
             return redirect()
                 ->route('guru.nilai.show', $mengerjakan->id_mengerjakan)
                 ->with('error', 'Nilai ini sudah divalidasi.');
+        }
+
+        if ($mengerjakan->status_validasi === 'lulus kkm otomatis') {
+            return redirect()
+                ->route('guru.nilai.show', $mengerjakan->id_mengerjakan)
+                ->with('error', 'Nilai ini sudah lulus KKM secara otomatis.');
         }
 
         $mengerjakan->update([

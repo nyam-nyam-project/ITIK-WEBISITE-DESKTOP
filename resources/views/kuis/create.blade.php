@@ -639,17 +639,17 @@
                         </option>
 
                         <option
+                            value="pre-test"
+                            {{ old('kategori') === 'pre-test' ? 'selected' : '' }}
+                        >
+                            Pre-test
+                        </option>
+
+                        <option
                             value="post-test"
                             {{ old('kategori') === 'post-test' ? 'selected' : '' }}
                         >
                             Post-test
-                        </option>
-
-                        <option
-                            value="pass-test"
-                            {{ old('kategori') === 'pass-test' ? 'selected' : '' }}
-                        >
-                            Pass-test
                         </option>
 
                         <option
@@ -677,6 +677,28 @@
 
                 </div>
 
+
+                <div class="form-group">
+                    <label for="tingkat_ujian">Tingkat Ujian</label>
+                    <select
+                        id="tingkat_ujian"
+                        name="tingkat_ujian"
+                        class="form-control"
+                        required
+                    >
+                        @foreach (['mudah' => 'Mudah', 'sedang' => 'Sedang', 'sulit' => 'Sulit'] as $value => $label)
+                            <option
+                                value="{{ $value }}"
+                                @selected(old('tingkat_ujian', 'mudah') === $value)
+                            >
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="form-hint">
+                        Tingkat Sedang dan Sulit terbuka otomatis setelah siswa lulus KKM pada tingkat sebelumnya untuk kategori dan materi yang sama.
+                    </p>
+                </div>
 
                 <!-- MATERI -->
 
@@ -761,9 +783,66 @@
                         value="{{ old('kkm') }}"
                         min="0"
                         max="100"
-                        step="0.01"
+                        step="1"
                         placeholder="Contoh: 75"
                     >
+
+                    @error('kkm')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+
+                </div>
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                    <label for="maks_percobaan">
+                        Maksimal Percobaan
+                    </label>
+
+                    <input
+                        type="number"
+                        id="maks_percobaan"
+                        name="maks_percobaan"
+                        class="form-control"
+                        value="{{ old('maks_percobaan') }}"
+                        min="1"
+                        max="65535"
+                        step="1"
+                        placeholder="Kosongkan untuk tanpa batas"
+                    >
+
+                    <small>Kuis dapat diulang sampai lulus atau batas tercapai.</small>
+
+                    @error('maks_percobaan')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+
+                    </div>
+
+                    <div class="form-group">
+
+                    <label for="waktu_publish">
+                        Jadwal Publikasi
+                    </label>
+
+                    <input
+                        type="datetime-local"
+                        id="waktu_publish"
+                        name="waktu_publish"
+                        class="form-control"
+                        value="{{ old('waktu_publish') }}"
+                        min="{{ now()->addMinute()->startOfMinute()->format('Y-m-d\TH:i') }}"
+                    >
+
+                    <small>Isi tanggal dan jam publikasi. Setelah soal siap, aktifkan jadwal melalui tombol Publikasikan Kuis pada halaman detail.</small>
+
+                    @error('waktu_publish')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+
+                    </div>
 
                 </div>
 
@@ -846,7 +925,7 @@
                                 >
 
                                     {{ $item->judul }}
-                                    ({{ $item->kategori }})
+                                    ({{ $item->kategori_label }})
 
                                 </option>
 
@@ -920,11 +999,10 @@
         remedialContainer.style.display = 'none';
 
 
-        // Post-test, pass-test, kuis harian
-
+        // Pre-test, post-test, kuis harian
         if (
+            value === 'pre-test' ||
             value === 'post-test' ||
-            value === 'pass-test' ||
             value === 'kuis harian'
         ) {
 

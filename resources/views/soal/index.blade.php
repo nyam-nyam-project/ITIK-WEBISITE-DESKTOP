@@ -668,7 +668,7 @@
                 </h2>
 
                 <p>
-                    Kategori: {{ $kuis->kategori }}
+                    Kategori: {{ $kuis->kategori_label }}
                     &nbsp; • &nbsp;
                     {{ $soal->count() }} soal
                 </p>
@@ -745,7 +745,7 @@
                 </span>
 
                 <span class="meta-badge">
-                    {{ $kuis->kategori }}
+                    {{ $kuis->kategori_label }}
                 </span>
 
             </div>
@@ -774,6 +774,13 @@
                             <strong>
                                 {{ $item->pertanyaan }}
                             </strong>
+                            @if ($item->gambar_pertanyaan)
+                                <img
+                                    src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($item->gambar_pertanyaan) }}"
+                                    alt="Gambar pertanyaan"
+                                    style="display: block; max-width: 320px; max-height: 220px; object-fit: contain;"
+                                >
+                            @endif
 
                         </div>
 
@@ -787,6 +794,9 @@
                     </div>
 
 
+                    @if ($item->tipe_soal === 'essay')
+                        <p>Essay / jawaban teks (tidak dinilai otomatis)</p>
+                    @else
                     <!-- OPTIONS -->
 
                     <div class="options">
@@ -799,6 +809,9 @@
                             <strong>A.</strong>
 
                             {{ $item->opsi_a }}
+                            @if ($item->gambar_opsi_a)
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($item->gambar_opsi_a) }}" alt="Gambar opsi A" style="display: block; max-width: 240px; max-height: 180px; object-fit: contain;">
+                            @endif
 
                         </div>
 
@@ -810,6 +823,9 @@
                             <strong>B.</strong>
 
                             {{ $item->opsi_b }}
+                            @if ($item->gambar_opsi_b)
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($item->gambar_opsi_b) }}" alt="Gambar opsi B" style="display: block; max-width: 240px; max-height: 180px; object-fit: contain;">
+                            @endif
 
                         </div>
 
@@ -821,6 +837,9 @@
                             <strong>C.</strong>
 
                             {{ $item->opsi_c }}
+                            @if ($item->gambar_opsi_c)
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($item->gambar_opsi_c) }}" alt="Gambar opsi C" style="display: block; max-width: 240px; max-height: 180px; object-fit: contain;">
+                            @endif
 
                         </div>
 
@@ -832,11 +851,14 @@
                             <strong>D.</strong>
 
                             {{ $item->opsi_d }}
+                            @if ($item->gambar_opsi_d)
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($item->gambar_opsi_d) }}" alt="Gambar opsi D" style="display: block; max-width: 240px; max-height: 180px; object-fit: contain;">
+                            @endif
 
                         </div>
 
 
-                        @if ($item->opsi_e)
+                        @if ($item->opsi_e || $item->gambar_opsi_e)
 
                             <div
                                 class="option {{ $item->jawaban === 'E' ? 'correct' : '' }}"
@@ -845,6 +867,9 @@
                                 <strong>E.</strong>
 
                                 {{ $item->opsi_e }}
+                                @if ($item->gambar_opsi_e)
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($item->gambar_opsi_e) }}" alt="Gambar opsi E" style="display: block; max-width: 240px; max-height: 180px; object-fit: contain;">
+                                @endif
 
                             </div>
 
@@ -867,6 +892,7 @@
                         </span>
 
                     </div>
+                    @endif
 
 
                     <!-- ACTION -->

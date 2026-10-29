@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Materi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class MateriController extends Controller
 {
@@ -24,7 +24,12 @@ class MateriController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'judul' => 'required|string|max:150',
+            'judul' => [
+                'required',
+                'string',
+                'max:150',
+                Rule::unique('materis', 'judul'),
+            ],
             'bab' => 'nullable|string|max:50',
             'kelas' => 'nullable|string|max:50',
             'deskripsi' => 'nullable|string',
@@ -33,24 +38,14 @@ class MateriController extends Controller
         ], [
             'judul.required' => 'Judul materi wajib diisi.',
             'judul.max' => 'Judul materi maksimal 150 karakter.',
+            'judul.unique' => 'Judul materi sudah digunakan.',
             'link_youtube.url' => 'Link YouTube harus berupa URL yang valid.',
             'file_pdf.mimes' => 'File materi harus berformat PDF.',
             'file_pdf.max' => 'Ukuran file PDF maksimal 10 MB.',
         ]);
 
-        $duplikat = Materi::where('kelas', $request->kelas)
-            ->where('bab', $request->bab)
-            ->where('judul', $request->judul)
-            ->exists();
-
-        if ($duplikat) {
-            return back()
-                ->withInput()
-                ->with('error', 'Materi dengan kelas, bab, dan judul tersebut sudah ada.');
-        }
-
-        //Sementara
-        $validated['id_materi'] = 'M' . str_pad(
+        // Sementara
+        $validated['id_materi'] = 'M'.str_pad(
             (Materi::count() + 1),
             3,
             '0',
@@ -93,38 +88,21 @@ class MateriController extends Controller
         $materi = Materi::findOrFail($id);
 
         $validated = $request->validate([
-            'judul' => 'required|string|max:150',
+            'judul' => [
+                'required',
+                'string',
+                'max:150',
+                Rule::unique('materis', 'judul')
+                    ->ignore($materi->id_materi, 'id_materi'),
+            ],
             'bab' => 'nullable|string|max:50',
             'kelas' => 'nullable|string|max:50',
             'deskripsi' => 'nullable|string',
             'file_pdf' => 'nullable|file|mimes:pdf|max:10240',
             'link_youtube' => 'nullable|url|max:255',
         ], [
-            'file_pdf.mimes' => 'File materi harus berformat PDF.',
-            'file_pdf.max' => 'Ukuran file PDF maksimal 10 MB.',
+            'judul.unique' => 'Judul materi sudah digunakan.',
         ]);
-
-        $duplikat = Materi::where('kelas', $request->kelas)
-            ->where('bab', $request->bab)
-            ->where('judul', $request->judul)
-            ->where('id_materi', '!=', $materi->id_materi)
-            ->exists();
-
-        if ($duplikat) {
-            return back()
-                ->withInput()
-                ->with('error', 'Materi dengan kelas, bab, dan judul tersebut sudah digunakan oleh materi lain.');
-        }
-
-        if ($request->hasFile('file_pdf')) {
-            if ($materi->isi_materi && Storage::disk('public')->exists($materi->isi_materi)) {
-                Storage::disk('public')->delete($materi->isi_materi);
-            }
-
-            $validated['isi_materi'] = $request->file('file_pdf')->store('materi', 'public');
-        }
-
-        unset($validated['file_pdf']);
 
         $materi->update($validated);
 

@@ -626,7 +626,7 @@
                                 <td>
 
                                     <span class="kategori">
-                                        {{ $item->kategori }}
+                                        {{ $item->kategori_label }}
                                     </span>
 
                                 </td>

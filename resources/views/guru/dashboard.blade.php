@@ -463,7 +463,7 @@
                                 </div>
 
                                 <div class="item-sub">
-                                    {{ $kuis->kategori }}
+                                    {{ $kuis->kategori_label }}
                                 </div>
 
                             </div>

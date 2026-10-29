@@ -729,7 +729,19 @@
                     </div>
 
                     <div class="info-value">
-                        {{ $kuis->kategori }}
+                        {{ $kuis->kategori_label }}
+                    </div>
+
+                </div>
+
+                <div class="info-item">
+
+                    <div class="info-label">
+                        Tingkat Ujian
+                    </div>
+
+                    <div class="info-value">
+                        {{ $kuis->tingkat_ujian_label }}
                     </div>
 
                 </div>
@@ -765,6 +777,32 @@
                     </div>
 
                 </div>
+
+                <div class="info-item">
+
+                    <div class="info-label">
+                        Maksimal Percobaan
+                    </div>
+
+                    <div class="info-value">
+                        {{ $kuis->maks_percobaan ?? 'Tanpa batas' }}
+                    </div>
+
+                </div>
+
+                @if ($kuis->waktu_publish)
+                    <div class="info-item">
+
+                        <div class="info-label">
+                            Jadwal Publikasi
+                        </div>
+
+                        <div class="info-value">
+                            {{ $kuis->waktu_publish->format('d-m-Y H:i') }}
+                        </div>
+
+                    </div>
+                @endif
 
 
                 <!-- WAKTU -->
@@ -853,7 +891,7 @@
 
             <!-- PUBLISH -->
 
-            @if ($kuis->status_publikasi === 'draft' && $kuis->is_aktif)
+            @if (in_array($kuis->status_publikasi, ['draft', 'terjadwal'], true) && $kuis->is_aktif)
 
                 @if (Auth::user()->role === 'guru')
 
@@ -862,11 +900,15 @@
                         <div>
 
                             <strong>
-                                Kuis masih dalam status draft
+                                Kuis {{ $kuis->status_publikasi === 'terjadwal' ? 'dijadwalkan' : 'masih dalam status draft' }}
                             </strong>
 
                             <p>
-                                Publikasikan kuis agar dapat digunakan sesuai pengaturan yang telah dibuat.
+                                @if ($kuis->waktu_publish && $kuis->waktu_publish->isFuture())
+                                    Tekan tombol untuk mengaktifkan publikasi otomatis pada {{ $kuis->waktu_publish->format('d-m-Y H:i') }}. Pastikan scheduler server berjalan setiap menit.
+                                @else
+                                    Publikasikan kuis sekarang. Untuk publikasi otomatis, atur jadwal pada formulir edit sebelum menekan tombol ini.
+                                @endif
                             </p>
 
                         </div>
@@ -886,7 +928,7 @@
                                 type="submit"
                                 class="btn btn-success"
                             >
-                                ✓ Publikasikan Kuis
+                                ✓ {{ $kuis->status_publikasi === 'terjadwal' ? 'Perbarui Jadwal Publikasi' : 'Publikasikan Kuis' }}
                             </button>
 
                         </form>
@@ -973,6 +1015,16 @@
 
                         <li>
                             {{ $soal->pertanyaan }}
+                            @if ($soal->gambar_pertanyaan)
+                                <img
+                                    src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($soal->gambar_pertanyaan) }}"
+                                    alt="Gambar pertanyaan"
+                                    style="display: block; max-width: 320px; max-height: 220px; object-fit: contain;"
+                                >
+                            @endif
+                            <small>
+                                {{ $soal->tipe_soal === 'essay' ? 'Essay / jawaban teks' : 'Pilihan ganda' }}
+                            </small>
                         </li>
 
                     @endforeach

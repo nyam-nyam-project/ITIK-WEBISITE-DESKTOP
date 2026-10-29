@@ -1,18 +1,18 @@
 <?php
 use App\Http\Controllers\SiswaDashboardController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\MateriController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KuisController;
-use App\Http\Controllers\SoalController;
-use App\Http\Controllers\SiswaKuisController;
-use App\Http\Controllers\ValidasiNilaiController;
-use App\Http\Controllers\RemedialSiswaController;
-use App\Http\Controllers\RemedialController;
-use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\MateriController;
 use App\Http\Controllers\OperatorDashboardController;
+use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\RemedialController;
+use App\Http\Controllers\RemedialSiswaController;
+use App\Http\Controllers\SiswaKuisController;
+use App\Http\Controllers\SoalController;
+use App\Http\Controllers\ValidasiNilaiController;
 use Illuminate\Support\Facades\Route;
 use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
-use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -20,10 +20,10 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware('auth')
     ->name('dashboard');
+
 Route::get('/profil', function () {
     return view('guru.profil');
 })->middleware('auth')->name('profil');
-
 
 // =====================================================
 // UMUM - GUEST
@@ -38,7 +38,6 @@ Route::post('/login', [AuthController::class, 'login'])
 Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
 
-
 // =====================================================
 // GURU
 // =====================================================
@@ -49,7 +48,6 @@ Route::middleware(['auth', 'role:guru'])->group(function () {
         ->name('kuis.publish');
 
 });
-
 
 // =====================================================
 // GURU - NILAI & REMEDIAL
@@ -72,7 +70,6 @@ Route::middleware(['auth', 'role:guru'])
 
         Route::patch('/nilai/{mengerjakan}/validasi', [ValidasiNilaiController::class, 'validasi'])
             ->name('nilai.validasi');
-
 
         // -------------------------
         // REMEDIAL
@@ -97,7 +94,6 @@ Route::middleware(['auth', 'role:guru'])
             ->name('remedial.show');
     });
 
-
 // =====================================================
 // OPERATOR
 // =====================================================
@@ -119,10 +115,9 @@ Route::middleware(['auth', 'role:guru,operator'])->group(function () {
     Route::resource('kuis.soal', SoalController::class)
         ->parameters([
             'kuis' => 'kuis',
-            'soal' => 'soal'
+            'soal' => 'soal',
         ]);
 });
-
 
 // =====================================================
 // SISWA
@@ -143,7 +138,7 @@ Route::middleware(['auth', 'role:siswa'])
         Route::get('/materi', [ProgressController::class, 'index'])
             ->name('materi.index');
 
-            Route::get('/materi/{idMateri}', [ProgressController::class, 'show'])
+        Route::get('/materi/{idMateri}', [ProgressController::class, 'show'])
             ->name('materi.show');
 
         Route::post('/materi/{idMateri}/selesai', [ProgressController::class, 'selesai'])
@@ -171,14 +166,12 @@ Route::middleware(['auth', 'role:siswa'])
         Route::get('/kuis/{kuis}/hasil', [SiswaKuisController::class, 'hasil'])
             ->name('kuis.hasil');
 
-
         // -------------------------
         // NILAI
         // -------------------------
 
         Route::get('/nilai', [SiswaKuisController::class, 'daftarNilai'])
             ->name('nilai');
-
 
         // -------------------------
         // REMEDIAL SISWA

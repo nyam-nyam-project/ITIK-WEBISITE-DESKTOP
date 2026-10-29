@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Materi extends Model
 {
-    protected $table = 'materi';
+    protected $table = 'materis';
 
     protected $primaryKey = 'id_materi';
 
@@ -26,7 +26,8 @@ class Materi extends Model
         'id_user',
     ];
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 
@@ -44,7 +45,7 @@ class Materi extends Model
 
     public function progress()
     {
-        return $this->hasMany(Progress::class,'id_materi','id_materi');
+        return $this->hasMany(Progress::class, 'id_materi', 'id_materi');
     }
 
     public function pdfUrl(): ?string

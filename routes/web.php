@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\SiswaDashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KuisController;
@@ -128,9 +128,8 @@ Route::middleware(['auth', 'role:siswa'])
     ->name('siswa.')
     ->group(function () {
 
-        Route::get('/dashboard', function () {
-            return view('siswa.dashboard');
-        })->name('dashboard');
+           Route::get('/dashboard', [SiswaDashboardController::class, 'index'])
+       ->name('dashboard');
 
         // -------------------------
         // MATERI

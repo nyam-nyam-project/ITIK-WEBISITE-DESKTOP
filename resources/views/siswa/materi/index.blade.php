@@ -1,94 +1,542 @@
-<h1>Materi Pembelajaran</h1>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-@if(session('success'))
-    <p style="color: green;">
-        {{ session('success') }}
-    </p>
-@endif
+    <title>Materi Pembelajaran - ITIK</title>
 
-@if(session('error'))
-    <p style="color: red;">
-        {{ session('error') }}
-    </p>
-@endif
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
 
-@if($materi->isEmpty())
+        body {
+            background: #f5f4fc;
+            color: #202044;
+        }
 
-    <p>Belum ada materi.</p>
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
 
-@else
+        /* SIDEBAR */
 
-<table border="1" cellpadding="10" cellspacing="0">
+        .sidebar {
+            width: 270px;
+            background: linear-gradient(180deg, #7160ef, #5948dd);
+            color: white;
+            padding: 30px 25px;
+        }
 
-    <thead>
-        <tr>
-            <th>No</th>
-            <th>Judul Materi</th>
-            <th>Bab</th>
-            <th>Kelas</th>
-            <th>Progress</th>
-            <th>Aksi</th>
-        </tr>
-    </thead>
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 60px;
+        }
 
-    <tbody>
+        .logo-icon {
+            width: 55px;
+            height: 55px;
+            border: 1px solid rgba(255,255,255,.4);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+        }
 
-        @foreach($materi as $item)
+        .logo h2 {
+            font-size: 22px;
+        }
 
-            @php
-                $progress = $item->progress->first();
-            @endphp
+        .logo span {
+            font-size: 14px;
+            opacity: .85;
+        }
 
-            <tr>
+        .menu-title {
+            font-size: 14px;
+            opacity: .7;
+            margin-bottom: 15px;
+        }
 
-                <td>
-                    {{ $loop->iteration }}
-                </td>
+        .menu a {
+            display: block;
+            text-decoration: none;
+            color: white;
+            padding: 15px 18px;
+            border-radius: 15px;
+            margin-bottom: 8px;
+            font-size: 17px;
+        }
 
-                <td>
-                    {{ $item->judul }}
-                </td>
+        .menu a.active {
+            background: white;
+            color: #5b4ae3;
+        }
 
-                <td>
-                    {{ $item->bab ?? '-' }}
-                </td>
+        .menu a:hover {
+            background: rgba(255,255,255,.15);
+        }
 
-                <td>
-                    {{ $item->kelas ?? '-' }}
-                </td>
+        /* CONTENT */
 
-                <td>
-                    @if(!$progress)
-                        Belum Mulai
-                    @elseif($progress->status === 'sedang belajar')
-                        Sedang Belajar
-                    @elseif($progress->status === 'selesai')
-                        <strong style="color: green;">
-                            Selesai
-                        </strong>
-                    @else
-                        {{ $progress->status }}
-                    @endif
-                </td>
+        .content {
+            flex: 1;
+            padding: 30px 45px;
+            min-width: 0;
+        }
 
-                <td>
-                    <a href="{{ route('siswa.materi.show', $item->id_materi) }}">
-                        Buka Materi
-                    </a>
-                </td>
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
 
-            </tr>
+        .title h1 {
+            font-size: 34px;
+            margin-bottom: 5px;
+        }
 
-        @endforeach
+        .title p {
+            color: #777394;
+            font-size: 17px;
+        }
 
-    </tbody>
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            padding: 10px 18px;
+            border-radius: 40px;
+            box-shadow: 0 3px 15px rgba(0,0,0,.04);
+        }
 
-</table>
+        .avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #6553e8;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
 
-@endif
+        .profile small {
+            color: #777394;
+        }
 
-<br>
+        /* ALERT */
 
-<a href="{{ route('siswa.kuis.index') }}">
-    Ke Daftar Kuis
-</a>
+        .alert {
+            padding: 15px 22px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            font-size: 15px;
+        }
+
+        .alert.success {
+            background: #e7f8ec;
+            color: #20a653;
+        }
+
+        .alert.error {
+            background: #fde8e8;
+            color: #d93636;
+        }
+
+        /* CARD */
+
+        .section-card {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 4px 18px rgba(70,60,130,.06);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 22px;
+        }
+
+        .section-header p {
+            color: #777394;
+            margin-top: 5px;
+        }
+
+        .see-all {
+            text-decoration: none;
+            color: #5d4be4;
+            border: 1px solid #ddd9f8;
+            padding: 10px 15px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+
+        .see-all:hover {
+            background: #f5f3ff;
+        }
+
+        /* TABLE */
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            text-align: left;
+            color: #777394;
+            font-size: 14px;
+            font-weight: normal;
+            padding: 12px 14px;
+            border-bottom: 1px solid #eeeef5;
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 17px 14px;
+            border-bottom: 1px solid #eeeef5;
+            font-size: 16px;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #faf9ff;
+        }
+
+        .col-no {
+            width: 60px;
+            color: #777394;
+        }
+
+        .materi-title {
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+        /* BADGE PROGRESS */
+
+        .badge {
+            display: inline-block;
+            padding: 7px 13px;
+            border-radius: 20px;
+            font-size: 13px;
+            white-space: nowrap;
+            background: #eeeaff;
+            color: #7a74a3;
+        }
+
+        .badge.belajar {
+            background: #fff0d4;
+            color: #d68a00;
+        }
+
+        .badge.selesai {
+            background: #e7f8ec;
+            color: #20a653;
+        }
+
+        /* BUTTON */
+
+        .btn-open {
+            display: inline-block;
+            text-decoration: none;
+            background: #6553e8;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .btn-open:hover {
+            background: #5948dd;
+        }
+
+        /* EMPTY STATE */
+
+        .empty {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .empty-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 18px;
+            background: #eeeaff;
+            color: #604de7;
+            font-size: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+        }
+
+        .empty h3 {
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+
+        .empty p {
+            color: #777394;
+        }
+
+        a:focus-visible {
+            outline: 3px solid #b9aefc;
+            outline-offset: 2px;
+        }
+
+        @media(max-width: 700px) {
+            .sidebar {
+                display: none;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <div class="logo-icon">IT</div>
+
+            <div>
+                <h2>ITIK</h2>
+                <span>Portal Guru</span>
+            </div>
+        </div>
+
+        <div class="menu-title">
+            Menu Utama
+        </div>
+
+        <nav class="menu">
+
+            <a href="{{ route('siswa.dashboard') }}">
+                ▦ &nbsp; Dashboard
+            </a>
+
+            <a href="{{ url('/siswa/materi') }}" class="active">
+                ▣ &nbsp; Materi
+            </a>
+
+            <a href="{{ url('/siswa/kuis') }}">
+                ☑ &nbsp; Kuis
+            </a>
+
+            <a href="{{ url('/siswa/nilai') }}">
+                ◉ &nbsp; Nilai Saya
+            </a>
+
+            <a href="{{ url('/siswa/remedial') }}">
+                ↻ &nbsp; Remedial
+            </a>
+
+            <a href="{{ route('profil') }}">
+                ◎ &nbsp; Profil
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- CONTENT -->
+
+    <main class="content">
+
+        <div class="topbar">
+
+            <div class="title">
+                <h1>Materi Pembelajaran</h1>
+                <p>Pilih materi dan lanjutkan belajar</p>
+            </div>
+
+            <div class="profile">
+
+                <div class="avatar">
+                    {{ strtoupper(substr(Auth::user()->nama_lengkap, 0, 2)) }}
+                </div>
+
+                <div>
+                    <strong>{{ Auth::user()->nama_lengkap }}</strong>
+                    <br>
+                    <small>{{ ucfirst(Auth::user()->role) }}</small>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- NOTIFIKASI -->
+
+        @if(session('success'))
+            <div class="alert success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert error">
+                {{ session('error') }}
+            </div>
+        @endif
+
+
+        <!-- DAFTAR MATERI -->
+
+        <div class="section-card">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Daftar Materi</h2>
+                    <p>{{ $materi->count() }} materi tersedia</p>
+                </div>
+
+                <a href="{{ route('siswa.kuis.index') }}" class="see-all">
+                    Ke daftar kuis
+                </a>
+
+            </div>
+
+
+            @if($materi->isEmpty())
+
+                <div class="empty">
+                    <div class="empty-icon">▣</div>
+                    <h3>Belum ada materi</h3>
+                    <p>Materi akan muncul di sini setelah guru menambahkannya.</p>
+                </div>
+
+            @else
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Judul Materi</th>
+                                <th>Bab</th>
+                                <th>Kelas</th>
+                                <th>Progress</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach($materi as $item)
+
+                                @php
+                                    $progress = $item->progress->first();
+                                @endphp
+
+                                <tr>
+
+                                    <td class="col-no">
+                                        {{ $loop->iteration }}
+                                    </td>
+
+                                    <td>
+                                        <span class="materi-title">
+                                            {{ $item->judul }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        {{ $item->bab ?? '-' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $item->kelas ?? '-' }}
+                                    </td>
+
+                                    <td>
+                                        @if(!$progress)
+                                            <span class="badge">Belum Mulai</span>
+                                        @elseif($progress->status === 'sedang belajar')
+                                            <span class="badge belajar">Sedang Belajar</span>
+                                        @elseif($progress->status === 'selesai')
+                                            <span class="badge selesai">Selesai</span>
+                                        @else
+                                            <span class="badge">{{ $progress->status }}</span>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        <a href="{{ route('siswa.materi.show', $item->id_materi) }}" class="btn-open">
+                                            Buka Materi
+                                        </a>
+                                    </td>
+
+                                </tr>
+
+                            @endforeach
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            @endif
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>

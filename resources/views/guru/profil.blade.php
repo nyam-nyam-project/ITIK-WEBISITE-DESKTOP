@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Profil Guru - ITIK</title>
+    <title>Profil - ITIK</title>
 
     <style>
         * {
@@ -364,7 +364,7 @@
 
             <div>
                 <h2>ITIK</h2>
-                <span>Portal Guru</span>
+                <span>{{ Auth::user()->role === 'siswa' ? 'Portal Siswa' : 'Portal Guru' }}</span>
             </div>
 
         </div>
@@ -372,6 +372,38 @@
         <div class="menu-title">
             Menu Utama
         </div>
+
+        @if(Auth::user()->role === 'siswa')
+
+        <nav class="menu">
+
+            <a href="{{ route('siswa.dashboard') }}">
+                ▦ &nbsp; Dashboard
+            </a>
+
+            <a href="{{ route('siswa.materi.index') }}">
+                ▣ &nbsp; Materi
+            </a>
+
+            <a href="{{ route('siswa.kuis.index') }}">
+                ☑ &nbsp; Kuis
+            </a>
+
+            <a href="{{ route('siswa.nilai') }}">
+                ◉ &nbsp; Nilai Saya
+            </a>
+
+            <a href="{{ route('siswa.remedial.index') }}">
+                ↻ &nbsp; Remedial
+            </a>
+
+            <a href="{{ route('profil') }}" class="active">
+                ◎ &nbsp; Profil
+            </a>
+
+        </nav>
+
+        @else
 
         <nav class="menu">
 
@@ -397,6 +429,8 @@
 
         </nav>
 
+        @endif
+
     </aside>
 
 
@@ -411,7 +445,7 @@
                 <h1>Profil</h1>
 
                 <p>
-                    Informasi akun guru
+                    Informasi akun {{ Auth::user()->role }}
                 </p>
 
             </div>
@@ -463,7 +497,7 @@
                 </h2>
 
                 <div class="role">
-                    Guru Portal ITIK
+                    {{ ucfirst(Auth::user()->role) }} Portal ITIK
                 </div>
 
                 <span class="role-badge">
@@ -575,7 +609,7 @@
                 <div class="actions">
 
                     <a
-                        href="{{ route('dashboard') }}"
+                        href="{{ Auth::user()->role === 'siswa' ? route('siswa.dashboard') : route('dashboard') }}"
                         class="btn btn-back"
                     >
                         ← Kembali

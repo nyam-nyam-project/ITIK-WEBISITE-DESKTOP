@@ -615,6 +615,33 @@
 
                 </div>
 
+                <div class="form-group">
+                    <label for="id_mapel">Mata pelajaran *</label>
+                    <select id="id_mapel" name="id_mapel" class="form-control" required>
+                        <option value="">-- Pilih Mata Pelajaran --</option>
+                        @foreach ($mapel as $itemMapel)
+                            <option value="{{ $itemMapel->id_mapel }}" @selected(old('id_mapel') === $itemMapel->id_mapel)>{{ $itemMapel->kode_mapel }} - {{ $itemMapel->nama_mapel }}</option>
+                        @endforeach
+                    </select>
+                    @if ($mapel->isEmpty())
+                        <p class="form-hint">Belum ada mata pelajaran aktif. Hubungi admin sekolah.</p>
+                    @endif
+                </div>
+
+                <div class="form-group">
+                    <label for="tahun_ajaran">Tahun ajaran</label>
+                    <input id="tahun_ajaran" class="form-control" type="text" value="{{ $tahunAjaran?->nama ?? 'Belum ada tahun ajaran aktif' }}" readonly>
+                    <p class="form-hint">Diisi otomatis dari tahun ajaran aktif. Jika belum tersedia, hubungi admin sekolah.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="tingkat_kesulitan">Tingkat kesulitan *</label>
+                    <select id="tingkat_kesulitan" name="tingkat_kesulitan" class="form-control" required>
+                        @foreach (['mudah' => 'Mudah', 'sedang' => 'Sedang', 'sulit' => 'Sulit'] as $nilai => $label)
+                            <option value="{{ $nilai }}" @selected(old('tingkat_kesulitan', 'mudah') === $nilai)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
                 <!-- KATEGORI -->
 
@@ -646,10 +673,10 @@
                         </option>
 
                         <option
-                            value="pass-test"
-                            {{ old('kategori') === 'pass-test' ? 'selected' : '' }}
+                            value="pre-test"
+                            {{ old('kategori') === 'pre-test' ? 'selected' : '' }}
                         >
-                            Pass-test
+                            Pre-test
                         </option>
 
                         <option
@@ -920,11 +947,11 @@
         remedialContainer.style.display = 'none';
 
 
-        // Post-test, pass-test, kuis harian
+        // Post-test, pre-test, kuis harian
 
         if (
             value === 'post-test' ||
-            value === 'pass-test' ||
+            value === 'pre-test' ||
             value === 'kuis harian'
         ) {
 

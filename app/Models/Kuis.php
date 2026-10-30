@@ -21,6 +21,9 @@ class Kuis extends Model
         'judul',
         'deskripsi',
         'kategori',
+        'tingkat_kesulitan',
+        'id_mapel',
+        'id_tahun_ajaran',
         'alokasi_waktu',
         'kkm',
         'waktu_mulai',
@@ -41,6 +44,16 @@ class Kuis extends Model
     public function pembuat()
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function mapel()
+    {
+        return $this->belongsTo(Mapel::class, 'id_mapel', 'id_mapel');
+    }
+
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class, 'id_tahun_ajaran', 'id_tahun_ajaran');
     }
 
     public function publisher()

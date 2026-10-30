@@ -556,6 +556,30 @@
 
                 </div>
 
+                <div class="form-group">
+                    <label for="id_mapel">Mata pelajaran *</label>
+                    <select id="id_mapel" name="id_mapel" class="form-control" required>
+                        @foreach ($mapel as $itemMapel)
+                            <option value="{{ $itemMapel->id_mapel }}" @selected(old('id_mapel', $kuis->id_mapel) === $itemMapel->id_mapel)>{{ $itemMapel->kode_mapel }} - {{ $itemMapel->nama_mapel }}{{ $itemMapel->is_aktif ? '' : ' (nonaktif)' }}</option>
+                        @endforeach
+                    </select>
+                    <p class="form-hint">Mata pelajaran nonaktif yang sudah terhubung boleh dipertahankan.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="tahun_ajaran">Tahun ajaran</label>
+                    <input id="tahun_ajaran" class="form-control" type="text" value="{{ $kuis->tahunAjaran?->nama }}" readonly>
+                    <p class="form-hint">Tahun ajaran kuis tetap dipertahankan agar riwayat rekap tidak berpindah.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="tingkat_kesulitan">Tingkat kesulitan *</label>
+                    <select id="tingkat_kesulitan" name="tingkat_kesulitan" class="form-control" required>
+                        @foreach (['mudah' => 'Mudah', 'sedang' => 'Sedang', 'sulit' => 'Sulit'] as $nilai => $label)
+                            <option value="{{ $nilai }}" @selected(old('tingkat_kesulitan', $kuis->tingkat_kesulitan) === $nilai)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
                 <!-- KATEGORI -->
                 <div class="form-group">
@@ -576,9 +600,9 @@
                             Post-test
                         </option>
 
-                        <option value="pass-test"
-                            {{ old('kategori', $kuis->kategori) === 'pass-test' ? 'selected' : '' }}>
-                            Pass-test
+                        <option value="pre-test"
+                            {{ old('kategori', $kuis->kategori) === 'pre-test' ? 'selected' : '' }}>
+                            Pre-test
                         </option>
 
                         <option value="kuis harian"
@@ -795,7 +819,7 @@
 
         } else if (
             kategori.value === 'post-test' ||
-            kategori.value === 'pass-test' ||
+            kategori.value === 'pre-test' ||
             kategori.value === 'kuis harian'
         ) {
 

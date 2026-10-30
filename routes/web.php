@@ -5,22 +5,40 @@ use App\Http\Controllers\MateriController;
 use App\Http\Controllers\KuisController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\SiswaKuisController;
+use App\Http\Controllers\SiswaDashboardController;
 use App\Http\Controllers\ValidasiNilaiController;
 use App\Http\Controllers\RemedialSiswaController;
 use App\Http\Controllers\RemedialController;
 use App\Http\Controllers\ProgressController;
-use App\Http\Controllers\OperatorDashboardController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\TahunAjaranController;
+use App\Http\Controllers\Admin\MapelController;
+use App\Http\Controllers\Admin\KelasController;
+use App\Http\Controllers\Admin\SiswaController;
+use App\Http\Controllers\Admin\GuruController;
+use App\Http\Controllers\Admin\RekapNilaiController;
 use Illuminate\Support\Facades\Route;
-use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return view('welcome');
 });
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth')
-    ->name('dashboard');
+Route::get('/dashboard', function () {
+    if (auth()->user()->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
+
+    if (auth()->user()->role === 'siswa') {
+        return redirect()->route('siswa.dashboard');
+    }
+
+    return app(DashboardController::class)->index();
+})->middleware('auth')->name('dashboard');
 Route::get('/profil', function () {
+    if (auth()->user()->role === 'admin') {
+        return redirect()->route('admin.profil');
+    }
+
     return view('guru.profil');
 })->middleware('auth')->name('profil');
 
@@ -98,19 +116,36 @@ Route::middleware(['auth', 'role:guru'])
     });
 
 
-// =====================================================
-// OPERATOR
-// =====================================================
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::view('/profil', 'admin.profil')->name('profil');
+        Route::patch('/tahun-ajaran/{tahunAjaran}/aktifkan', [TahunAjaranController::class, 'aktifkan'])
+            ->name('tahun-ajaran.aktifkan');
+        Route::resource('tahun-ajaran', TahunAjaranController::class)
+            ->parameters(['tahun-ajaran' => 'tahunAjaran'])
+            ->except(['show', 'destroy']);
+        Route::resource('mapel', MapelController::class)->except(['show', 'destroy']);
+        Route::post('/kelas/{kelas}/anggota', [KelasController::class, 'tambahAnggota'])
+            ->name('kelas.anggota.store');
+        Route::resource('kelas', KelasController::class)
+            ->parameters(['kelas' => 'kelas'])->except('destroy');
+        Route::patch('/siswa/{siswa}/nonaktifkan', [SiswaController::class, 'nonaktifkan'])
+            ->name('siswa.nonaktifkan');
+        Route::patch('/siswa/{siswa}/aktifkan', [SiswaController::class, 'aktifkan'])
+            ->name('siswa.aktifkan');
+        Route::resource('siswa', SiswaController::class)->except(['show', 'destroy']);
+        Route::patch('/guru/{guru}/nonaktifkan', [GuruController::class, 'nonaktifkan'])
+            ->name('guru.nonaktifkan');
+        Route::patch('/guru/{guru}/aktifkan', [GuruController::class, 'aktifkan'])
+            ->name('guru.aktifkan');
+        Route::resource('guru', GuruController::class)->except(['show', 'destroy']);
+        Route::get('/rekap', [RekapNilaiController::class, 'index'])->name('rekap.index');
+    });
 
-// Route::get('/operator/dashboard', [OperatorDashboardController::class, 'index'])
-//     ->middleware(['auth', 'role:operator'])
-//     ->name('operator.dashboard');
-
-// =====================================================
-// GURU DAN OPERATOR
-// =====================================================
-
-Route::middleware(['auth', 'role:guru,operator'])->group(function () {
+Route::middleware(['auth', 'role:guru'])->group(function () {
 
     Route::resource('materi', MateriController::class);
 
@@ -133,9 +168,8 @@ Route::middleware(['auth', 'role:siswa'])
     ->name('siswa.')
     ->group(function () {
 
-        Route::get('/dashboard', function () {
-            return view('siswa.dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', [SiswaDashboardController::class, 'index'])
+            ->name('dashboard');
 
         // -------------------------
         // MATERI

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kuis;
+use App\Models\Mapel;
 use App\Models\Materi;
 use App\Models\Soal;
 use App\Models\Remedial;
+use App\Models\TahunAjaran;
+use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -13,6 +16,28 @@ use Illuminate\Support\Facades\Auth;
 
 class KuisController extends Controller
 {
+    use MenghasilkanId;
+
+    private const KATEGORI = ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'];
+
+    private function pilihanMapel(?string $idMapelSaatIni = null)
+    {
+        return Mapel::where(fn ($q) => $q->where('is_aktif', 1)
+                ->when($idMapelSaatIni, fn ($q) => $q->orWhere('id_mapel', $idMapelSaatIni)))
+            ->orderBy('nama_mapel')
+            ->get();
+    }
+
+    private function aturanMapel(?string $idMapelSaatIni = null): array
+    {
+        return [
+            'required',
+            'string',
+            Rule::exists('mapel', 'id_mapel')->where(fn ($q) => $q->where('is_aktif', 1)
+                ->when($idMapelSaatIni, fn ($q) => $q->orWhere('id_mapel', $idMapelSaatIni))),
+        ];
+    }
+
     public function index()
     {
         $kuis = Kuis::where('is_aktif', true)
@@ -34,25 +59,34 @@ class KuisController extends Controller
         ->orderBy('judul')
         ->get();
 
-        return view('kuis.create', compact('materi', 'kuisAsal'));
+        $mapel = $this->pilihanMapel();
+
+        $tahunAjaran = TahunAjaran::aktif();
+
+        return view('kuis.create', compact('materi', 'kuisAsal', 'mapel', 'tahunAjaran'));
     }
 
     public function store(Request $request)
     {
+        $tahunAjaran = TahunAjaran::aktif();
+
+        if (! $tahunAjaran) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'kuis' => 'Belum ada tahun ajaran aktif. Hubungi admin sekolah untuk mengaktifkannya.',
+                ]);
+        }
+
         $validated = $request->validate([
             'judul' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
 
-            'kategori' => [
-                'required',
-                Rule::in([
-                    'post-test',
-                    'pass-test',
-                    'kuis harian',
-                    'ulangan',
-                    'remedial',
-                ]),
-            ],
+            'kategori' => ['required', Rule::in(self::KATEGORI)],
+
+            'id_mapel' => $this->aturanMapel(),
+
+            'tingkat_kesulitan' => ['required', Rule::in(['mudah', 'sedang', 'sulit'])],
 
             'alokasi_waktu' => 'nullable|integer|min:1|max:300',
             'kkm' => 'nullable|numeric|min:0|max:100',
@@ -64,6 +98,10 @@ class KuisController extends Controller
             'materi.*' => 'exists:materi,id_materi',
 
             'id_kuis_asal' => 'nullable|exists:kuis,id_kuis',
+        ], [
+            'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
+            'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
+            'tingkat_kesulitan.required' => 'Tingkat kesulitan wajib dipilih.',
         ]);
 
         /*
@@ -127,15 +165,8 @@ class KuisController extends Controller
             $validated['waktu_selesai'] = null;
         }
 
-        /*
-        * Generate ID kuis.
-        */
-        $validated['id_kuis'] = 'K' . str_pad(
-            Kuis::count() + 1,
-            3,
-            '0',
-            STR_PAD_LEFT
-        );
+        $validated['id_kuis'] = $this->idBerikutnya('kuis', 'id_kuis', 'K');
+        $validated['id_tahun_ajaran'] = $tahunAjaran->id_tahun_ajaran;
 
         /*
         * Guru yang membuat kuis.
@@ -173,7 +204,7 @@ class KuisController extends Controller
 
         /*
         * Hubungkan materi untuk:
-        * post-test, pass-test, kuis harian, ulangan.
+        * post-test, pre-test, kuis harian, ulangan.
         */
         if (
             $request->filled('materi') &&
@@ -220,9 +251,11 @@ class KuisController extends Controller
             ->pluck('id_materi')
             ->toArray();
 
+        $mapel = $this->pilihanMapel($kuis->id_mapel);
+
         return view(
             'kuis.edit',
-            compact('kuis', 'materi', 'materiTerpilih')
+            compact('kuis', 'materi', 'materiTerpilih', 'mapel')
         );
     }
 
@@ -239,22 +272,19 @@ class KuisController extends Controller
         $validated = $request->validate([
             'judul' => 'required|string|max:150',
             'deskripsi' => 'nullable|string',
-            'kategori' => [
-                'required',
-                Rule::in([
-                    'post-test',
-                    'pass-test',
-                    'kuis harian',
-                    'ulangan',
-                    'remedial',
-                ]),
-            ],
+            'kategori' => ['required', Rule::in(self::KATEGORI)],
+            'id_mapel' => $this->aturanMapel($kuis->id_mapel),
+            'tingkat_kesulitan' => ['required', Rule::in(['mudah', 'sedang', 'sulit'])],
             'alokasi_waktu' => 'nullable|integer|min:1|max:300',
             'kkm' => 'nullable|numeric|min:0|max:100',
             'waktu_mulai' => 'nullable|date',
             'waktu_selesai' => 'nullable|date',
             'materi' => 'nullable|array',
             'materi.*' => 'exists:materi,id_materi',
+        ], [
+            'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
+            'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
+            'tingkat_kesulitan.required' => 'Tingkat kesulitan wajib dipilih.',
         ]);
 
         if ($validated['kategori'] === 'ulangan') {

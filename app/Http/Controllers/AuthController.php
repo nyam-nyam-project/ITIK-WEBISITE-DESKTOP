@@ -25,7 +25,23 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        if ($user->role === 'guru' || $user->role === 'operator') {
+        if ($user->status !== 'aktif') {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()
+                ->withErrors([
+                    'email' => 'Akun Anda sudah tidak aktif. Hubungi admin sekolah.',
+                ])
+                ->onlyInput('email');
+        }
+
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($user->role === 'guru') {
             return redirect()->route('materi.index');
         }
 

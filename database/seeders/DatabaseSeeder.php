@@ -2,9 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\Kelas;
 use App\Models\Kuis;
+use App\Models\Mapel;
 use App\Models\Materi;
 use App\Models\Soal;
+use App\Models\TahunAjaran;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -49,12 +52,32 @@ class DatabaseSeeder extends Seeder
             [
                 'nomor_induk' => '199001',
                 'nama_lengkap' => 'Andi Operator',
-                'role' => 'operator',
+                'role' => 'admin',
                 'kelas' => null,
                 'email' => 'andi@sekolah.sch.id',
                 'password' => '123456',
             ]
         );
+
+        $tahun = TahunAjaran::firstOrCreate(
+            ['id_tahun_ajaran' => 'TA001'],
+            ['nama' => '2026/2027', 'is_aktif' => ! TahunAjaran::where('is_aktif', 1)->exists()]
+        );
+        $mapel = Mapel::firstOrCreate(
+            ['id_mapel' => 'MP001'],
+            ['kode_mapel' => 'TIK', 'nama_mapel' => 'Teknologi Informasi dan Komunikasi', 'is_aktif' => true]
+        );
+        foreach (['KLS001' => 'X TKJ 1', 'KLS002' => 'X TKJ 2'] as $idKelas => $namaKelas) {
+            $kelas = Kelas::firstOrCreate(
+                ['id_kelas' => $idKelas],
+                ['nama_kelas' => $namaKelas, 'tingkat' => 'X', 'id_tahun_ajaran' => $tahun->id_tahun_ajaran, 'is_aktif' => true]
+            );
+            $kelas->mapel()->syncWithoutDetaching([$mapel->id_mapel]);
+        }
+        $siswa = User::find('U002');
+        if (! $siswa->kelasDiikuti()->where('id_tahun_ajaran', $tahun->id_tahun_ajaran)->exists()) {
+            $siswa->kelasDiikuti()->syncWithoutDetaching(['KLS001']);
+        }
 
         $materi1 = Materi::firstOrCreate(
             ['id_materi' => 'M001'],
@@ -66,6 +89,7 @@ class DatabaseSeeder extends Seeder
                 'isi_materi' => 'HTML adalah bahasa markup untuk struktur halaman web.',
                 'link_youtube' => 'https://www.youtube.com/watch?v=ok-plXXHlWw',
                 'id_user' => 'U001',
+                'id_mapel' => $mapel->id_mapel,
             ]
         );
 
@@ -79,6 +103,7 @@ class DatabaseSeeder extends Seeder
                 'isi_materi' => 'CSS digunakan untuk mengatur tampilan dan layout halaman web.',
                 'link_youtube' => 'https://www.youtube.com/watch?v=1Rs2ND1ryYc',
                 'id_user' => 'U001',
+                'id_mapel' => $mapel->id_mapel,
             ]
         );
 
@@ -92,6 +117,7 @@ class DatabaseSeeder extends Seeder
                 'isi_materi' => 'JavaScript membuat halaman web menjadi interaktif.',
                 'link_youtube' => 'https://www.youtube.com/watch?v=W6NZfCO5SIk',
                 'id_user' => 'U001',
+                'id_mapel' => $mapel->id_mapel,
             ]
         );
 
@@ -109,6 +135,9 @@ class DatabaseSeeder extends Seeder
                 'status_publikasi' => 'terbit',
                 'id_publisher' => 'U001',
                 'is_aktif' => true,
+                'id_mapel' => $mapel->id_mapel,
+                'id_tahun_ajaran' => $tahun->id_tahun_ajaran,
+                'tingkat_kesulitan' => 'mudah',
             ]
         );
 
@@ -126,6 +155,9 @@ class DatabaseSeeder extends Seeder
                 'status_publikasi' => 'draft',
                 'id_publisher' => null,
                 'is_aktif' => true,
+                'id_mapel' => $mapel->id_mapel,
+                'id_tahun_ajaran' => $tahun->id_tahun_ajaran,
+                'tingkat_kesulitan' => 'mudah',
             ]
         );
 
@@ -143,6 +175,9 @@ class DatabaseSeeder extends Seeder
                 'status_publikasi' => 'terbit',
                 'id_publisher' => 'U001',
                 'is_aktif' => true,
+                'id_mapel' => $mapel->id_mapel,
+                'id_tahun_ajaran' => $tahun->id_tahun_ajaran,
+                'tingkat_kesulitan' => 'mudah',
             ]
         );
 

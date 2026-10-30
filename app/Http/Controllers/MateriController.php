@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Mapel;
 use App\Models\Materi;
+use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class MateriController extends Controller
 {
+    use MenghasilkanId;
+
     public function index()
     {
         $materi = Materi::latest()->get();
@@ -18,12 +23,15 @@ class MateriController extends Controller
 
     public function create()
     {
-        return view('materi.create');
+        $mapel = Mapel::aktif()->orderBy('nama_mapel')->get();
+
+        return view('materi.create', compact('mapel'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'id_mapel' => ['required', 'string', Rule::exists('mapel', 'id_mapel')->where('is_aktif', 1)],
             'judul' => 'required|string|max:150',
             'bab' => 'nullable|string|max:50',
             'kelas' => 'nullable|string|max:50',
@@ -31,6 +39,8 @@ class MateriController extends Controller
             'file_pdf' => 'nullable|file|mimes:pdf|max:10240',
             'link_youtube' => 'nullable|url|max:255',
         ], [
+            'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
+            'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
             'judul.required' => 'Judul materi wajib diisi.',
             'judul.max' => 'Judul materi maksimal 150 karakter.',
             'link_youtube.url' => 'Link YouTube harus berupa URL yang valid.',
@@ -49,13 +59,7 @@ class MateriController extends Controller
                 ->with('error', 'Materi dengan kelas, bab, dan judul tersebut sudah ada.');
         }
 
-        //Sementara
-        $validated['id_materi'] = 'M' . str_pad(
-            (Materi::count() + 1),
-            3,
-            '0',
-            STR_PAD_LEFT
-        );
+        $validated['id_materi'] = $this->idBerikutnya('materi', 'id_materi', 'M');
 
         $validated['id_user'] = Auth::user()->id_user;
 
@@ -84,8 +88,12 @@ class MateriController extends Controller
     public function edit($id)
     {
         $materi = Materi::findOrFail($id);
+        $mapel = Mapel::where(fn ($q) => $q->where('is_aktif', 1)
+                ->orWhere('id_mapel', $materi->id_mapel))
+            ->orderBy('nama_mapel')
+            ->get();
 
-        return view('materi.edit', compact('materi'));
+        return view('materi.edit', compact('materi', 'mapel'));
     }
 
     public function update(Request $request, $id)
@@ -93,6 +101,8 @@ class MateriController extends Controller
         $materi = Materi::findOrFail($id);
 
         $validated = $request->validate([
+            'id_mapel' => ['required', 'string', Rule::exists('mapel', 'id_mapel')
+                ->where(fn ($q) => $q->where('is_aktif', 1)->orWhere('id_mapel', $materi->id_mapel))],
             'judul' => 'required|string|max:150',
             'bab' => 'nullable|string|max:50',
             'kelas' => 'nullable|string|max:50',
@@ -100,6 +110,8 @@ class MateriController extends Controller
             'file_pdf' => 'nullable|file|mimes:pdf|max:10240',
             'link_youtube' => 'nullable|url|max:255',
         ], [
+            'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
+            'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
             'file_pdf.mimes' => 'File materi harus berformat PDF.',
             'file_pdf.max' => 'Ukuran file PDF maksimal 10 MB.',
         ]);

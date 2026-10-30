@@ -573,6 +573,18 @@
 
                 </div>
 
+                <div class="form-group">
+                    <label for="id_mapel">Mata pelajaran <span class="required">*</span></label>
+                    <select id="id_mapel" name="id_mapel" class="form-control" required>
+                        <option value="">-- Pilih Mata Pelajaran --</option>
+                        @foreach ($mapel as $itemMapel)
+                            <option value="{{ $itemMapel->id_mapel }}" @selected(old('id_mapel') === $itemMapel->id_mapel)>{{ $itemMapel->kode_mapel }} - {{ $itemMapel->nama_mapel }}</option>
+                        @endforeach
+                    </select>
+                    @if ($mapel->isEmpty())
+                        <p class="form-hint">Belum ada mata pelajaran aktif. Hubungi admin sekolah.</p>
+                    @endif
+                </div>
 
                 <!-- BAB -->
 

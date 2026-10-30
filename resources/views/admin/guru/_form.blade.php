@@ -1,0 +1,14 @@
+@php($sedangEdit = isset($guru))
+<p class="muted small">Kolom bertanda * wajib diisi. NIP disimpan sebagai teks agar angka nol di depan tetap utuh.</p>
+<div class="grid grid-2">
+    <div class="field"><label for="nomor_induk">NIP *</label><input id="nomor_induk" name="nomor_induk" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="50" value="{{ old('nomor_induk', $guru->nomor_induk ?? '') }}" required aria-invalid="{{ $errors->has('nomor_induk') ? 'true' : 'false' }}">@error('nomor_induk')<p class="error">{{ $message }}</p>@enderror</div>
+    <div class="field"><label for="nama_lengkap">Nama lengkap *</label><input id="nama_lengkap" name="nama_lengkap" type="text" maxlength="100" value="{{ old('nama_lengkap', $guru->nama_lengkap ?? '') }}" required aria-invalid="{{ $errors->has('nama_lengkap') ? 'true' : 'false' }}">@error('nama_lengkap')<p class="error">{{ $message }}</p>@enderror</div>
+</div>
+<div class="field"><label for="email">Email login *</label><input id="email" name="email" type="email" maxlength="100" value="{{ old('email', $guru->email ?? '') }}" autocomplete="off" required aria-describedby="email-help" aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}"><p class="help" id="email-help">Login saat ini menggunakan email. Isi alamat email yang benar dan berbeda untuk setiap akun.</p>@error('email')<p class="error">{{ $message }}</p>@enderror</div>
+<div class="field"><label for="password">{{ $sedangEdit ? 'Kata sandi baru (opsional)' : 'Kata sandi sementara *' }}</label><input id="password" name="password" type="password" minlength="6" autocomplete="new-password" @required(!$sedangEdit) aria-describedby="password-help" aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"><p class="help" id="password-help">Minimal 6 karakter. {{ $sedangEdit ? 'Kosongkan untuk mempertahankan kata sandi saat ini.' : 'Sampaikan kata sandi sementara kepada guru secara aman.' }} Kata sandi tidak ditampilkan kembali.</p>@error('password')<p class="error">{{ $message }}</p>@enderror</div>
+@if($sedangEdit)
+    <div class="field"><label for="status">Status akun *</label><select id="status" name="status" required aria-invalid="{{ $errors->has('status') ? 'true' : 'false' }}"><option value="aktif" @selected(old('status', $guru->status) === 'aktif')>Aktif</option><option value="nonaktif" @selected(old('status', $guru->status) === 'nonaktif')>Nonaktif / keluar sekolah</option></select><p class="help">Materi dan kuis milik guru tetap tersimpan meskipun akunnya nonaktif.</p>@error('status')<p class="error">{{ $message }}</p>@enderror</div>
+@else
+    <div class="alert alert-info">Akun guru baru dibuat dengan status aktif dan ditandai wajib mengganti kata sandi.</div>
+@endif
+<div class="form-actions"><button class="btn" type="submit">{{ $sedangEdit ? 'Simpan perubahan' : 'Simpan guru' }}</button><a class="btn btn-secondary" href="{{ route('admin.guru.index') }}">Batal</a></div>

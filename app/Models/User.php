@@ -23,9 +23,12 @@ class User extends Authenticatable
         'nomor_induk',
         'nama_lengkap',
         'role',
+        'status',
         'kelas',
         'email',
         'password',
+        'wajib_ganti_password',
+        'dibuat_oleh',
     ];
 
     protected $hidden = [
@@ -37,6 +40,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'wajib_ganti_password' => 'boolean',
         ];
     }
 
@@ -57,5 +61,42 @@ class User extends Authenticatable
     public function progressMateri()
     {
         return $this->hasMany(Progress::class,'id_user','id_user');
+    }
+
+    public function kelasDiikuti()
+    {
+        return $this->belongsToMany(
+            Kelas::class,
+            'anggota_kelas',
+            'id_user',
+            'id_kelas',
+            'id_user',
+            'id_kelas'
+        );
+    }
+
+    public function pembuatAkun()
+    {
+        return $this->belongsTo(User::class, 'dibuat_oleh', 'id_user');
+    }
+
+    public function isAktif(): bool
+    {
+        return $this->status === 'aktif';
+    }
+
+    public function scopeAktif($query)
+    {
+        return $query->where('status', 'aktif');
+    }
+
+    public function scopeSiswa($query)
+    {
+        return $query->where('role', 'siswa');
+    }
+
+    public function scopeGuru($query)
+    {
+        return $query->where('role', 'guru');
     }
 }

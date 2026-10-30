@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
+use App\Services\KuisSubmissionService;
 use App\Models\Kuis;
 use App\Models\Soal;
 use App\Models\SesiKuis;
@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\DB;
 
 class SiswaKuisController extends Controller
 {
+    public function __construct(private KuisSubmissionService $submission)
+    {
+    }
+
     public function index()
     {
         $user = Auth::user();

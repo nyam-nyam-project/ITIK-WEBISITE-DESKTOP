@@ -20,8 +20,13 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/backup/
 /vendor
 _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+graphify-out/
+.graphify/
+graph.json
+WASIAT.md

@@ -20,6 +20,7 @@ class Materi extends Model
         'judul',
         'bab',
         'kelas',
+        'id_mapel',
         'deskripsi',
         'isi_materi',
         'link_youtube',
@@ -28,6 +29,11 @@ class Materi extends Model
 
     public function user(){
         return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function mapel()
+    {
+        return $this->belongsTo(Mapel::class, 'id_mapel', 'id_mapel');
     }
 
     public function kuis()

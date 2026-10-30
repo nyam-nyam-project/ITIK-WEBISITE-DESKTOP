@@ -570,6 +570,15 @@
 
                 </div>
 
+                <div class="form-group">
+                    <label for="id_mapel">Mata pelajaran <span class="required">*</span></label>
+                    <select id="id_mapel" name="id_mapel" class="form-control" required>
+                        @foreach ($mapel as $itemMapel)
+                            <option value="{{ $itemMapel->id_mapel }}" @selected(old('id_mapel', $materi->id_mapel) === $itemMapel->id_mapel)>{{ $itemMapel->kode_mapel }} - {{ $itemMapel->nama_mapel }}{{ $itemMapel->is_aktif ? '' : ' (nonaktif)' }}</option>
+                        @endforeach
+                    </select>
+                    <p class="form-hint">Mata pelajaran nonaktif yang sudah terhubung boleh dipertahankan.</p>
+                </div>
 
                 <!-- BAB -->
 

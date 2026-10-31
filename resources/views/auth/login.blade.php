@@ -385,6 +385,38 @@
         }
 
         /* =========================
+           LINK ADMIN PORTAL
+        ========================= */
+
+        .admin-portal-box {
+            margin-top: 16px;
+        }
+
+        .btn-admin-portal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 11px 16px;
+            background: #f7f6fd;
+            color: #4a3f9e;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border: 1px dashed #cfcae8;
+            transition: all .2s;
+        }
+
+        .btn-admin-portal:hover {
+            background: #eeeaff;
+            color: #3b308e;
+            border-color: #7160ef;
+            transform: translateY(-1px);
+        }
+
+        /* =========================
            FOOTER
         ========================= */
 
@@ -546,27 +578,27 @@
                 @csrf
 
 
-                <!-- EMAIL -->
+                <!-- IDENTITAS (NISN / NIP) -->
 
                 <div class="form-group">
 
-                    <label for="email">
-                        Email
+                    <label for="nomor_induk">
+                        NISN / NIP
                     </label>
 
                     <div class="input-wrapper">
 
                         <span class="input-icon">
-                            ✉
+                            👤
                         </span>
 
                         <input
-                            type="email"
-                            id="email"
-                            name="email"
+                            type="text"
+                            id="nomor_induk"
+                            name="nomor_induk"
                             class="form-control"
-                            placeholder="Masukkan email"
-                            value="{{ old('email') }}"
+                            placeholder="Masukkan NISN (Siswa) atau NIP (Guru)"
+                            value="{{ old('nomor_induk', old('login', old('email'))) }}"
                             required
                             autofocus
                         >
@@ -634,23 +666,24 @@
                 </div>
 
                 <div class="demo-row">
-                    <span class="demo-role">Guru</span>
-                    <span class="demo-email">budi@guru.sch.id</span>
+                    <span class="demo-role">Guru (NIP)</span>
+                    <span class="demo-email">198001</span>
                     <span class="demo-pass">password123</span>
                 </div>
 
                 <div class="demo-row">
-                    <span class="demo-role">Siswa</span>
-                    <span class="demo-email">siti@siswa.sch.id</span>
+                    <span class="demo-role">Siswa (NISN)</span>
+                    <span class="demo-email">202401</span>
                     <span class="demo-pass">password123</span>
                 </div>
 
-                <div class="demo-row">
-                    <span class="demo-role">Operator</span>
-                    <span class="demo-email">andi@sekolah.sch.id</span>
-                    <span class="demo-pass">123456</span>
-                </div>
+            </div>
 
+            <!-- LINK MENUJU LOGIN ADMIN -->
+            <div class="admin-portal-box">
+                <a href="{{ route('admin.login') }}" class="btn-admin-portal">
+                    🛡️ &nbsp; Login sebagai Administrator
+                </a>
             </div>
 
 

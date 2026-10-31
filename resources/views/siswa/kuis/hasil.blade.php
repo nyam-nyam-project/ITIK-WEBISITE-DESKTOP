@@ -589,6 +589,11 @@
                         <div class="info-value">ke-{{ $hasil->percobaan_ke }}</div>
                     </div>
 
+                    <div class="info-item">
+                        <div class="info-label">Waktu Pengerjaan</div>
+                        <div class="info-value">{{ $durasiTampil ?? 'Belum tercatat' }}</div>
+                    </div>
+
                 </div>
 
 

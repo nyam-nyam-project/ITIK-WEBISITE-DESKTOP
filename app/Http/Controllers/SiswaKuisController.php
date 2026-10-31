@@ -23,6 +23,10 @@ class SiswaKuisController extends Controller
     {
         $user = Auth::user();
 
+        // Tutup sesi yang sudah kedaluwarsa milik siswa ini,
+        // supaya nilai otomatis muncul saat halaman dibuka.
+        $this->submission->selesaikanMilikSiswa($user->id_user);
+
         $remedial = RemedialSiswa::with('kuisRemedial')
             ->whereHas('mengerjakanAsal', function ($query) use ($user) {
                 $query->where('id_user', $user->id_user);
@@ -155,16 +159,25 @@ class SiswaKuisController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Cari sesi yang masih aktif
+        | Cari sesi yang masih aktif (terbaru, belum selesai)
         |--------------------------------------------------------------------------
         | Kalau siswa sudah pernah mulai tetapi belum submit,
         | jangan membuat percobaan baru.
         */
-        $sesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
-            ->where('id_user', $user->id_user)
-            ->whereNull('waktu_selesai')
-            ->latest('id_sesi')
-            ->first();
+        $sesi = $this->submission->sesiAktif($kuis->id_kuis, $user->id_user);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Kalau sesi aktif sudah kedaluwarsa, auto-submit dan redirect ke hasil
+        |--------------------------------------------------------------------------
+        */
+        if ($sesi && now()->gte($this->submission->batasWaktu($sesi))) {
+            $this->submission->submit($sesi, true);
+
+            return redirect()
+                ->route('siswa.kuis.hasil', $kuis->id_kuis)
+                ->with('info', 'Waktu habis, jawaban otomatis dikumpulkan.');
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -190,44 +203,6 @@ class SiswaKuisController extends Controller
                 'waktu_mulai' => now(),
                 'waktu_selesai' => null,
             ]);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Hitung deadline sesi
-        |--------------------------------------------------------------------------
-        */
-        $batasWaktu = $sesi->waktu_mulai
-            ->copy()
-            ->addMinutes($kuis->alokasi_waktu);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Untuk ulangan, deadline sesi tidak boleh melewati
-        | waktu_selesai ulangan.
-        |--------------------------------------------------------------------------
-        */
-        if (
-            $kuis->kategori === 'ulangan' &&
-            $kuis->waktu_selesai &&
-            $kuis->waktu_selesai->lessThan($batasWaktu)
-        ) {
-            $batasWaktu = $kuis->waktu_selesai->copy();
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Kalau sesi ternyata sudah habis
-        |--------------------------------------------------------------------------
-        */
-        if (now()->greaterThanOrEqualTo($batasWaktu)) {
-
-            return redirect()
-                ->route('siswa.kuis.index')
-                ->with(
-                    'error',
-                    'Waktu pengerjaan kuis sudah habis.'
-                );
         }
 
         return redirect()->route(
@@ -293,30 +268,28 @@ class SiswaKuisController extends Controller
         }
 
         /*
-         * Cari sesi siswa untuk kuis ini.
+         * Cari sesi aktif siswa untuk kuis ini (terbaru, belum selesai).
+         * Kalau tidak ada sesi aktif, arahkan ke daftar kuis.
          */
-        $sesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
-            ->where('id_user', $user->id_user)
-            ->firstOrFail();
+        $sesi = $this->submission->sesiAktif($kuis->id_kuis, $user->id_user);
 
-        /*
-         * Hitung batas waktu.
-         */
-        $batasWaktu = $sesi->waktu_mulai
-            ->copy()
-            ->addMinutes($kuis->alokasi_waktu);
-
-        /*
-         * Backend tetap mengecek timer.
-         */
-        if (now()->greaterThanOrEqualTo($batasWaktu)) {
-
+        if (!$sesi) {
             return redirect()
                 ->route('siswa.kuis.index')
-                ->with(
-                    'error',
-                    'Waktu pengerjaan kuis sudah habis.'
-                );
+                ->with('error', 'Sesi kuis tidak ditemukan. Silakan mulai kuis dari daftar.');
+        }
+
+        /*
+         * Kalau waktu sesi sudah habis, auto-submit lalu redirect ke hasil.
+         */
+        $batasWaktu = $this->submission->batasWaktu($sesi);
+
+        if (now()->greaterThanOrEqualTo($batasWaktu)) {
+            $this->submission->submit($sesi, true);
+
+            return redirect()
+                ->route('siswa.kuis.hasil', $kuis->id_kuis)
+                ->with('info', 'Waktu habis, jawaban otomatis dikumpulkan.');
         }
 
         /*
@@ -363,11 +336,9 @@ class SiswaKuisController extends Controller
         }
 
         /*
-         * Pastikan siswa mempunyai sesi.
+         * Pastikan siswa mempunyai sesi aktif.
          */
-        $sesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
-            ->where('id_user', $user->id_user)
-            ->first();
+        $sesi = $this->submission->sesiAktif($kuis->id_kuis, $user->id_user);
 
         if (!$sesi) {
             return response()->json([
@@ -376,19 +347,10 @@ class SiswaKuisController extends Controller
             ], 404);
         }
 
-        $waktuDeadline = $sesi->waktu_mulai
-            ->copy()
-            ->addMinutes($kuis->alokasi_waktu);
-
-        if (
-            $kuis->kategori === 'ulangan' &&
-            $kuis->waktu_selesai &&
-            $kuis->waktu_selesai->lessThan($waktuDeadline)
-        ) {
-            $waktuDeadline = $kuis->waktu_selesai->copy();
-        }
-
-        if (now()->greaterThanOrEqualTo($waktuDeadline)) {
+        /*
+         * Tolak autosave jika batas waktu sudah lewat.
+         */
+        if (now()->greaterThanOrEqualTo($this->submission->batasWaktu($sesi))) {
             return response()->json([
                 'success' => false,
                 'message' => 'Waktu pengerjaan sudah habis.'
@@ -450,174 +412,18 @@ class SiswaKuisController extends Controller
             abort(403);
         }
 
-        $hasil = DB::transaction(function () use ($kuis, $user) {
+        // Cari sesi aktif siswa untuk kuis ini.
+        $sesi = $this->submission->sesiAktif($kuis->id_kuis, $user->id_user);
 
-            // Ambil sesi aktif dan kunci barisnya
-            $sesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
-                ->where('id_user', $user->id_user)
-                ->whereNull('waktu_selesai')
-                ->lockForUpdate()
-                ->first();
+        // Kalau tidak ada sesi aktif, pengerjaan sudah selesai sebelumnya.
+        if (!$sesi) {
+            return redirect()
+                ->route('siswa.kuis.index')
+                ->with('error', 'Pengerjaan kuis ini sudah selesai.');
+        }
 
-            // Kalau tidak ada sesi aktif
-            if (!$sesi) {
-                return null;
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Hitung batas waktu berdasarkan waktu server
-            |--------------------------------------------------------------------------
-            */
-
-            $batasWaktu = $sesi->waktu_mulai
-                ->copy()
-                ->addMinutes($kuis->alokasi_waktu);
-
-            // Untuk ulangan, batas waktu tidak boleh melewati waktu_selesai kuis
-            if (
-                $kuis->kategori === 'ulangan' &&
-                $kuis->waktu_selesai &&
-                $kuis->waktu_selesai->lessThan($batasWaktu)
-            ) {
-                $batasWaktu = $kuis->waktu_selesai->copy();
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Ambil soal
-            |--------------------------------------------------------------------------
-            */
-
-            $soal = $kuis->soal()
-                ->orderBy('id_soal')
-                ->get();
-
-            if ($soal->isEmpty()) {
-                abort(422, 'Kuis belum memiliki soal.');
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Ambil jawaban sementara siswa
-            |--------------------------------------------------------------------------
-            */
-
-            $draft = DraftJawaban::where('id_kuis', $kuis->id_kuis)
-                ->where('id_user', $user->id_user)
-                ->get()
-                ->keyBy('id_soal');
-
-            /*
-            |--------------------------------------------------------------------------
-            | Hitung nilai
-            |--------------------------------------------------------------------------
-            */
-
-            $totalBobot = $soal->sum(function ($item) {
-                return (float) $item->bobot;
-            });
-
-            $bobotBenar = 0;
-
-            foreach ($soal as $item) {
-
-                $jawabanSiswa = $draft->get($item->id_soal);
-
-                if (!$jawabanSiswa) {
-                    continue;
-                }
-
-                if (
-                    $jawabanSiswa->jawaban_dipilih &&
-                    $item->jawaban &&
-                    strtoupper($jawabanSiswa->jawaban_dipilih)
-                    === strtoupper($item->jawaban)
-                ) {
-                    $bobotBenar += (float) $item->bobot;
-                }
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Nilai akhir
-            |--------------------------------------------------------------------------
-            |
-            | Dibuat normalisasi ke skala 0-100.
-            | Kalau total bobot = 100, hasilnya tetap sama.
-            |
-            */
-
-            $nilai = $totalBobot > 0
-                ? round(($bobotBenar / $totalBobot) * 100, 2)
-                : 0;
-
-            /*
-            |--------------------------------------------------------------------------
-            | Simpan hasil pengerjaan
-            |--------------------------------------------------------------------------
-            */
-
-            $mengerjakan = Mengerjakan::create([
-                'id_kuis' => $kuis->id_kuis,
-                'id_user' => $user->id_user,
-                'nilai' => $nilai,
-                'tanggal' => now()->toDateString(),
-                'percobaan_ke' => max(
-                    $sesi->percobaan_ke,
-                    (int) Mengerjakan::where('id_kuis', $kuis->id_kuis)
-                        ->where('id_user', $user->id_user)
-                        ->max('percobaan_ke') + 1
-                ),
-                'status_pengerjaan' => 'final',
-                'status_validasi' => 'belum divalidasi',
-                'id_validator' => null,
-            ]);
-
-            // Jika ini kuis remedial, tandai tugas remedial sebagai selesai
-            if ($kuis->kategori === 'remedial') {
-
-                RemedialSiswa::where(
-                    'id_kuis_remedial',
-                    $kuis->id_kuis
-                )
-                    ->whereHas('mengerjakanAsal', function ($query) use ($user) {
-                        $query->where('id_user', $user->id_user);
-                    })
-                    ->where('status', 'ditugaskan')
-                    ->update([
-                        'status' => 'selesai',
-                    ]);
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Tutup sesi
-            |--------------------------------------------------------------------------
-            */
-
-            $sesi->update([
-                'waktu_selesai' => now(),
-            ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Hapus draft jawaban
-            |--------------------------------------------------------------------------
-            */
-
-            DraftJawaban::where('id_kuis', $kuis->id_kuis)
-                ->where('id_user', $user->id_user)
-                ->delete();
-
-            return $mengerjakan;
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Kalau sudah pernah submit
-        |--------------------------------------------------------------------------
-        */
+        // Delegasikan submit ke service (mencakup transaksi, nilai, tutup sesi, hapus draft).
+        $hasil = $this->submission->submit($sesi);
 
         if (!$hasil) {
             return redirect()
@@ -646,6 +452,22 @@ class SiswaKuisController extends Controller
                 ->with('error', 'Hasil kuis belum tersedia.');
         }
 
+        // Ambil sesi yang cocok untuk menghitung durasi.
+        // Kolom durasi_detik tidak ada di DB live, jadi hitung dari selisih waktu.
+        $sesiHasil = SesiKuis::where('id_kuis', $kuis->id_kuis)
+            ->where('id_user', $user->id_user)
+            ->where('percobaan_ke', $hasil->percobaan_ke)
+            ->whereNotNull('waktu_selesai')
+            ->first();
+
+        $durasiTampil = null;
+        if ($sesiHasil) {
+            $detik = (int) $sesiHasil->waktu_mulai->diffInSeconds($sesiHasil->waktu_selesai);
+            $menit  = intdiv($detik, 60);
+            $sisa   = $detik % 60;
+            $durasiTampil = $menit . ' menit ' . $sisa . ' detik';
+        }
+
         $remedial = null;
         $nilaiAsal = null;
 
@@ -664,7 +486,7 @@ class SiswaKuisController extends Controller
             }
         }
 
-        return view('siswa.kuis.hasil', compact('kuis', 'hasil', 'remedial', 'nilaiAsal'));
+        return view('siswa.kuis.hasil', compact('kuis', 'hasil', 'remedial', 'nilaiAsal', 'durasiTampil'));
     }
 
     /*
@@ -673,6 +495,9 @@ class SiswaKuisController extends Controller
     public function daftarNilai()
     {
         $user = Auth::user();
+
+        // Tutup sesi kedaluwarsa supaya nilai langsung muncul.
+        $this->submission->selesaikanMilikSiswa($user->id_user);
 
         $hasil = Mengerjakan::with('kuis')
             ->where('id_user', $user->id_user)

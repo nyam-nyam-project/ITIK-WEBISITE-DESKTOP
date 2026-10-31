@@ -295,6 +295,140 @@
             background: #ffd5d5;
         }
 
+        .btn-password {
+            background: #eeeaff;
+            color: #5b4ae3;
+        }
+
+        .btn-password:hover {
+            background: #e0d9fc;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7160ef, #5948dd);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: .95;
+        }
+
+        .alert-success {
+            background: #e8f7ee;
+            color: #1b7a43;
+            padding: 14px 18px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .alert-error {
+            background: #ffe5e5;
+            color: #c93434;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            border-left: 4px solid #d64545;
+        }
+
+        /* ================= MODAL GANTI PASSWORD ================= */
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(32, 32, 68, 0.55);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+            animation: modalFadeIn .2s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { transform: scale(0.94); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            color: #202044;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 26px;
+            color: #777394;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+        }
+
+        .btn-close:hover {
+            color: #202044;
+        }
+
+        .modal-form .form-group {
+            margin-bottom: 16px;
+        }
+
+        .modal-form label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #3b3955;
+        }
+
+        .modal-form .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #dfddec;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #faf9ff;
+            transition: all .2s;
+        }
+
+        .modal-form .form-control:focus {
+            outline: none;
+            border-color: #7160ef;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(113, 96, 239, .15);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
         /* ================= RESPONSIVE ================= */
 
         @media(max-width: 1000px) {
@@ -521,6 +655,12 @@
 
                 </div>
 
+                @if(session('success'))
+                    <div class="alert-success">
+                        ✓ {{ session('success') }}
+                    </div>
+                @endif
+
 
                 <div class="info-grid">
 
@@ -608,6 +748,14 @@
 
                 <div class="actions">
 
+                    <button
+                        type="button"
+                        class="btn btn-password"
+                        onclick="bukaModalPassword()"
+                    >
+                        🔑 &nbsp; Ganti Password
+                    </button>
+
                     <a
                         href="{{ Auth::user()->role === 'siswa' ? route('siswa.dashboard') : route('dashboard') }}"
                         class="btn btn-back"
@@ -641,6 +789,92 @@
     </main>
 
 </div>
+
+    <!-- ================= MODAL GANTI PASSWORD ================= -->
+    <div id="modalPassword" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Ganti Password</h3>
+                <button type="button" class="btn-close" onclick="tutupModalPassword()">&times;</button>
+            </div>
+
+            @if ($errors->has('password_lama') || $errors->has('password_baru'))
+                <div class="alert-error">
+                    {{ $errors->first('password_lama') ?: $errors->first('password_baru') }}
+                </div>
+            @endif
+
+            <form action="{{ route('profil.password') }}" method="POST" class="modal-form">
+                @csrf
+                @method('PUT')
+
+                <div class="form-group">
+                    <label for="password_lama">Password Saat Ini</label>
+                    <input
+                        type="password"
+                        id="password_lama"
+                        name="password_lama"
+                        class="form-control"
+                        placeholder="Masukkan password saat ini"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password_baru">Password Baru</label>
+                    <input
+                        type="password"
+                        id="password_baru"
+                        name="password_baru"
+                        class="form-control"
+                        placeholder="Minimal 6 karakter"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password_baru_confirmation">Konfirmasi Password Baru</label>
+                    <input
+                        type="password"
+                        id="password_baru_confirmation"
+                        name="password_baru_confirmation"
+                        class="form-control"
+                        placeholder="Ulangi password baru"
+                        required
+                    >
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-back" onclick="tutupModalPassword()">
+                        Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Simpan Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function bukaModalPassword() {
+            document.getElementById('modalPassword').classList.add('active');
+        }
+
+        function tutupModalPassword() {
+            document.getElementById('modalPassword').classList.remove('active');
+        }
+
+        document.getElementById('modalPassword').addEventListener('click', function(e) {
+            if (e.target === this) {
+                tutupModalPassword();
+            }
+        });
+
+        @if ($errors->has('password_lama') || $errors->has('password_baru'))
+            bukaModalPassword();
+        @endif
+    </script>
 
 </body>
 </html>

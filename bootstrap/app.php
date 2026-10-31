@@ -15,8 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role'=>\App\Http\Middleware\RoleMiddleware::class,
             'akun.aktif'=>\App\Http\Middleware\EnsureAccountActive::class,
+            'password.diubah'=>\App\Http\Middleware\EnsurePasswordChanged::class,
         ]);
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsureAccountActive::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordChanged::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\MateriController;
 use App\Http\Controllers\KuisController;
 use App\Http\Controllers\SoalController;
@@ -42,6 +43,12 @@ Route::get('/profil', function () {
     return view('guru.profil');
 })->middleware('auth')->name('profil');
 
+Route::middleware('auth')->group(function () {
+    Route::get('/password/wajib', [PasswordController::class, 'formWajibGanti'])->name('password.wajib');
+    Route::post('/password/wajib', [PasswordController::class, 'simpanWajibGanti'])->name('password.wajib.update');
+    Route::put('/profil/password', [PasswordController::class, 'updateProfilPassword'])->name('profil.password');
+});
+
 
 // =====================================================
 // UMUM - GUEST
@@ -52,6 +59,12 @@ Route::get('/login', [AuthController::class, 'showLogin'])
 
 Route::post('/login', [AuthController::class, 'login'])
     ->name('login.process');
+
+Route::get('/admin/login', [AuthController::class, 'showAdminLogin'])
+    ->name('admin.login');
+
+Route::post('/admin/login', [AuthController::class, 'adminLogin'])
+    ->name('admin.login.process');
 
 Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');

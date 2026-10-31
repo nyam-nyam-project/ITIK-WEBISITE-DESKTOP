@@ -7,13 +7,21 @@ use App\Models\Materi;
 use App\Models\Mengerjakan;
 use App\Models\Progress;
 use App\Models\RemedialSiswa;
+use App\Services\KuisSubmissionService;
 use Illuminate\Support\Facades\Auth;
 
 class SiswaDashboardController extends Controller
 {
+    public function __construct(private KuisSubmissionService $submission)
+    {
+    }
+
     public function index()
     {
         $user = Auth::user();
+
+        // Tutup sesi kedaluwarsa supaya nilai hasil auto-submit langsung muncul di dashboard.
+        $this->submission->selesaikanMilikSiswa($user->id_user);
 
         /*
          * Tugas remedial yang belum dikerjakan.

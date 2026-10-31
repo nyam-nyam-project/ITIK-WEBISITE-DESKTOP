@@ -37,6 +37,7 @@ class KuisSubmissionService
      | Tutup semua sesi milik siswa yang waktunya sudah lewat.
      | Dipanggil saat siswa membuka halaman, supaya nilai tetap masuk
      | walaupun ia menutup tab tanpa menekan Kumpulkan.
+     | Hanya berlaku untuk kuis yang masih aktif (is_aktif = true).
      */
     public function selesaikanMilikSiswa(string $idUser): int
     {
@@ -44,6 +45,9 @@ class KuisSubmissionService
 
         SesiKuis::with('kuis')->where('id_user', $idUser)
             ->whereNull('waktu_selesai')
+            ->whereHas('kuis', function ($query) {
+                $query->where('is_aktif', true);
+            })
             ->each(function (SesiKuis $sesi) use (&$jumlah) {
                 if (now()->gte($this->batasWaktu($sesi)) && $this->submit($sesi, true)) {
                     $jumlah++;
@@ -70,6 +74,22 @@ class KuisSubmissionService
             }
 
             $waktuSelesai = $sekarang->min($batasWaktu);
+
+            // Cek apakah data pengerjaan untuk kuis, siswa, dan percobaan ini sudah ada
+            // (misal dari sesi lama yang tertinggal atau pernah tersimpan sebelumnya).
+            $sudahAda = Mengerjakan::where('id_kuis', $sesi->id_kuis)
+                ->where('id_user', $sesi->id_user)
+                ->where('percobaan_ke', $sesi->percobaan_ke)
+                ->first();
+
+            if ($sudahAda) {
+                $sesi->update(['waktu_selesai' => $waktuSelesai]);
+                DraftJawaban::where('id_kuis', $sesi->id_kuis)
+                    ->where('id_user', $sesi->id_user)->delete();
+
+                return $sudahAda;
+            }
+
             $kuis = $sesi->kuis;
             $soal = $kuis->soal()->get();
             $draft = DraftJawaban::where('id_kuis', $sesi->id_kuis)

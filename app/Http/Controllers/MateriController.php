@@ -36,14 +36,14 @@ class MateriController extends Controller
             }
         }
 
-        return view('materi.index', compact('materi', 'mapelAktif', 'mapelTerpilih', 'idMapel'));
+        return view('guru.materi.index', compact('materi', 'mapelAktif', 'mapelTerpilih', 'idMapel'));
     }
 
     public function create()
     {
         $mapel = Mapel::aktif()->orderBy('nama_mapel')->get();
 
-        return view('materi.create', compact('mapel'));
+        return view('guru.materi.create', compact('mapel'));
     }
 
     public function store(Request $request)
@@ -100,7 +100,7 @@ class MateriController extends Controller
 
         $pdfUrl = $materi->pdfUrl();
 
-        return view('materi.show', compact('materi', 'pdfUrl'));
+        return view('guru.materi.show', compact('materi', 'pdfUrl'));
     }
 
     public function edit($id)
@@ -111,7 +111,7 @@ class MateriController extends Controller
             ->orderBy('nama_mapel')
             ->get();
 
-        return view('materi.edit', compact('materi', 'mapel'));
+        return view('guru.materi.edit', compact('materi', 'mapel'));
     }
 
     public function update(Request $request, $id)

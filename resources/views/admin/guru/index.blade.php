@@ -18,7 +18,7 @@
                 @endforeach
             </tbody></table></div>
         @else
-            <div class="empty"><h3>Tidak ada guru yang ditampilkan</h3><p>Ubah status atau kata pencarian. Jika belum ada akun pengajar, tambahkan guru pertama.</p><div class="actions" style="justify-content:center"><a class="btn btn-secondary" href="{{ route('admin.guru.index') }}">Reset filter</a><a class="btn" href="{{ route('admin.guru.create') }}">Tambah guru</a></div></div>
+            <div class="empty"><h3>Tidak ada guru yang ditampilkan</h3><p>Ubah status atau kata pencarian. Jika belum ada akun pengajar, tambahkan guru pertama.</p><div class="actions u-justify-content-center"><a class="btn btn-secondary" href="{{ route('admin.guru.index') }}">Reset filter</a><a class="btn" href="{{ route('admin.guru.create') }}">Tambah guru</a></div></div>
         @endif
         @include('admin.partials.pagination', ['paginator' => $guru])
     </section>

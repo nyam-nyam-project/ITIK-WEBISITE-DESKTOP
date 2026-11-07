@@ -40,7 +40,7 @@ Route::get('/profil', function () {
         return redirect()->route('admin.profil');
     }
 
-    return view('guru.profil');
+    return view('shared.profil');
 })->middleware('auth')->name('profil');
 
 Route::middleware('auth')->group(function () {

@@ -278,7 +278,7 @@ class KuisMateriMapelTest extends TestCase
     public function test_create_forms_offer_only_active_subjects_and_restore_old_selection(string $resource): void
     {
         $this->actingAs($this->guru);
-        $response = $this->get(route($resource.'.create'))->assertOk()->assertViewIs($resource.'.create');
+        $response = $this->get(route($resource.'.create'))->assertOk()->assertViewIs('guru.'.$resource.'.create');
         $this->assertOptions($response->getContent(), 'id_mapel', ['MP001', 'MP002']);
         $this->assertTrue($this->select($response->getContent(), 'id_mapel')->hasAttribute('required'));
 
@@ -300,7 +300,7 @@ class KuisMateriMapelTest extends TestCase
         $content = $this->content($resource);
         $content->update(['id_mapel' => 'MP003']);
         $response = $this->actingAs($this->guru)->get(route($resource.'.edit', $content->getKey()))
-            ->assertOk()->assertViewIs($resource.'.edit');
+            ->assertOk()->assertViewIs('guru.'.$resource.'.edit');
         $this->assertOptions($response->getContent(), 'id_mapel', ['MP001', 'MP002', 'MP003'], 'MP003');
         if ($resource === 'kuis') {
             $this->assertOptions($response->getContent(), 'kategori', ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'], 'pre-test');

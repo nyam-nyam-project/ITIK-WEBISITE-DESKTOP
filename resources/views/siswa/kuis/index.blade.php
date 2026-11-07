@@ -2,251 +2,7 @@
 @section('title', 'Daftar Kuis')
 
 @push('styles')
-<style>
-    .breadcrumb-siswa {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 20px;
-        font-size: 13px;
-        color: var(--muted);
-        flex-wrap: wrap;
-    }
-    .breadcrumb-siswa a {
-        color: var(--purple);
-        font-weight: 600;
-    }
-    .mapel-banner {
-        background: linear-gradient(135deg, #7160ef 0%, #5c4be0 100%);
-        border-radius: 16px;
-        padding: 24px 28px;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-    }
-    .mapel-banner-info {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-    }
-    .mapel-banner-icon {
-        width: 52px;
-        height: 52px;
-        background: rgba(255, 255, 255, .2);
-        border-radius: 14px;
-        display: grid;
-        place-items: center;
-        font-size: 24px;
-    }
-    .mapel-banner h3 {
-        margin: 0 0 4px;
-        font-size: 22px;
-    }
-    .mapel-banner p {
-        margin: 0;
-        opacity: .9;
-        font-size: 13px;
-    }
-    .btn-back-mapel {
-        background: white;
-        color: var(--purple);
-        font-size: 13px;
-        font-weight: 700;
-        padding: 9px 16px;
-        border-radius: 10px;
-        text-decoration: none;
-    }
-    .btn-back-mapel:hover {
-        background: var(--purple-light);
-        text-decoration: none;
-    }
-
-    /* Grid Mapel */
-    .mapel-grid-siswa {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 18px;
-    }
-    .mapel-card-s {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 22px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        text-decoration: none;
-        color: inherit;
-        transition: all .2s ease;
-    }
-    .mapel-card-s:hover {
-        border-color: var(--purple);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(92, 75, 224, .08);
-        text-decoration: none;
-    }
-    .mapel-icon-s {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        background: var(--purple-light);
-        display: grid;
-        place-items: center;
-        font-size: 22px;
-        margin-bottom: 14px;
-    }
-    .mapel-nama {
-        font-size: 17px;
-        font-weight: 700;
-        margin-bottom: 6px;
-        color: var(--ink);
-    }
-    .mapel-count {
-        margin-top: 14px;
-        padding-top: 12px;
-        border-top: 1px solid var(--border);
-        font-size: 12px;
-        color: var(--muted);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .mapel-count-num {
-        font-weight: 700;
-        color: var(--purple);
-    }
-
-    /* Bab Grid */
-    .bab-grid-siswa {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 18px;
-    }
-    .bab-card-siswa {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 22px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        text-decoration: none;
-        color: inherit;
-        transition: all .2s ease;
-    }
-    .bab-card-siswa:hover {
-        border-color: var(--purple);
-        box-shadow: 0 8px 25px rgba(92, 75, 224, .08);
-        text-decoration: none;
-    }
-    .bab-card-header {
-        display: flex;
-        gap: 14px;
-        align-items: flex-start;
-        margin-bottom: 12px;
-    }
-    .bab-card-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        background: var(--purple-light);
-        display: grid;
-        place-items: center;
-        font-size: 20px;
-        flex-shrink: 0;
-    }
-    .bab-card-tag {
-        display: inline-block;
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--purple);
-        background: var(--purple-light);
-        padding: 2px 8px;
-        border-radius: 6px;
-        margin-bottom: 4px;
-    }
-    .bab-card-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--ink);
-    }
-    .bab-card-desc {
-        font-size: 13px;
-        color: var(--muted);
-        margin: 8px 0 14px;
-        line-height: 1.5;
-    }
-    .bab-card-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--purple);
-        padding-top: 12px;
-        border-top: 1px solid var(--border);
-    }
-
-    /* Kuis Grid */
-    .kuis-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 18px;
-    }
-    .kuis-item {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 22px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        position: relative;
-    }
-    .kuis-item.terkunci {
-        opacity: .75;
-        background: #fbfbfd;
-    }
-    .kuis-item h3 {
-        font-size: 17px;
-        margin-bottom: 10px;
-        color: var(--ink);
-    }
-    .badges-row {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-        margin-bottom: 16px;
-    }
-    .kuis-meta {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        background: #f8f7fc;
-        padding: 10px;
-        border-radius: 12px;
-        text-align: center;
-        margin-bottom: 16px;
-    }
-    .meta-number {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--purple);
-    }
-    .meta-label {
-        font-size: 11px;
-        color: var(--muted);
-    }
-    .kunci-info {
-        font-size: 12px;
-        color: var(--muted);
-        margin-top: 8px;
-        line-height: 1.4;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/siswa/kuis/index.css') }}">
 @endpush
 
 @section('content')
@@ -377,7 +133,7 @@
                                     </div>
                                 @endif
 
-                                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;">
+                                <div class="u-display-flex u-gap-6px u-flex-wrap-wrap u-margin-top-10px">
                                     <span class="badge {{ $hasMudah ? 'badge-success' : 'badge-muted' }}">
                                         {{ $hasMudah ? '✓' : '○' }} Mudah
                                     </span>
@@ -458,30 +214,30 @@
                                 </div>
 
                                 @if ($nilaiTertinggi !== null)
-                                    <p class="small muted" style="margin-bottom: 12px;">
-                                        Nilai terbaik kamu: <strong style="color: {{ $lulus ? '#166534' : '#92400e' }};">{{ number_format($nilaiTertinggi, 1) }}</strong>
+                                    <p class="small muted u-margin-bottom-12px">
+                                        Nilai terbaik kamu: <strong class="{{ $lulus ? 'u-color-166534' : 'u-color-92400e' }}">{{ number_format($nilaiTertinggi, 1) }}</strong>
                                     </p>
                                 @endif
                             </div>
 
                             <div>
                                 @if ($terkunci)
-                                    <button class="btn btn-secondary" style="width: 100%; opacity: .6;" disabled>🔒 Kuis Terkunci</button>
+                                    <button class="btn btn-secondary u-width-100pct u-opacity-p6" disabled>🔒 Kuis Terkunci</button>
                                     <div class="kunci-info">ℹ️ {{ $alasanKunci }}</div>
                                 @elseif ($bisaUlang && $sudahPernah && !$lulus)
                                     <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
-                                        <button type="submit" class="btn btn-warning" style="width: 100%;">↻ Kerjakan Ulang</button>
+                                        <button type="submit" class="btn btn-warning u-width-100pct">↻ Kerjakan Ulang</button>
                                     </form>
                                 @elseif ($katItem === 'ulangan' && $sudahPernah && !$lulus)
-                                    <div class="small" style="color: #991b1b; font-weight: 700; margin-bottom: 8px;">
+                                    <div class="small u-color-991b1b u-font-weight-700 u-margin-bottom-8px">
                                         ⚠️ Nilai di bawah KKM
                                     </div>
-                                    <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning" style="width: 100%; text-align: center;">
+                                    <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning u-width-100pct u-text-align-center">
                                         Cek Tugas Remedial
                                     </a>
                                 @else
                                     <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
-                                        <button type="submit" class="btn" style="width: 100%;">
+                                        <button type="submit" class="btn u-width-100pct">
                                             {{ $sudahPernah ? '→ Kerjakan Lagi' : 'Mulai' }}
                                         </button>
                                     </form>
@@ -569,30 +325,30 @@
                                 </div>
 
                                 @if ($nilaiTertinggi !== null)
-                                    <p class="small muted" style="margin-bottom: 12px;">
-                                        Nilai terbaik kamu: <strong style="color: {{ $lulus ? '#166534' : '#92400e' }};">{{ number_format($nilaiTertinggi, 1) }}</strong>
+                                    <p class="small muted u-margin-bottom-12px">
+                                        Nilai terbaik kamu: <strong class="{{ $lulus ? 'u-color-166534' : 'u-color-92400e' }}">{{ number_format($nilaiTertinggi, 1) }}</strong>
                                     </p>
                                 @endif
                             </div>
 
                             <div>
                                 @if ($terkunci)
-                                    <button class="btn btn-secondary" style="width: 100%; opacity: .6;" disabled>🔒 Kuis Terkunci</button>
+                                    <button class="btn btn-secondary u-width-100pct u-opacity-p6" disabled>🔒 Kuis Terkunci</button>
                                     <div class="kunci-info">ℹ️ {{ $alasanKunci }}</div>
                                 @elseif ($bisaBabUlang && $sudahPernah && !$lulus)
                                     <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
-                                        <button type="submit" class="btn btn-warning" style="width: 100%;">↻ Kerjakan Ulang</button>
+                                        <button type="submit" class="btn btn-warning u-width-100pct">↻ Kerjakan Ulang</button>
                                     </form>
                                 @elseif ($katBabItem === 'ulangan' && $sudahPernah && !$lulus)
-                                    <div class="small" style="color: #991b1b; font-weight: 700; margin-bottom: 8px;">
+                                    <div class="small u-color-991b1b u-font-weight-700 u-margin-bottom-8px">
                                         ⚠️ Nilai di bawah KKM
                                     </div>
-                                    <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning" style="width: 100%; text-align: center;">
+                                    <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning u-width-100pct u-text-align-center">
                                         Cek Tugas Remedial
                                     </a>
                                 @else
                                     <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
-                                        <button type="submit" class="btn" style="width: 100%;">
+                                        <button type="submit" class="btn u-width-100pct">
                                             {{ $sudahPernah ? '→ Kerjakan Lagi' : 'Mulai' }}
                                         </button>
                                     </form>
@@ -619,7 +375,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 40px;">No</th>
+                            <th class="u-width-40px">No</th>
                             <th>Judul</th>
                             <th>Kategori</th>
                             <th>Aksi</th>
@@ -628,7 +384,7 @@
                     <tbody>
                         @foreach($remedial as $item)
                             <tr>
-                                <td class="number" style="text-align: left;">{{ $loop->iteration }}</td>
+                                <td class="number u-text-align-left">{{ $loop->iteration }}</td>
                                 <td><strong>{{ $item->kuisRemedial->judul }}</strong></td>
                                 <td><span class="badge">{{ ucfirst($item->kuisRemedial->kategori) }}</span></td>
                                 <td>

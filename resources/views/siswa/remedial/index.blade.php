@@ -31,14 +31,14 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 40px;">No</th>
+                        <th class="u-width-40px">No</th>
                         <th>Kuis Asal</th>
                         <th>Nilai Awal</th>
                         <th>KKM</th>
                         <th>Kuis Remedial</th>
                         <th>Tanggal Ditugaskan</th>
                         <th>Status</th>
-                        <th style="min-width: 150px;">Aksi</th>
+                        <th class="u-min-width-150px">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -47,12 +47,12 @@
                             $kkm = $item->mengerjakanAsal?->kuis?->kkm;
                         @endphp
                         <tr>
-                            <td class="number" style="text-align: left;">{{ $loop->iteration }}</td>
+                            <td class="number u-text-align-left">{{ $loop->iteration }}</td>
                             <td>
                                 <strong>{{ $item->mengerjakanAsal?->kuis?->judul ?? '-' }}</strong>
                             </td>
                             <td>
-                                <strong style="color: #991b1b;">{{ $item->mengerjakanAsal?->nilai ?? '-' }}</strong>
+                                <strong class="u-color-991b1b">{{ $item->mengerjakanAsal?->nilai ?? '-' }}</strong>
                             </td>
                             <td>{{ $kkm !== null ? number_format($kkm, 1) : '-' }}</td>
                             <td>
@@ -76,7 +76,7 @@
                                         Kerjakan Remedial →
                                     </a>
                                 @elseif($item->status === 'selesai')
-                                    <span class="muted small" style="color: #166534; font-weight: 600;">✓ Sudah Selesai</span>
+                                    <span class="muted small u-color-166534 u-font-weight-600">✓ Sudah Selesai</span>
                                 @else
                                     {{ $item->status }}
                                 @endif

@@ -1,0 +1,40 @@
+.soal-display {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #202044;
+    background: #fbfafd;
+    border: 1px solid #ebe6f7;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+.opsi-box-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid #ebe6f7;
+    background: #ffffff;
+    margin-bottom: 12px;
+}
+.opsi-box-item.is-correct {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+.opsi-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #ede9fc;
+    color: #5542dc;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.opsi-box-item.is-correct .opsi-circle {
+    background: #166534;
+    color: white;
+}

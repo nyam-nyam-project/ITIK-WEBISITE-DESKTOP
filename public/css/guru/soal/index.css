@@ -1,0 +1,48 @@
+.soal-card-item {
+    background: #ffffff;
+    border: 1px solid #ebe6f7;
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+.soal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.soal-badge-num {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #5542dc;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.option-box {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #fbfafd;
+    border: 1px solid #ebe6f7;
+    font-size: 14px;
+    color: #373356;
+}
+.option-box.is-correct {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #166534;
+    font-weight: 600;
+}

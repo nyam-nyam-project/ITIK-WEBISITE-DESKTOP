@@ -1,0 +1,268 @@
+/* FILTER SECTION DENGAN GAYA CHIPS SEPERTI WHATSAPP */
+.filter-section {
+    background: white;
+    border-radius: 16px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 20px #29263d03;
+}
+.filter-header-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+.filter-pills-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+.pill-item {
+    position: relative;
+}
+.pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border-radius: 24px;
+    background: #f6f5fc;
+    border: 1.5px solid #ded9f7;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s ease;
+    user-select: none;
+}
+.pill-btn:hover {
+    background: var(--purple-light);
+    border-color: #b8aaff;
+}
+.pill-btn.active {
+    background: var(--purple);
+    color: white;
+    border-color: var(--purple);
+}
+.pill-btn.active .caret {
+    color: white;
+}
+.pill-btn .caret {
+    font-size: 9px;
+    color: var(--muted);
+    transition: transform .2s ease;
+}
+.pill-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    background: white;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 35px rgba(41, 38, 61, .12);
+    z-index: 100;
+    min-width: 220px;
+    padding: 6px;
+}
+.pill-dropdown.show {
+    display: block;
+}
+.pill-dropdown-item {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--ink);
+    transition: background .15s ease;
+}
+.pill-dropdown-item:hover {
+    background: var(--purple-light);
+    color: var(--purple);
+}
+.pill-dropdown-item.selected {
+    background: var(--purple-light);
+    color: var(--purple);
+    font-weight: 700;
+}
+.pill-input-form {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    border: 1.5px solid var(--purple);
+    border-radius: 24px;
+    padding: 4px 10px;
+    box-shadow: 0 4px 15px rgba(92, 75, 224, .15);
+}
+.pill-input-form.show {
+    display: inline-flex;
+}
+.pill-input-form input {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 8px;
+    width: 110px;
+    min-height: auto;
+}
+.pill-input-form button {
+    border: none;
+    background: var(--purple);
+    color: white;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+}
+.btn-pill-reset {
+    background: #fff0f2 !important;
+    border-color: #efc0c8 !important;
+    color: #96293b !important;
+}
+.badge-category {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+.badge-category.ulangan { background: #fee2e2; color: #991b1b; }
+.badge-category.remedial { background: #fef3c7; color: #92400e; }
+.badge-category.kuis-harian, .badge-category[class*="kuis"] { background: #e0e7ff; color: #3730a3; }
+.badge-category.pre-test, .badge-category.post-test { background: #dcfce7; color: #166534; }
+.score.pass { color: #166534; font-weight: 700; }
+.score.fail { color: #991b1b; font-weight: 700; }
+.pass { color: #166534; font-weight: 600; font-size: 12px; }
+.fail { color: #991b1b; font-weight: 600; font-size: 12px; }
+.btn-action-remedial {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+.btn-action-remedial:hover {
+    background: #d97706;
+}
+.badge-remedial-done {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* KELAS CARDS GURU */
+.kelas-section {
+    margin-bottom: 24px;
+}
+.kelas-grid-guru {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+}
+.kelas-card-guru {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 18px #29263d04;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.kelas-card-guru:hover {
+    transform: translateY(-2px);
+    border-color: var(--purple);
+    box-shadow: 0 8px 25px rgba(85,66,220,.1);
+    text-decoration: none;
+}
+.kelas-card-guru.active {
+    border-color: var(--purple);
+    background: #fbfafd;
+    box-shadow: 0 0 0 2px var(--purple);
+}
+.kelas-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.kelas-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+}
+.kelas-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.kelas-stat-box {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+.kelas-stat-box .label {
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.kelas-stat-box .value {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--ink);
+}
+.kelas-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--purple);
+}
+.banner-kelas-active {
+    background: linear-gradient(135deg, #ede9fc 0%, #f6f5fc 100%);
+    border: 1px solid #d0c8ed;
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 12px;
+}

@@ -67,7 +67,7 @@ class KuisController extends Controller
             ->latest('created_at')
             ->get();
 
-        return view('kuis.index', compact('kuis', 'mapelAktif', 'mapelTerpilih', 'daftarMateri'));
+        return view('guru.kuis.index', compact('kuis', 'mapelAktif', 'mapelTerpilih', 'daftarMateri'));
     }
 
     public function create(Request $request)
@@ -86,7 +86,7 @@ class KuisController extends Controller
 
         $tahunAjaran = TahunAjaran::aktif();
 
-        return view('kuis.create', compact('materi', 'kuisAsal', 'mapel', 'tahunAjaran', 'mapelTerpilih'));
+        return view('guru.kuis.create', compact('materi', 'kuisAsal', 'mapel', 'tahunAjaran', 'mapelTerpilih'));
     }
 
     public function store(Request $request)
@@ -264,7 +264,7 @@ class KuisController extends Controller
             'soal',
         ])->findOrFail($id);
 
-        return view('kuis.show', compact('kuis'));
+        return view('guru.kuis.show', compact('kuis'));
     }
 
     public function edit($id)
@@ -294,7 +294,7 @@ class KuisController extends Controller
         $mapel = $this->pilihanMapel($kuis->id_mapel);
 
         return view(
-            'kuis.edit',
+            'guru.kuis.edit',
             compact('kuis', 'materi', 'materiTerpilih', 'mapel')
         );
     }

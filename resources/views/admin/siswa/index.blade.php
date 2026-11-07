@@ -28,16 +28,11 @@
                 @endforeach
             </tbody></table></div>
         @else
-            <div class="empty"><h3>Tidak ada siswa yang ditampilkan</h3><p>Ubah filter atau kata pencarian. Jika belum ada akun siswa, tambahkan siswa pertama.</p><div class="actions" style="justify-content:center"><a class="btn btn-secondary" href="{{ route('admin.siswa.index') }}">Reset filter</a><a class="btn" href="{{ route('admin.siswa.create') }}">Tambah siswa</a></div></div>
+            <div class="empty"><h3>Tidak ada siswa yang ditampilkan</h3><p>Ubah filter atau kata pencarian. Jika belum ada akun siswa, tambahkan siswa pertama.</p><div class="actions u-justify-content-center"><a class="btn btn-secondary" href="{{ route('admin.siswa.index') }}">Reset filter</a><a class="btn" href="{{ route('admin.siswa.create') }}">Tambah siswa</a></div></div>
         @endif
         @include('admin.partials.pagination', ['paginator' => $siswa])
     </section>
 @endsection
 @push('scripts')
-<script>
-    document.getElementById('tahun_ajaran').addEventListener('change', function () {
-        document.getElementById('filter-kelas').value = '';
-        this.form.submit();
-    });
-</script>
+<script src="{{ asset('js/admin/siswa-index.js') }}" defer></script>
 @endpush

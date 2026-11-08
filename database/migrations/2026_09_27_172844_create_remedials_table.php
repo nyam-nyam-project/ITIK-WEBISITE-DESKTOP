@@ -12,13 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('remedials', function (Blueprint $table) {
-            $table->integer('id_remedial')->autoIncrement();
+            $table->increments('id_remedial');
             $table->string('id_kuis_remedial', 50)
                 ->comment('Kuis dengan kategori=remedial');
             $table->string('id_kuis_asal', 50)
                 ->comment('Kuis asal (misal pass-test) yang jadi alasan remedial');
 
-            
             $table->unique('id_kuis_remedial', 'uq_kuis_remedial');
             $table->index('id_kuis_asal', 'fk_remedial_kuisasal');
 

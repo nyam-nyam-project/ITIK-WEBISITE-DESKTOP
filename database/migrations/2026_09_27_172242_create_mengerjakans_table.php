@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('mengerjakans', function (Blueprint $table) {
-            $table->integer('id_mengerjakan')->autoIncrement();
+            $table->increments('id_mengerjakan');
             $table->string('id_kuis', 50);
             $table->string('id_user', 50)
                 ->comment('Siswa yang mengerjakan');
@@ -32,7 +32,6 @@ return new class extends Migration
                 ->nullable()
                 ->comment('Guru yang memvalidasi nilai ini');
 
-            
             $table->unique(
                 ['id_kuis', 'id_user', 'percobaan_ke'],
                 'uq_kuis_siswa_percobaan'

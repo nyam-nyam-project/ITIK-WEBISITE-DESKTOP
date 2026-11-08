@@ -246,7 +246,7 @@ class KuisMateriMapelTest extends TestCase
         $this->assertSame(1, $nodes->length, 'Expected one select named '.$name);
         $select = $nodes->item(0);
         $this->assertInstanceOf(DOMElement::class, $select);
-
+        /** @var DOMElement $select */
         return $select;
     }
 
@@ -255,6 +255,7 @@ class KuisMateriMapelTest extends TestCase
         $values = [];
         $selectedValues = [];
         foreach ($this->select($html, $name)->getElementsByTagName('option') as $option) {
+            /** @var DOMElement $option */
             $value = $option->getAttribute('value');
             if ($value !== '') {
                 $values[] = $value;
@@ -278,7 +279,7 @@ class KuisMateriMapelTest extends TestCase
     public function test_create_forms_offer_only_active_subjects_and_restore_old_selection(string $resource): void
     {
         $this->actingAs($this->guru);
-        $response = $this->get(route($resource.'.create'))->assertOk()->assertViewIs($resource.'.create');
+        $response = $this->get(route($resource.'.create'))->assertOk()->assertViewIs('guru.'.$resource.'.create');
         $this->assertOptions($response->getContent(), 'id_mapel', ['MP001', 'MP002']);
         $this->assertTrue($this->select($response->getContent(), 'id_mapel')->hasAttribute('required'));
 
@@ -300,7 +301,7 @@ class KuisMateriMapelTest extends TestCase
         $content = $this->content($resource);
         $content->update(['id_mapel' => 'MP003']);
         $response = $this->actingAs($this->guru)->get(route($resource.'.edit', $content->getKey()))
-            ->assertOk()->assertViewIs($resource.'.edit');
+            ->assertOk()->assertViewIs('guru.'.$resource.'.edit');
         $this->assertOptions($response->getContent(), 'id_mapel', ['MP001', 'MP002', 'MP003'], 'MP003');
         if ($resource === 'kuis') {
             $this->assertOptions($response->getContent(), 'kategori', ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'], 'pre-test');
@@ -813,5 +814,46 @@ class KuisMateriMapelTest extends TestCase
             ->assertRedirect(route('materi.edit', 'M002'))->assertSessionHas('error');
         $this->assertSame($before, $this->snapshot());
         $this->assertSame(['materi/original.pdf'], Storage::disk('public')->allFiles());
+    }
+
+    public function test_kuis_create_preselects_materi_when_valid_materi_param_is_owned_by_guru(): void
+    {
+        $response = $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M001']))
+            ->assertOk()
+            ->assertViewIs('guru.kuis.create');
+
+        $response->assertViewHas('materiDipreselect', fn ($v) => $v?->id_materi === 'M001');
+        $response->assertViewHas('mapelTerpilih', 'MP001');
+        $response->assertSee('M001'); // id materi ada di hidden input
+    }
+
+    public function test_kuis_create_redirects_with_error_when_materi_param_does_not_exist(): void
+    {
+        $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M999']))
+            ->assertRedirect(route('materi.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_kuis_create_redirects_with_error_when_materi_belongs_to_another_user(): void
+    {
+        // Ubah kepemilikan M001 ke user lain (admin U001)
+        Materi::findOrFail('M001')->update(['id_user' => 'U001']);
+
+        $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M001']))
+            ->assertRedirect(route('materi.index', ['mapel' => 'MP001']))
+            ->assertSessionHas('error');
+    }
+
+    public function test_kuis_create_without_materi_param_passes_null_materiDipreselect_to_view(): void
+    {
+        $response = $this->actingAs($this->guru)
+            ->get(route('kuis.create'))
+            ->assertOk()
+            ->assertViewIs('guru.kuis.create');
+
+        $response->assertViewHas('materiDipreselect', null);
     }
 }

@@ -40,7 +40,7 @@ Route::get('/profil', function () {
         return redirect()->route('admin.profil');
     }
 
-    return view('guru.profil');
+    return view('shared.profil');
 })->middleware('auth')->name('profil');
 
 Route::middleware('auth')->group(function () {
@@ -149,6 +149,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::resource('mapel', MapelController::class)->except(['show', 'destroy']);
         Route::post('/kelas/{kelas}/anggota', [KelasController::class, 'tambahAnggota'])
             ->name('kelas.anggota.store');
+        Route::post('/kelas/{kelas}/pindah-anggota', [KelasController::class, 'pindahAnggota'])
+            ->name('kelas.pindah-anggota');
         Route::resource('kelas', KelasController::class)
             ->parameters(['kelas' => 'kelas'])->except('destroy');
         Route::patch('/siswa/{siswa}/nonaktifkan', [SiswaController::class, 'nonaktifkan'])

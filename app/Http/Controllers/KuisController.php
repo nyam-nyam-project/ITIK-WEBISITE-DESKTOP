@@ -67,11 +67,28 @@ class KuisController extends Controller
             ->latest('created_at')
             ->get();
 
-        return view('kuis.index', compact('kuis', 'mapelAktif', 'mapelTerpilih', 'daftarMateri'));
+        return view('guru.kuis.index', compact('kuis', 'mapelAktif', 'mapelTerpilih', 'daftarMateri'));
     }
 
     public function create(Request $request)
     {
+        // Preselect dari shortcut "Buat Kuis" di halaman Materi
+        $materiDipreselect = null;
+        if ($request->filled('materi')) {
+            $kandidat = Materi::find($request->query('materi'));
+            if (! $kandidat) {
+                return redirect()
+                    ->route('materi.index')
+                    ->with('error', 'Materi tidak ditemukan.');
+            }
+            if ($kandidat->id_user !== Auth::user()->id_user) {
+                return redirect()
+                    ->route('materi.index', ['mapel' => $kandidat->id_mapel])
+                    ->with('error', 'Anda tidak berhak membuat kuis untuk materi ini.');
+            }
+            $materiDipreselect = $kandidat;
+        }
+
         $materi = Materi::orderBy('bab')
             ->orderBy('judul')
             ->get();
@@ -81,12 +98,19 @@ class KuisController extends Controller
         ->orderBy('judul')
         ->get();
 
-        $mapel = $this->pilihanMapel();
-        $mapelTerpilih = $request->query('mapel');
+        // Jika ada materi dipreselect, gunakan mapelnya; jika tidak, pakai query param
+        $mapelTerpilih = $materiDipreselect
+            ? $materiDipreselect->id_mapel
+            : $request->query('mapel');
+
+        $mapel = $this->pilihanMapel($mapelTerpilih);
 
         $tahunAjaran = TahunAjaran::aktif();
 
-        return view('kuis.create', compact('materi', 'kuisAsal', 'mapel', 'tahunAjaran', 'mapelTerpilih'));
+        return view('guru.kuis.create', compact(
+            'materi', 'kuisAsal', 'mapel', 'tahunAjaran',
+            'mapelTerpilih', 'materiDipreselect'
+        ));
     }
 
     public function store(Request $request)
@@ -264,7 +288,7 @@ class KuisController extends Controller
             'soal',
         ])->findOrFail($id);
 
-        return view('kuis.show', compact('kuis'));
+        return view('guru.kuis.show', compact('kuis'));
     }
 
     public function edit($id)
@@ -294,7 +318,7 @@ class KuisController extends Controller
         $mapel = $this->pilihanMapel($kuis->id_mapel);
 
         return view(
-            'kuis.edit',
+            'guru.kuis.edit',
             compact('kuis', 'materi', 'materiTerpilih', 'mapel')
         );
     }

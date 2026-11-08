@@ -6,6 +6,7 @@ use App\Models\Kelas;
 use App\Models\Mapel;
 use App\Models\TahunAjaran;
 use App\Models\User;
+use App\Services\KelasMigrasiService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Collection;
@@ -881,5 +882,89 @@ class AdminPanelTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('kuis');
         $this->from(route('admin.rekap.index'))->get(route('admin.rekap.index', $parameters))
             ->assertRedirect(route('admin.rekap.index'))->assertSessionHasErrors('kuis');
+    }
+
+    public function test_admin_can_migrate_students_to_another_class_in_same_year(): void
+    {
+        // KLS001 is tingkat X, KLS002 update to tingkat XI
+        Kelas::whereKey('KLS002')->update(['tingkat' => 'XI']);
+        $this->makeUser('U004', 'siswa', 'Siswa Dua');
+        $this->joinKelas('U004', 'KLS001');
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.kelas.pindah-anggota', 'KLS001'), [
+                'id_user' => ['U003', 'U004'],
+                'id_kelas_tujuan' => 'KLS002',
+            ])
+            ->assertRedirect(route('admin.kelas.show', 'KLS001'))
+            ->assertSessionHas('success');
+
+        // U003 and U004 should now be in KLS002, not KLS001
+        $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
+        $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U004']);
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS002', 'id_user' => 'U003']);
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS002', 'id_user' => 'U004']);
+
+        // user.kelas should be updated to XI
+        $this->assertSame('XI', User::findOrFail('U003')->kelas);
+        $this->assertSame('XI', User::findOrFail('U004')->kelas);
+    }
+
+    public function test_migration_deletes_origin_row_if_student_already_in_destination_class(): void
+    {
+        // Student U003 is already in KLS001. Also add to KLS002.
+        $this->joinKelas('U003', 'KLS002');
+        $this->assertDatabaseCount('anggota_kelas', 2);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.kelas.pindah-anggota', 'KLS001'), [
+                'id_user' => ['U003'],
+                'id_kelas_tujuan' => 'KLS002',
+            ])
+            ->assertRedirect(route('admin.kelas.show', 'KLS001'))
+            ->assertSessionHas('success');
+
+        // U003 removed from KLS001, remains in KLS002
+        $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS002', 'id_user' => 'U003']);
+        $this->assertDatabaseCount('anggota_kelas', 1);
+    }
+
+    public function test_migration_rejects_different_academic_year(): void
+    {
+        TahunAjaran::create(['id_tahun_ajaran' => 'TA002', 'nama' => '2027/2028']);
+        $this->makeKelas('KLS003', 'X TKJ 3', 'TA002');
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.kelas.pindah-anggota', 'KLS001'), [
+                'id_user' => ['U003'],
+                'id_kelas_tujuan' => 'KLS003',
+            ])
+            ->assertSessionHasErrors('id_kelas_tujuan');
+
+        // U003 remains in KLS001
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
+        $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS003', 'id_user' => 'U003']);
+    }
+
+    public function test_migration_rejects_same_origin_and_destination_class(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('admin.kelas.pindah-anggota', 'KLS001'), [
+                'id_user' => ['U003'],
+                'id_kelas_tujuan' => 'KLS001',
+            ])
+            ->assertSessionHasErrors('id_kelas_tujuan');
+
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
+    }
+
+    public function test_service_pindah_massal_direct_invocation(): void
+    {
+        $hasil = KelasMigrasiService::pindahMassal(['U003'], 'KLS002');
+        $this->assertSame(1, $hasil['berhasil']);
+        $this->assertSame(0, $hasil['dilewati']);
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS002', 'id_user' => 'U003']);
+        $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
     }
 }

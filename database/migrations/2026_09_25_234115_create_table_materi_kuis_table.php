@@ -12,11 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('materi_kuis', function (Blueprint $table) {
-            $table->integer('id_materi_kuis')->autoIncrement();
+            $table->increments('id_materi_kuis');
             $table->string('id_materi', 50);
             $table->string('id_kuis', 50);
-
-            // HAPUS $table->primary('id_materi_kuis');
 
             $table->unique(['id_materi', 'id_kuis'], 'uq_materi_kuis');
             $table->index('id_kuis', 'fk_materikuis_kuis');

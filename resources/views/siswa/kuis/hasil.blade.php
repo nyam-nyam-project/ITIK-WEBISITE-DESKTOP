@@ -2,113 +2,7 @@
 @section('title', 'Hasil Kuis - ' . $kuis->judul)
 
 @push('styles')
-<style>
-    .score-card {
-        text-align: center;
-        padding: 30px;
-    }
-    .score-number {
-        font-size: 58px;
-        font-weight: 800;
-        color: #166534;
-        line-height: 1.1;
-        margin: 10px 0;
-    }
-    .score-number.gagal {
-        color: #991b1b;
-    }
-    .eval-stats {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-top: 24px;
-        padding-top: 20px;
-        border-top: 1px solid var(--border);
-    }
-    .eval-stat-box {
-        background: #f8f7fc;
-        padding: 12px;
-        border-radius: 12px;
-    }
-    .eval-stat-num {
-        font-size: 24px;
-        font-weight: 700;
-    }
-    .eval-stat-label {
-        font-size: 11px;
-        color: var(--muted);
-    }
-    .soal-card {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 18px 20px;
-        margin-bottom: 16px;
-        border-left: 5px solid #d1d5db;
-    }
-    .soal-card.benar { border-left-color: #10b981; }
-    .soal-card.salah { border-left-color: #ef4444; }
-    .soal-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 10px;
-    }
-    .soal-card-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--ink);
-    }
-    .soal-pertanyaan {
-        font-size: 14px;
-        line-height: 1.6;
-        margin-bottom: 12px;
-    }
-    .opsi-review-list {
-        display: grid;
-        gap: 8px;
-    }
-    .opsi-review-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 12px;
-        border-radius: 8px;
-        background: #f9fafb;
-        border: 1px solid var(--border);
-        font-size: 13px;
-    }
-    .opsi-review-item.kunci {
-        background: #ecfdf5;
-        border-color: #a7f3d0;
-        font-weight: 600;
-    }
-    .opsi-review-item.jawaban-salah {
-        background: #fef2f2;
-        border-color: #fecaca;
-    }
-    .opsi-label {
-        font-weight: 700;
-        width: 20px;
-    }
-    .opsi-status-text {
-        margin-left: auto;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 10px;
-    }
-    .opsi-status-text.kunci {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    .opsi-status-text.jawaban-kamu {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/siswa/kuis/hasil.css') }}">
 @endpush
 
 @section('content')
@@ -118,7 +12,7 @@
 
 <div class="page-heading">
     <div>
-        <a href="{{ route('siswa.kuis.index') }}" class="btn btn-secondary" style="display:inline-block; margin-bottom:10px;">
+        <a href="{{ route('siswa.kuis.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
             ← Kembali
         </a>
         <h1>Hasil Kuis</h1>
@@ -163,15 +57,15 @@
 
         <div class="eval-stats">
             <div class="eval-stat-box">
-                <div class="eval-stat-num" style="color: #166534;">{{ $totalBenar ?? 0 }}</div>
+                <div class="eval-stat-num u-color-166534">{{ $totalBenar ?? 0 }}</div>
                 <div class="eval-stat-label">Jawaban Benar</div>
             </div>
             <div class="eval-stat-box">
-                <div class="eval-stat-num" style="color: #991b1b;">{{ $totalSalah ?? 0 }}</div>
+                <div class="eval-stat-num u-color-991b1b">{{ $totalSalah ?? 0 }}</div>
                 <div class="eval-stat-label">Jawaban Salah</div>
             </div>
             <div class="eval-stat-box">
-                <div class="eval-stat-num" style="color: var(--purple);">{{ count($soal ?? []) }}</div>
+                <div class="eval-stat-num u-color-var---purple">{{ count($soal ?? []) }}</div>
                 <div class="eval-stat-label">Total Butir Soal</div>
             </div>
         </div>
@@ -233,7 +127,7 @@
                 <div class="soal-card-header">
                     <div class="soal-card-title">
                         Soal #{{ $loop->iteration }}
-                        <span class="muted small" style="margin-left: 6px;">(Bobot: {{ $itemSoal->bobot ?? 0 }}%)</span>
+                        <span class="muted small u-margin-left-6px">(Bobot: {{ $itemSoal->bobot ?? 0 }}%)</span>
                     </div>
 
                     @if($isBenar)
@@ -265,7 +159,7 @@
 
                             <div class="opsi-review-item {{ $itemClass }}">
                                 <div class="opsi-label">{{ $huruf }}.</div>
-                                <div style="flex: 1;">{{ $teksOpsi }}</div>
+                                <div class="u-flex-1">{{ $teksOpsi }}</div>
 
                                 @if($isKunci && $isDipilihSiswa)
                                     <span class="opsi-status-text kunci">✓ Pilihan Kamu (Benar)</span>

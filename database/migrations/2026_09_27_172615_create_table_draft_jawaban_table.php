@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('draft_jawaban', function (Blueprint $table) {
-            $table->integer('id_draft')->autoIncrement();
+            $table->increments('id_draft');
             $table->string('id_kuis', 50);
             $table->string('id_user', 50)
                 ->comment('Siswa yang mengerjakan');
@@ -24,7 +24,6 @@ return new class extends Migration
                 ->useCurrent()
                 ->useCurrentOnUpdate();
 
-            
             $table->unique(['id_kuis', 'id_user', 'id_soal'], 'uq_draft');
             $table->index('id_user', 'fk_draft_user');
             $table->index('id_soal', 'fk_draft_soal');

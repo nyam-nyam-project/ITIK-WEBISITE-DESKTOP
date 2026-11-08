@@ -30,7 +30,7 @@ class RemedialController extends Controller
             ->get();
 
         return view(
-            'remedial.index',
+            'guru.remedial.index',
             compact('remedials')
         );
     }
@@ -53,7 +53,7 @@ class RemedialController extends Controller
             ->get();
 
         return view(
-            'remedial.create',
+            'guru.remedial.create',
             compact('kuisAsal')
         );
     }
@@ -219,7 +219,7 @@ class RemedialController extends Controller
                 ->first();
         });
 
-        return view('remedial.show', compact('remedial'));
+        return view('guru.remedial.show', compact('remedial'));
     }
 
     /**
@@ -258,7 +258,7 @@ class RemedialController extends Controller
             ->toArray();
 
         return view(
-            'remedial.siswa',
+            'guru.remedial.siswa',
             compact(
                 'remedial',
                 'kuisAsal',

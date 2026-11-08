@@ -15,7 +15,7 @@ class SoalController extends Controller
             ->orderBy('id_soal')
             ->get();
 
-        return view('soal.index', compact('kuis', 'soal'));
+        return view('guru.soal.index', compact('kuis', 'soal'));
     }
 
     public function create(Kuis $kuis)
@@ -29,7 +29,7 @@ class SoalController extends Controller
                 );
         }
 
-        return view('soal.create', compact('kuis'));
+        return view('guru.soal.create', compact('kuis'));
     }
 
     public function store(Request $request, Kuis $kuis)
@@ -154,7 +154,7 @@ class SoalController extends Controller
     {
         $this->checkSoalBelongsToKuis($kuis, $soal);
 
-        return view('soal.show', compact('kuis', 'soal'));
+        return view('guru.soal.show', compact('kuis', 'soal'));
     }
 
     public function edit(Kuis $kuis, Soal $soal)
@@ -170,7 +170,7 @@ class SoalController extends Controller
                 );
         }
 
-        return view('soal.edit', compact('kuis', 'soal'));
+        return view('guru.soal.edit', compact('kuis', 'soal'));
     }
 
     public function update(

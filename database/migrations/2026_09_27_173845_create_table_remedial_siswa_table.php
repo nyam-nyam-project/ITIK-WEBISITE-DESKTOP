@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('remedial_siswa', function (Blueprint $table) {
-            $table->integer('id_remedial_siswa')->autoIncrement();
+            $table->increments('id_remedial_siswa');
             $table->string('id_kuis_remedial', 50);
             $table->integer('id_mengerjakan_asal')
                 ->comment('Baris nilai siswa yang di bawah KKM (alasan diberi remedial)');
@@ -23,7 +23,6 @@ return new class extends Migration
                 ->default('ditugaskan')
                 ->comment('ditugaskan/selesai');
 
-            
             $table->unique(
                 ['id_kuis_remedial', 'id_mengerjakan_asal'],
                 'uq_remedial_siswa'

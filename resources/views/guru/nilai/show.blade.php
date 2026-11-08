@@ -2,93 +2,7 @@
 @section('title', 'Detail Nilai Siswa')
 
 @push('styles')
-<style>
-    .eval-stats-guru {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 16px;
-        margin-bottom: 22px;
-    }
-    .eval-stat-guru-box {
-        background: #f8f7fc;
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 16px;
-        text-align: center;
-    }
-    .eval-stat-guru-num {
-        font-size: 28px;
-        font-weight: 700;
-        line-height: 1.2;
-    }
-    .eval-stat-guru-label {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--muted);
-        margin-top: 4px;
-    }
-    .soal-guru-item {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 18px 20px;
-        margin-bottom: 16px;
-        border-left: 5px solid #d1d5db;
-    }
-    .soal-guru-item.benar {
-        border-left-color: #10b981;
-    }
-    .soal-guru-item.salah {
-        border-left-color: #ef4444;
-    }
-    .soal-guru-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 12px;
-    }
-    .opsi-guru-list {
-        display: grid;
-        gap: 8px;
-    }
-    .opsi-guru-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 9px 14px;
-        border-radius: 8px;
-        background: #f9fafb;
-        border: 1px solid var(--border);
-        font-size: 13px;
-        flex-wrap: wrap;
-    }
-    .opsi-guru-item.kunci {
-        background: #ecfdf5;
-        border-color: #a7f3d0;
-        font-weight: 600;
-    }
-    .opsi-guru-item.jawaban-salah {
-        background: #fef2f2;
-        border-color: #fecaca;
-    }
-    .opsi-guru-badge {
-        margin-left: auto;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 12px;
-    }
-    .opsi-guru-badge.badge-green {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    .opsi-guru-badge.badge-red {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/guru/nilai/show.css') }}">
 @endpush
 
 @section('content')
@@ -143,7 +57,7 @@
             <div>
                 <dt>Nilai Akhir</dt>
                 <dd>
-                    <strong style="font-size: 20px; color: var(--purple);">{{ $mengerjakan->nilai !== null ? number_format($mengerjakan->nilai, 1) : '-' }}</strong>
+                    <strong class="u-font-size-20px u-color-var---purple">{{ $mengerjakan->nilai !== null ? number_format($mengerjakan->nilai, 1) : '-' }}</strong>
                 </dd>
             </div>
             <div>
@@ -184,7 +98,7 @@
                 </div>
                 <div>
                     <dt>Nilai Setelah Remedial</dt>
-                    <dd><strong style="color: var(--purple);">{{ $mengerjakan->nilai }}</strong></dd>
+                    <dd><strong class="u-color-var---purple">{{ $mengerjakan->nilai }}</strong></dd>
                 </div>
                 <div>
                     <dt>Status Remedial</dt>
@@ -215,15 +129,15 @@
 
         <div class="eval-stats-guru">
             <div class="eval-stat-guru-box">
-                <div class="eval-stat-guru-num" style="color: #166534;">{{ $totalBenar ?? 0 }}</div>
+                <div class="eval-stat-guru-num u-color-166534">{{ $totalBenar ?? 0 }}</div>
                 <div class="eval-stat-guru-label">Jawaban Benar</div>
             </div>
             <div class="eval-stat-guru-box">
-                <div class="eval-stat-guru-num" style="color: #991b1b;">{{ $totalSalah ?? 0 }}</div>
+                <div class="eval-stat-guru-num u-color-991b1b">{{ $totalSalah ?? 0 }}</div>
                 <div class="eval-stat-guru-label">Jawaban Salah</div>
             </div>
             <div class="eval-stat-guru-box">
-                <div class="eval-stat-guru-num" style="color: var(--purple);">{{ count($soal) }}</div>
+                <div class="eval-stat-guru-num u-color-var---purple">{{ count($soal) }}</div>
                 <div class="eval-stat-guru-label">Total Butir Soal</div>
             </div>
         </div>
@@ -246,7 +160,7 @@
                 <div class="soal-guru-head">
                     <strong>
                         Soal #{{ $loop->iteration }}
-                        <span class="muted small" style="margin-left: 6px;">(Bobot: {{ $itemSoal->bobot ?? 0 }}%)</span>
+                        <span class="muted small u-margin-left-6px">(Bobot: {{ $itemSoal->bobot ?? 0 }}%)</span>
                     </strong>
 
                     @if($isBenar)
@@ -258,7 +172,7 @@
                     @endif
                 </div>
 
-                <div style="font-size: 14px; line-height: 1.6; margin-bottom: 12px;">
+                <div class="u-font-size-14px u-line-height-1p6 u-margin-bottom-12px">
                     {{ $itemSoal->pertanyaan }}
                 </div>
 

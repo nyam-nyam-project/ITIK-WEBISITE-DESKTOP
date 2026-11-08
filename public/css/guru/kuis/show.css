@@ -1,0 +1,48 @@
+.meta-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.meta-item {
+    background: #fbfafd;
+    border: 1px solid #ebe6f7;
+    border-radius: 12px;
+    padding: 14px 18px;
+}
+.meta-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #777394;
+    margin-bottom: 4px;
+}
+.meta-val {
+    font-size: 15px;
+    font-weight: 700;
+    color: #202044;
+}
+.soal-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0eff6;
+}
+.soal-item:last-child {
+    border-bottom: none;
+}
+.soal-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #ede9fc;
+    color: #5542dc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+}

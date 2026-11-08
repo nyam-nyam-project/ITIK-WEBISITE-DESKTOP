@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\MapelController;
 use App\Http\Controllers\Admin\KelasController;
 use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\GuruController;
+use App\Http\Controllers\Admin\PengajaranController;
 use App\Http\Controllers\Admin\RekapNilaiController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
@@ -163,6 +164,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/guru/{guru}/aktifkan', [GuruController::class, 'aktifkan'])
             ->name('guru.aktifkan');
         Route::resource('guru', GuruController::class)->except(['show', 'destroy']);
+        Route::resource('pengajaran', PengajaranController::class)->only(['index', 'store', 'destroy']);
         Route::get('/rekap', [RekapNilaiController::class, 'index'])->name('rekap.index');
     });
 

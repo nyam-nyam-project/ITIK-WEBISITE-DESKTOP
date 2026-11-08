@@ -31,6 +31,7 @@
                 ['admin.kelas.index', 'admin.kelas.*', 'Kelas', 'M3 21h18M5 21V5h14v16M9 9h1M14 9h1M9 13h1M14 13h1M10 21v-4h4v4'],
                 ['admin.siswa.index', 'admin.siswa.*', 'Siswa', 'M12 3 2 8l10 5 10-5-10-5M6 10v7c4 3 8 3 12 0v-7M22 8v9'],
                 ['admin.guru.index', 'admin.guru.*', 'Guru', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M17 4h5v11h-4'],
+                ['admin.pengajaran.index', 'admin.pengajaran.*', 'Pengajaran', 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z M6 6h10M6 10h10'],
                 ['admin.rekap.index', 'admin.rekap.*', 'Rekap nilai', 'M4 3v18h17M8 17v-5M13 17V7M18 17v-8'],
                 ['admin.profil', 'admin.profil', 'Profil saya', 'M20 21v-2a7 7 0 0 0-14 0v2M13 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8'],
             ];

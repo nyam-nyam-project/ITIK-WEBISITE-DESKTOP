@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Kelas;
 use App\Models\Mapel;
+use App\Models\Materi;
+use App\Models\Pengajaran;
 use App\Models\TahunAjaran;
 use App\Models\User;
 use App\Services\KelasMigrasiService;
@@ -108,6 +110,18 @@ class AdminPanelTest extends TestCase
             $table->unique(['id_mapel', 'id_kelas']);
             $table->foreign('id_mapel')->references('id_mapel')->on('mapel')->restrictOnDelete();
             $table->foreign('id_kelas')->references('id_kelas')->on('kelas')->restrictOnDelete();
+        });
+
+        Schema::create('pengajaran', function (Blueprint $table) {
+            $table->increments('id_pengajaran');
+            $table->string('id_user', 50);
+            $table->string('id_kelas', 50);
+            $table->string('id_mapel', 50);
+            $table->timestamp('created_at')->nullable()->useCurrent();
+            $table->unique(['id_user', 'id_kelas', 'id_mapel']);
+            $table->foreign('id_user')->references('id_user')->on('user')->restrictOnDelete();
+            $table->foreign('id_kelas')->references('id_kelas')->on('kelas')->restrictOnDelete();
+            $table->foreign('id_mapel')->references('id_mapel')->on('mapel')->restrictOnDelete();
         });
 
         Schema::create('kuis', function (Blueprint $table) {
@@ -966,5 +980,133 @@ class AdminPanelTest extends TestCase
         $this->assertSame(0, $hasil['dilewati']);
         $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS002', 'id_user' => 'U003']);
         $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
+    }
+
+    public function test_admin_can_view_pengajaran_index_and_filter_by_tahun_ajaran(): void
+    {
+        TahunAjaran::create(['id_tahun_ajaran' => 'TA002', 'nama' => '2027/2028']);
+        $this->makeKelas('KLS003', 'XI TKJ 1', 'TA002');
+        Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
+        DB::table('mapel_kelas')->insert(['id_mapel' => 'MP002', 'id_kelas' => 'KLS003']);
+
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS003', 'id_mapel' => 'MP002']);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.pengajaran.index', ['tahun_ajaran' => 'TA001']));
+        $response->assertOk()->assertViewIs('admin.pengajaran.index');
+        $response->assertViewHas('pengajaran', fn ($list) => $list->count() === 1 && $list->first()->id_kelas === 'KLS001');
+
+        $response2 = $this->actingAs($this->admin)->get(route('admin.pengajaran.index', ['tahun_ajaran' => 'TA002']));
+        $response2->assertOk();
+        $response2->assertViewHas('pengajaran', fn ($list) => $list->count() === 1 && $list->first()->id_kelas === 'KLS003');
+    }
+
+    public function test_admin_can_store_pengajaran_from_mapel_kelas(): void
+    {
+        $this->actingAs($this->admin)->post(route('admin.pengajaran.store'), [
+            'id_user' => 'U002',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP001',
+        ])->assertRedirect(route('admin.pengajaran.index'))->assertSessionHas('success');
+
+        $this->assertDatabaseHas('pengajaran', [
+            'id_user' => 'U002',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP001',
+        ]);
+    }
+
+    public function test_admin_cannot_store_pengajaran_with_invalid_mapel_kelas_combination(): void
+    {
+        Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
+        // MP002 is not attached to KLS001 in mapel_kelas
+        $this->actingAs($this->admin)->post(route('admin.pengajaran.store'), [
+            'id_user' => 'U002',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP002',
+        ])->assertSessionHasErrors('id_mapel');
+
+        $this->assertDatabaseMissing('pengajaran', [
+            'id_user' => 'U002',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP002',
+        ]);
+    }
+
+    public function test_admin_cannot_duplicate_pengajaran(): void
+    {
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        $this->actingAs($this->admin)->post(route('admin.pengajaran.store'), [
+            'id_user' => 'U002',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP001',
+        ])->assertSessionHasErrors('id_user');
+
+        $this->assertDatabaseCount('pengajaran', 1);
+    }
+
+    public function test_admin_can_destroy_pengajaran_without_deleting_user_class_or_mapel(): void
+    {
+        $p = Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        $this->actingAs($this->admin)->delete(route('admin.pengajaran.destroy', $p->id_pengajaran))
+            ->assertRedirect(route('admin.pengajaran.index'))->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('pengajaran', ['id_pengajaran' => $p->id_pengajaran]);
+        // Data master tetap utuh
+        $this->assertDatabaseHas('user', ['id_user' => 'U002']);
+        $this->assertDatabaseHas('kelas', ['id_kelas' => 'KLS001']);
+        $this->assertDatabaseHas('mapel', ['id_mapel' => 'MP001']);
+    }
+
+    public function test_guru_materi_index_limited_to_pengajaran_mapel(): void
+    {
+        Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
+        $this->makeKelas('KLS003', 'XI TKJ 1', 'TA001');
+        DB::table('mapel_kelas')->insert(['id_mapel' => 'MP002', 'id_kelas' => 'KLS003']);
+
+        // U002 only teaches MP001
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        $response = $this->actingAs($this->guru)->get(route('materi.index'));
+        $response->assertOk();
+        $response->assertViewHas('mapelAktif', function ($mapelAktif) {
+            return $mapelAktif->count() === 1 && $mapelAktif->first()->id_mapel === 'MP001';
+        });
+
+        // Guru accessing materi on MP001 is allowed
+        $this->get(route('materi.index', ['mapel' => 'MP001']))->assertOk();
+
+        // Guru accessing materi on MP002 (not in pengajaran) yields 403
+        $this->get(route('materi.index', ['mapel' => 'MP002']))->assertForbidden();
+    }
+
+    public function test_guru_without_pengajaran_sees_empty_pengajaran_message(): void
+    {
+        // No pengajaran assigned to U002
+        $response = $this->actingAs($this->guru)->get(route('materi.index'));
+        $response->assertOk();
+        $response->assertViewHas('tanpaPengajaran', true);
+        $response->assertSee('Belum Ada Penugasan Pengajaran');
+    }
+
+    public function test_guru_forbidden_from_viewing_or_editing_materi_outside_pengajaran(): void
+    {
+        Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
+        Materi::create([
+            'id_materi' => 'M002', 'judul' => 'Materi Sains', 'bab' => 'Bab 1',
+            'kelas' => 'X', 'id_mapel' => 'MP002', 'id_user' => 'U002',
+        ]);
+
+        // Guru only assigned to MP001
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        $this->actingAs($this->guru)->get(route('materi.show', 'M002'))->assertForbidden();
+        $this->actingAs($this->guru)->get(route('materi.edit', 'M002'))->assertForbidden();
+
+        // Materi inside pengajaran is accessible
+        $this->actingAs($this->guru)->get(route('materi.show', 'M001'))->assertOk();
+        $this->actingAs($this->guru)->get(route('materi.edit', 'M001'))->assertOk();
     }
 }

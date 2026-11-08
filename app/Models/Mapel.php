@@ -48,6 +48,11 @@ class Mapel extends Model
         return $this->hasMany(Materi::class, 'id_mapel', 'id_mapel');
     }
 
+    public function pengajaran()
+    {
+        return $this->hasMany(Pengajaran::class, 'id_mapel', 'id_mapel');
+    }
+
     public function scopeAktif($query)
     {
         return $query->where('is_aktif', true);

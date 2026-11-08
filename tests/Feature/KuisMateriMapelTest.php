@@ -156,6 +156,14 @@ class KuisMateriMapelTest extends TestCase
             $table->string('tingkat_kesulitan', 50)->nullable();
             $table->foreign('id_kuis')->references('id_kuis')->on('kuis')->cascadeOnDelete();
         });
+
+        Schema::create('pengajaran', function (Blueprint $table) {
+            $table->increments('id_pengajaran');
+            $table->string('id_user', 50);
+            $table->string('id_kelas', 50)->nullable();
+            $table->string('id_mapel', 50);
+            $table->timestamp('created_at')->nullable()->useCurrent();
+        });
     }
 
     private function seedScenario(): void
@@ -185,6 +193,11 @@ class KuisMateriMapelTest extends TestCase
             'id_soal' => 'S001', 'id_kuis' => 'K001', 'pertanyaan' => 'Apa itu algoritma?',
             'opsi_a' => 'Langkah logis', 'opsi_b' => 'Monitor', 'opsi_c' => 'Mouse', 'opsi_d' => 'Keyboard',
             'jawaban' => 'A', 'bobot' => 100, 'tingkat_kesulitan' => 'mudah',
+        ]);
+        DB::table('pengajaran')->insert([
+            ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001'],
+            ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP002'],
+            ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP003'],
         ]);
     }
 

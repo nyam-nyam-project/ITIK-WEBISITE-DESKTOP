@@ -18,7 +18,12 @@
         </div>
     </div>
 
-    @if($mapelAktif->isEmpty())
+    @if($tanpaPengajaran ?? false)
+        <div class="empty">
+            <h3>Belum Ada Penugasan Pengajaran</h3>
+            <p>Anda belum ditugaskan untuk mengajar mata pelajaran apa pun. Silakan hubungi administrator sekolah.</p>
+        </div>
+    @elseif($mapelAktif->isEmpty())
         <div class="empty">
             <h3>Belum Ada Mata Pelajaran Aktif</h3>
             <p>Hubungi admin untuk menambahkan mata pelajaran pembelajaran.</p>

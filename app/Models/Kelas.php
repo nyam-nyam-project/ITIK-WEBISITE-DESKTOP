@@ -60,6 +60,11 @@ class Kelas extends Model
         return $this->hasMany(AnggotaKelas::class, 'id_kelas', 'id_kelas');
     }
 
+    public function pengajaran()
+    {
+        return $this->hasMany(Pengajaran::class, 'id_kelas', 'id_kelas');
+    }
+
     public function scopeAktif($query)
     {
         return $query->where('is_aktif', true);

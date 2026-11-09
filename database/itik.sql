@@ -815,3 +815,4 @@ CREATE TABLE
         CONSTRAINT fk_pengajaran_user FOREIGN KEY (id_user) REFERENCES user (id_user) ON UPDATE CASCADE ON DELETE RESTRICT,
         CONSTRAINT fk_pengajaran_mapel_kelas FOREIGN KEY (id_mapel, id_kelas) REFERENCES mapel_kelas (id_mapel, id_kelas) ON UPDATE CASCADE ON DELETE RESTRICT
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+

@@ -102,6 +102,9 @@ Route::middleware(['auth', 'role:guru'])
         Route::get('/nilai', [ValidasiNilaiController::class, 'index'])
             ->name('nilai.index');
 
+        Route::get('/nilai/unduh', [ValidasiNilaiController::class, 'unduh'])
+            ->name('nilai.unduh');
+
         Route::get('/nilai/{mengerjakan}', [ValidasiNilaiController::class, 'show'])
             ->name('nilai.show');
 

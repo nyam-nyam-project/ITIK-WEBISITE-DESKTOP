@@ -7,6 +7,7 @@ use App\Models\Kuis;
 use App\Models\Mengerjakan;
 use App\Models\Remedial;
 use App\Models\RemedialSiswa;
+use App\Services\RekapNilaiGuruService;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,69 @@ use Illuminate\Support\Facades\Auth;
 class ValidasiNilaiController extends Controller
 {
     use MenghasilkanId;
+
+    /**
+     * Mengunduh rekap nilai guru dalam format CSV (UTF-8 BOM).
+     * NISN ditulis sebagai ="..." agar nol di depannya tetap terbaca di Excel.
+     */
+    public function unduh(Request $request, RekapNilaiGuruService $service)
+    {
+        $idKelas  = $request->query('kelas');
+        $guru     = Auth::user();
+
+        $rows     = $service->rekapUntukGuru($guru, $idKelas);
+        $filename = 'rekap-nilai-' . now()->format('Ymd-His') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($rows) {
+            $handle = fopen('php://output', 'w');
+
+            // BOM UTF-8 agar Excel mengenali encoding dengan benar
+            fputs($handle, "\xEF\xBB\xBF");
+
+            // Baris header
+            fputcsv($handle, [
+                'NISN',
+                'Nama Siswa',
+                'Judul Kuis',
+                'Kategori',
+                'KKM',
+                'Nilai Terbaik',
+                'Lulus',
+                'Percobaan',
+                'Tanggal',
+            ]);
+
+            foreach ($rows as $row) {
+                $nisn   = $row->siswa?->nomor_induk ?? '';
+                $nilai  = $row->nilai_terbaik;
+                $kkm    = $row->kuis?->kkm;
+                $lulus  = ($nilai !== null && $kkm !== null)
+                    ? ($nilai >= $kkm ? 'Ya' : 'Tidak')
+                    : '-';
+
+                fputcsv($handle, [
+                    '="' . $nisn . '"',                          // format Excel agar nol depan terjaga
+                    $row->siswa?->nama_lengkap ?? '-',
+                    $row->kuis?->judul ?? '-',
+                    $row->kuis?->kategori ?? '-',
+                    $kkm !== null ? number_format($kkm, 1) : '-',
+                    $nilai !== null ? number_format($nilai, 1) : '-',
+                    $lulus,
+                    $row->percobaan,
+                    $row->tanggal ?? '-',
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 
     /**
      * Menampilkan daftar nilai siswa

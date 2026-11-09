@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class Pengajaran extends Model
 {
@@ -36,4 +38,30 @@ class Pengajaran extends Model
     {
         return $this->belongsTo(Mapel::class, 'id_mapel', 'id_mapel');
     }
+
+    /**
+     * Mengembalikan id_mapel unik dari pengajaran guru,
+     * dengan join kelas dan filter id_tahun_ajaran tahun aktif.
+     */
+    public static function mapelUntukGuru(User $guru): Collection
+    {
+        if (Schema::hasTable('pengajaran') === false) {
+            return collect();
+        }
+
+        $tahunAktif = TahunAjaran::aktif();
+
+        if (! $tahunAktif || Schema::hasTable('kelas') === false) {
+            return static::where('id_user', $guru->id_user)
+                ->distinct()
+                ->pluck('id_mapel');
+        }
+
+        return static::join('kelas', 'pengajaran.id_kelas', '=', 'kelas.id_kelas')
+            ->where('pengajaran.id_user', $guru->id_user)
+            ->where('kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran)
+            ->distinct()
+            ->pluck('pengajaran.id_mapel');
+    }
 }
+

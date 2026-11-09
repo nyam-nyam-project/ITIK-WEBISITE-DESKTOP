@@ -57,4 +57,9 @@ class Mapel extends Model
     {
         return $query->where('is_aktif', true);
     }
+
+    public static function mapelUntukSiswa(User $siswa): \Illuminate\Support\Collection
+    {
+        return Kelas::mapelUntukSiswa($siswa);
+    }
 }

@@ -13,11 +13,35 @@ use App\Models\Mengerjakan;
 use App\Models\RemedialSiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class SiswaKuisController extends Controller
 {
     public function __construct(private KuisSubmissionService $submission)
     {
+    }
+
+    /**
+     * Ambil id_mapel yang boleh diakses siswa berdasarkan kelas di tahun aktif.
+     * Mengembalikan [Collection $mapelIds, ?string $idKelas, bool $tanpaKelas].
+     */
+    private function mapelSiswa(): array
+    {
+        $user = Auth::user();
+
+        if (! Schema::hasTable('anggota_kelas') || ! Schema::hasTable('mapel_kelas')) {
+            return [Mapel::pluck('id_mapel'), 'DEFAULT', false];
+        }
+
+        $idKelas = \App\Models\Kelas::kelasAktifSiswa($user);
+
+        if (!$idKelas) {
+            return [collect(), null, true];
+        }
+
+        $mapelIds = \App\Models\Kelas::mapelUntukSiswa($user);
+
+        return [$mapelIds, $idKelas, false];
     }
 
     public function index(Request $request)
@@ -31,7 +55,17 @@ class SiswaKuisController extends Controller
         $idMapel = $request->query('mapel');
         $idMateri = $request->query('materi');
 
+        [$mapelIds, $idKelas, $tanpaKelas] = $this->mapelSiswa();
+
+        if ($idMapel) {
+            if ($tanpaKelas || ! $mapelIds->contains($idMapel)) {
+                abort(403, 'Anda tidak berhak mengakses mata pelajaran di luar kelas Anda.');
+            }
+        }
+
         $mapelAktif = Mapel::aktif()
+            ->when(! $tanpaKelas, fn ($q) => $q->whereIn('id_mapel', $mapelIds))
+            ->when($tanpaKelas, fn ($q) => $q->whereRaw('1 = 0'))
             ->withCount(['kuis' => function ($q) {
                 $q->where('status_publikasi', 'terbit')
                   ->where('is_aktif', true);
@@ -71,6 +105,17 @@ class SiswaKuisController extends Controller
 
         $kuisQuery = Kuis::where('status_publikasi', 'terbit')
             ->where('is_aktif', true)
+            ->where(function ($q) use ($mapelIds, $user, $tanpaKelas) {
+                $q->when(! $tanpaKelas, fn ($subQ) => $subQ->whereIn('id_mapel', $mapelIds))
+                  ->when($tanpaKelas, fn ($subQ) => $subQ->whereRaw('1 = 0'))
+                  ->orWhere(function ($sub) use ($user) {
+                      $sub->whereRaw('LOWER(TRIM(kategori)) = ?', ['remedial'])
+                          ->whereHas('remedialSiswa', function ($r) use ($user) {
+                              $r->where('status', 'ditugaskan')
+                                ->whereHas('mengerjakanAsal', fn ($m) => $m->where('id_user', $user->id_user));
+                          });
+                  });
+            })
             ->with(['soal', 'mapel', 'materi'])
             ->orderBy('created_at', 'desc');
 
@@ -111,7 +156,8 @@ class SiswaKuisController extends Controller
             'mapelTerpilih',
             'daftarMateri',
             'materiTerpilih',
-            'statusKuis'
+            'statusKuis',
+            'tanpaKelas'
         ));
     }
 
@@ -132,6 +178,14 @@ class SiswaKuisController extends Controller
         // Kuis harus aktif
         if (!$kuis->is_aktif) {
             abort(404);
+        }
+
+        // Pastikan kuis termasuk mapel kelas siswa, kecuali remedial yang sesuai penugasan
+        if (strtolower(trim($kuis->kategori)) !== 'remedial') {
+            [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
+            if ($tanpaKelas || ! $mapelIds->contains($kuis->id_mapel)) {
+                abort(403, 'Kuis ini tidak termasuk dalam mata pelajaran kelas Anda.');
+            }
         }
 
         // Jika kuis remedial, pastikan siswa memang mendapat tugas
@@ -298,6 +352,14 @@ class SiswaKuisController extends Controller
             abort(403);
         }
 
+        // Pastikan kuis termasuk mapel kelas siswa, kecuali remedial yang sesuai penugasan
+        if (strtolower(trim($kuis->kategori)) !== 'remedial') {
+            [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
+            if ($tanpaKelas || ! $mapelIds->contains($kuis->id_mapel)) {
+                abort(403, 'Kuis ini tidak termasuk dalam mata pelajaran kelas Anda.');
+            }
+        }
+
         /*
          * KHUSUS KUIS REMEDIAL
          *
@@ -403,6 +465,16 @@ class SiswaKuisController extends Controller
     {
         $user = Auth::user();
 
+        if (strtolower(trim($kuis->kategori)) !== 'remedial') {
+            [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
+            if ($tanpaKelas || ! $mapelIds->contains($kuis->id_mapel)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kuis ini tidak termasuk dalam mata pelajaran kelas Anda.'
+                ], 403);
+            }
+        }
+
         /*
          * Pastikan kuis sudah terbit dan aktif.
          */
@@ -488,6 +560,14 @@ class SiswaKuisController extends Controller
 
         if ($user->role !== 'siswa') {
             abort(403);
+        }
+
+        // Pastikan kuis termasuk mapel kelas siswa, kecuali remedial yang sesuai penugasan
+        if (strtolower(trim($kuis->kategori)) !== 'remedial') {
+            [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
+            if ($tanpaKelas || ! $mapelIds->contains($kuis->id_mapel)) {
+                abort(403, 'Kuis ini tidak termasuk dalam mata pelajaran kelas Anda.');
+            }
         }
 
         // Cari sesi aktif siswa untuk kuis ini.

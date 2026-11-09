@@ -22,13 +22,10 @@ class MateriController extends Controller
         $user = Auth::user();
         $tanpaPengajaran = false;
 
-        if ($user && $user->role === 'guru' && Schema::hasTable('pengajaran')) {
-            $mapelPengajaranIds = Pengajaran::where('id_user', $user->id_user)
-                ->pluck('id_mapel')
-                ->unique()
-                ->all();
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
 
-            if (empty($mapelPengajaranIds)) {
+            if ($mapelPengajaranIds->isEmpty()) {
                 $tanpaPengajaran = true;
                 $mapelAktif = collect();
                 $mapelTerpilih = null;
@@ -37,7 +34,7 @@ class MateriController extends Controller
                 return view('guru.materi.index', compact('materi', 'mapelAktif', 'mapelTerpilih', 'idMapel', 'tanpaPengajaran'));
             }
 
-            if ($idMapel && ! in_array($idMapel, $mapelPengajaranIds, true)) {
+            if ($idMapel && ! $mapelPengajaranIds->contains($idMapel)) {
                 abort(403, 'Anda tidak berhak mengakses mata pelajaran di luar penugasan pengajaran Anda.');
             }
 
@@ -86,14 +83,11 @@ class MateriController extends Controller
     public function create()
     {
         $user = Auth::user();
-        if ($user && $user->role === 'guru' && Schema::hasTable('pengajaran')) {
-            $mapelPengajaranIds = Pengajaran::where('id_user', $user->id_user)
-                ->pluck('id_mapel')
-                ->unique()
-                ->all();
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
 
             $mapel = Mapel::aktif()
-                ->when(! empty($mapelPengajaranIds), fn ($q) => $q->whereIn('id_mapel', $mapelPengajaranIds))
+                ->when($mapelPengajaranIds->isNotEmpty(), fn ($q) => $q->whereIn('id_mapel', $mapelPengajaranIds), fn ($q) => $q->whereRaw('1 = 0'))
                 ->orderBy('nama_mapel')
                 ->get();
         } else {
@@ -105,8 +99,19 @@ class MateriController extends Controller
 
     public function store(Request $request)
     {
+        $user = Auth::user();
+
         $validated = $request->validate([
-            'id_mapel' => ['required', 'string', Rule::exists('mapel', 'id_mapel')->where('is_aktif', 1)],
+            'id_mapel' => [
+                'required',
+                'string',
+                Rule::exists('mapel', 'id_mapel')->where(function ($q) use ($user) {
+                    $q->where('is_aktif', 1);
+                    if ($user && $user->role === 'guru') {
+                        $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
+                    }
+                }),
+            ],
             'judul' => 'required|string|max:150',
             'bab' => 'nullable|string|max:50',
             'kelas' => 'nullable|string|max:50',
@@ -156,13 +161,10 @@ class MateriController extends Controller
         $materi = Materi::findOrFail($id);
         $user = Auth::user();
 
-        if ($user && $user->role === 'guru' && Schema::hasTable('pengajaran')) {
-            $mapelPengajaranIds = Pengajaran::where('id_user', $user->id_user)
-                ->pluck('id_mapel')
-                ->unique()
-                ->all();
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
 
-            if (! in_array($materi->id_mapel, $mapelPengajaranIds, true)) {
+            if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
                 abort(403, 'Anda tidak berhak mengakses materi di luar penugasan pengajaran Anda.');
             }
         }
@@ -177,19 +179,19 @@ class MateriController extends Controller
         $materi = Materi::findOrFail($id);
         $user = Auth::user();
 
-        if ($user && $user->role === 'guru' && Schema::hasTable('pengajaran')) {
-            $mapelPengajaranIds = Pengajaran::where('id_user', $user->id_user)
-                ->pluck('id_mapel')
-                ->unique()
-                ->all();
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
 
-            if (! in_array($materi->id_mapel, $mapelPengajaranIds, true)) {
+            if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
                 abort(403, 'Anda tidak berhak mengubah materi di luar penugasan pengajaran Anda.');
             }
         }
 
         $mapel = Mapel::where(fn ($q) => $q->where('is_aktif', 1)
                 ->orWhere('id_mapel', $materi->id_mapel))
+            ->when($user && $user->role === 'guru', function ($q) use ($user) {
+                $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
+            })
             ->orderBy('nama_mapel')
             ->get();
 
@@ -199,10 +201,27 @@ class MateriController extends Controller
     public function update(Request $request, $id)
     {
         $materi = Materi::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
+
+            if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
+                abort(403, 'Anda tidak berhak mengubah materi di luar penugasan pengajaran Anda.');
+            }
+        }
 
         $validated = $request->validate([
-            'id_mapel' => ['required', 'string', Rule::exists('mapel', 'id_mapel')
-                ->where(fn ($q) => $q->where('is_aktif', 1)->orWhere('id_mapel', $materi->id_mapel))],
+            'id_mapel' => [
+                'required',
+                'string',
+                Rule::exists('mapel', 'id_mapel')->where(function ($q) use ($user, $materi) {
+                    if ($user && $user->role === 'guru') {
+                        $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
+                    }
+                    $q->where(fn ($sub) => $sub->where('is_aktif', 1)->orWhere('id_mapel', $materi->id_mapel));
+                }),
+            ],
             'judul' => 'required|string|max:150',
             'bab' => 'nullable|string|max:50',
             'kelas' => 'nullable|string|max:50',
@@ -248,6 +267,16 @@ class MateriController extends Controller
     public function destroy($id)
     {
         $materi = Materi::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
+
+            if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
+                abort(403, 'Anda tidak berhak menghapus materi di luar penugasan pengajaran Anda.');
+            }
+        }
+
         $idMapel = $materi->id_mapel;
 
         if ($materi->isi_materi && Storage::disk('public')->exists($materi->isi_materi)) {

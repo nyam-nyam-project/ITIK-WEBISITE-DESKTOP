@@ -104,4 +104,9 @@ class User extends Authenticatable
     {
         return $query->where('role', 'guru');
     }
+
+    public static function mapelUntukSiswa(User $siswa): \Illuminate\Support\Collection
+    {
+        return Kelas::mapelUntukSiswa($siswa);
+    }
 }

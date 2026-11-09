@@ -14,23 +14,24 @@ use Illuminate\Support\Str;
 class ProgressController extends Controller
 {
     /**
-     * Ambil id_mapel yang boleh diakses siswa berdasarkan kelas.
+     * Ambil id_mapel yang boleh diakses siswa berdasarkan kelas di tahun aktif.
      * Mengembalikan [mapelIds, idKelas|null, tanpaKelas].
      */
     private function mapelSiswa(): array
     {
-        $user    = Auth::user();
-        $idKelas = DB::table('anggota_kelas')
-            ->where('id_user', $user->id_user)
-            ->value('id_kelas');
+        $user = Auth::user();
+
+        if (! Schema::hasTable('anggota_kelas') || ! Schema::hasTable('mapel_kelas')) {
+            return [Mapel::pluck('id_mapel'), 'DEFAULT', false];
+        }
+
+        $idKelas = \App\Models\Kelas::kelasAktifSiswa($user);
 
         if (!$idKelas) {
             return [collect(), null, true];
         }
 
-        $mapelIds = DB::table('mapel_kelas')
-            ->where('id_kelas', $idKelas)
-            ->pluck('id_mapel');
+        $mapelIds = \App\Models\Kelas::mapelUntukSiswa($user);
 
         return [$mapelIds, $idKelas, false];
     }
@@ -41,6 +42,12 @@ class ProgressController extends Controller
         $idMapel = $request->query('mapel');
 
         [$mapelIds, $idKelas, $tanpaKelas] = $this->mapelSiswa();
+
+        if ($idMapel) {
+            if ($tanpaKelas || ! $mapelIds->contains($idMapel)) {
+                abort(403, 'Mata pelajaran ini tidak termasuk dalam kelas Anda.');
+            }
+        }
 
         // Batasi mapelAktif hanya ke mapel kelas siswa
         $mapelAktif = Mapel::aktif()

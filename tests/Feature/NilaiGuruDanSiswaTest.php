@@ -187,6 +187,29 @@ class NilaiGuruDanSiswaTest extends TestCase
             $table->string('id_materi', 50);
             $table->string('id_user', 50);
         });
+
+        Schema::create('kelas', function (Blueprint $table) {
+            $table->string('id_kelas', 50)->primary();
+            $table->string('nama_kelas', 100);
+            $table->string('tingkat', 20)->nullable();
+            $table->string('id_tahun_ajaran', 50)->nullable();
+            $table->boolean('is_aktif')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('anggota_kelas', function (Blueprint $table) {
+            $table->increments('id_anggota_kelas');
+            $table->string('id_kelas', 50);
+            $table->string('id_user', 50);
+            $table->timestamp('created_at')->nullable()->useCurrent();
+        });
+
+        Schema::create('mapel_kelas', function (Blueprint $table) {
+            $table->increments('id_mapel_kelas');
+            $table->string('id_mapel', 50);
+            $table->string('id_kelas', 50);
+            $table->timestamp('created_at')->nullable()->useCurrent();
+        });
     }
 
     private function seedScenario(): void
@@ -266,6 +289,25 @@ class NilaiGuruDanSiswaTest extends TestCase
         DB::table('materi_kuis')->insert([
             ['id_materi' => 'M001', 'id_kuis' => 'K005'],
             ['id_materi' => 'M001', 'id_kuis' => 'K001'],
+        ]);
+
+        // Kelas, anggota, dan mapel_kelas — dibutuhkan oleh ProgressController::mapelSiswa()
+        DB::table('kelas')->insert([
+            'id_kelas'        => 'KLS001',
+            'nama_kelas'      => 'X RPL 1',
+            'tingkat'         => 'X',
+            'id_tahun_ajaran' => 'TA001',
+            'is_aktif'        => true,
+        ]);
+
+        DB::table('anggota_kelas')->insert([
+            'id_kelas' => 'KLS001',
+            'id_user'  => 'U002',    // $this->siswa
+        ]);
+
+        DB::table('mapel_kelas')->insert([
+            'id_mapel' => 'MP001',
+            'id_kelas' => 'KLS001',
         ]);
     }
 

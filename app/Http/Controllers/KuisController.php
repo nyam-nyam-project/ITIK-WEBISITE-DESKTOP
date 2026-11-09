@@ -24,6 +24,18 @@ class KuisController extends Controller
 
     private function pilihanMapel(?string $idMapelSaatIni = null)
     {
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru') {
+            $mapelIds = Pengajaran::mapelUntukGuru($user);
+
+            return Mapel::whereIn('id_mapel', $mapelIds)
+                ->where(fn ($q) => $q->where('is_aktif', 1)
+                    ->when($idMapelSaatIni, fn ($q) => $q->orWhere('id_mapel', $idMapelSaatIni)))
+                ->orderBy('nama_mapel')
+                ->get();
+        }
+
         return Mapel::where(fn ($q) => $q->where('is_aktif', 1)
                 ->when($idMapelSaatIni, fn ($q) => $q->orWhere('id_mapel', $idMapelSaatIni)))
             ->orderBy('nama_mapel')
@@ -32,11 +44,20 @@ class KuisController extends Controller
 
     private function aturanMapel(?string $idMapelSaatIni = null): array
     {
+        $user = Auth::user();
+
         return [
             'required',
             'string',
-            Rule::exists('mapel', 'id_mapel')->where(fn ($q) => $q->where('is_aktif', 1)
-                ->when($idMapelSaatIni, fn ($q) => $q->orWhere('id_mapel', $idMapelSaatIni))),
+            Rule::exists('mapel', 'id_mapel')->where(function ($q) use ($idMapelSaatIni, $user) {
+                if ($user && $user->role === 'guru') {
+                    $mapelIds = Pengajaran::mapelUntukGuru($user);
+                    $q->whereIn('id_mapel', $mapelIds);
+                }
+
+                $q->where(fn ($sub) => $sub->where('is_aktif', 1)
+                    ->when($idMapelSaatIni, fn ($s) => $s->orWhere('id_mapel', $idMapelSaatIni)));
+            }),
         ];
     }
 
@@ -45,6 +66,42 @@ class KuisController extends Controller
         Kuis::sinkronisasiStatus();
 
         $idMapel = $request->query('mapel');
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru') {
+            $mapelIds = Pengajaran::mapelUntukGuru($user);
+
+            if ($idMapel && ! $mapelIds->contains($idMapel)) {
+                abort(403, 'Anda tidak berhak mengakses mata pelajaran di luar penugasan pengajaran Anda.');
+            }
+
+            $mapelAktif = Mapel::aktif()
+                ->whereIn('id_mapel', $mapelIds)
+                ->withCount(['kuis' => function ($q) {
+                    $q->where('is_aktif', true);
+                }])
+                ->orderBy('nama_mapel')
+                ->get();
+
+            $mapelTerpilih = null;
+            $daftarMateri = collect();
+            if ($idMapel) {
+                $mapelTerpilih = Mapel::where('id_mapel', $idMapel)->first();
+                $daftarMateri = Materi::where('id_mapel', $idMapel)
+                    ->orderBy('bab')
+                    ->orderBy('judul')
+                    ->get();
+            }
+
+            $kuis = Kuis::where('is_aktif', true)
+                ->whereIn('id_mapel', $mapelIds)
+                ->when($idMapel, fn ($q) => $q->where('id_mapel', $idMapel))
+                ->with(['pembuat', 'mapel', 'soal', 'materi'])
+                ->latest('created_at')
+                ->get();
+
+            return view('guru.kuis.index', compact('kuis', 'mapelAktif', 'mapelTerpilih', 'daftarMateri'));
+        }
 
         $mapelAktif = Mapel::aktif()
             ->withCount(['kuis' => function ($q) {
@@ -86,11 +143,8 @@ class KuisController extends Controller
 
             $user = Auth::user();
             if ($user && $user->role === 'guru') {
-                $berhak = Schema::hasTable('pengajaran')
-                    ? Pengajaran::where('id_user', $user->id_user)
-                        ->where('id_mapel', $kandidat->id_mapel)
-                        ->exists()
-                    : ($kandidat->id_user === $user->id_user);
+                $mapelIds = Pengajaran::mapelUntukGuru($user);
+                $berhak = $mapelIds->contains($kandidat->id_mapel);
 
                 if (! $berhak) {
                     return redirect()
@@ -102,9 +156,13 @@ class KuisController extends Controller
             $materiDipreselect = $kandidat;
         }
 
-        $materi = Materi::orderBy('bab')
-            ->orderBy('judul')
-            ->get();
+        $user = Auth::user();
+        $materiQuery = Materi::orderBy('bab')->orderBy('judul');
+        if ($user && $user->role === 'guru') {
+            $mapelIds = Pengajaran::mapelUntukGuru($user);
+            $materiQuery->whereIn('id_mapel', $mapelIds);
+        }
+        $materi = $materiQuery->get();
 
         $kuisAsal = Kuis::where('is_aktif', true)
         ->whereRaw('LOWER(TRIM(kategori)) = ?', ['ulangan'])
@@ -301,12 +359,25 @@ class KuisController extends Controller
             'soal',
         ])->findOrFail($id);
 
+        $user = Auth::user();
+        if ($user && $user->role === 'guru') {
+            $mapelIds = Pengajaran::mapelUntukGuru($user);
+            if (! $mapelIds->contains($kuis->id_mapel)) {
+                abort(403, 'Anda tidak berhak mengakses kuis di luar penugasan pengajaran Anda.');
+            }
+        }
+
         return view('guru.kuis.show', compact('kuis'));
     }
 
     public function edit($id)
     {
         $kuis = Kuis::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+            abort(403, 'Anda tidak berhak mengubah kuis milik guru lain.');
+        }
 
         /*
          * Kuis yang sudah terbit tidak boleh diedit
@@ -339,6 +410,11 @@ class KuisController extends Controller
     public function update(Request $request, $id)
     {
         $kuis = Kuis::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+            abort(403, 'Anda tidak berhak mengubah kuis milik guru lain.');
+        }
 
         if ($kuis->status_publikasi === 'terbit') {
             return back()
@@ -428,6 +504,12 @@ class KuisController extends Controller
     public function destroy($id)
     {
         $kuis = Kuis::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+            abort(403, 'Anda tidak berhak menghapus kuis milik guru lain.');
+        }
+
         $idMapel = $kuis->id_mapel;
 
         /*
@@ -447,6 +529,11 @@ class KuisController extends Controller
     public function publish($id)
     {
         $kuis = Kuis::with('soal')->findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+            abort(403, 'Anda tidak berhak mengubah status kuis milik guru lain.');
+        }
 
         /*
         * 1. Kkuis masih draft
@@ -640,6 +727,11 @@ class KuisController extends Controller
     public function unpublish($id)
     {
         $kuis = Kuis::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+            abort(403, 'Anda tidak berhak mengubah status kuis milik guru lain.');
+        }
 
         if ($kuis->status_publikasi !== 'terbit') {
             return back()->withErrors([

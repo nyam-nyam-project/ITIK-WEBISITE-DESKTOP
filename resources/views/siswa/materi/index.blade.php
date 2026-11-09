@@ -76,7 +76,7 @@
                 @php
                     $prog = $item->relationLoaded('progress') ? $item->progress->first() : null;
                 @endphp
-                <a href="{{ route('siswa.materi.show', $item->id_materi) }}" class="materi-card-link">
+                <div class="materi-card-link">
                     <div class="materi-main-info">
                         <div class="materi-num-badge">
                             {{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }}
@@ -105,9 +105,15 @@
                         @else
                             <span class="badge">{{ $prog->status }}</span>
                         @endif
-                        <span class="arrow-icon">→</span>
+
+                        <a href="{{ route('siswa.materi.show', $item->id_materi) }}" class="btn btn-secondary btn-small">
+                            Baca Materi
+                        </a>
+                        <a href="{{ route('siswa.kuis.index', ['mapel' => $item->id_mapel, 'materi' => $item->id_materi]) }}" class="btn btn-small">
+                            Kuis Materi
+                        </a>
                     </div>
-                </a>
+                </div>
             @endforeach
         </div>
     @endif

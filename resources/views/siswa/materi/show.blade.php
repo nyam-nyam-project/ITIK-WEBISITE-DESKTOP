@@ -15,11 +15,16 @@
         <h1>{{ $materi->judul }}</h1>
         <p>{{ $materi->bab ?? '-' }} &bull; Kelas {{ $materi->kelas ?? '-' }}</p>
     </div>
-    @if($pdfUrl)
-        <a href="{{ $pdfUrl }}" target="_blank" class="btn btn-secondary btn-small">
-            Buka PDF di tab baru ↗
+    <div class="actions">
+        <a href="{{ route('siswa.kuis.index', ['mapel' => $materi->id_mapel, 'materi' => $materi->id_materi]) }}" class="btn">
+            Kerjakan Kuis
         </a>
-    @endif
+        @if($pdfUrl)
+            <a href="{{ $pdfUrl }}" target="_blank" class="btn btn-secondary btn-small">
+                Buka PDF di tab baru ↗
+            </a>
+        @endif
+    </div>
 </div>
 
 <div class="grid grid-2">
@@ -121,6 +126,41 @@
                 <div class="alert alert-success u-margin-bottom-0">
                     ✓ Materi ini sudah kamu tandai selesai dipelajari!
                 </div>
+            @endif
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2>Kuis Materi</h2>
+                @if(isset($kuisTerkait) && $kuisTerkait->isNotEmpty())
+                    <span class="badge">{{ $kuisTerkait->count() }} Kuis</span>
+                @endif
+            </div>
+
+            @if(isset($kuisTerkait) && $kuisTerkait->isNotEmpty())
+                <p class="muted small u-margin-bottom-12px">
+                    Uji pemahamanmu dengan kuis yang terhubung ke materi ini:
+                </p>
+                <div class="kuis-materi-list">
+                    @foreach($kuisTerkait as $itemKuis)
+                        <div class="kuis-materi-item">
+                            <div>
+                                <strong>{{ $itemKuis->judul }}</strong>
+                                <span class="badge small">{{ ucfirst($itemKuis->kategori) }}</span>
+                            </div>
+                            <a href="{{ route('siswa.kuis.mulai', $itemKuis->id_kuis) }}" class="btn btn-small">
+                                Mulai Kuis
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p class="muted small u-margin-bottom-12px">
+                    Belum ada kuis yang diterbitkan untuk materi ini.
+                </p>
+                <a href="{{ route('siswa.kuis.index', ['mapel' => $materi->id_mapel, 'materi' => $materi->id_materi]) }}" class="btn btn-secondary btn-small">
+                    Buka Halaman Kuis Materi
+                </a>
             @endif
         </section>
     </div>

@@ -47,3 +47,20 @@
     white-space: pre-wrap;
     color: var(--ink);
 }
+
+.kuis-materi-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.kuis-materi-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}

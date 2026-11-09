@@ -839,6 +839,8 @@ class KuisMateriMapelTest extends TestCase
         $response->assertViewHas('materiDipreselect', fn ($v) => $v?->id_materi === 'M001');
         $response->assertViewHas('mapelTerpilih', 'MP001');
         $response->assertSee('M001'); // id materi ada di hidden input
+        $response->assertSee('checked', false);
+        $response->assertSee('disabled', false);
     }
 
     public function test_kuis_create_redirects_with_error_when_materi_param_does_not_exist(): void
@@ -849,15 +851,42 @@ class KuisMateriMapelTest extends TestCase
             ->assertSessionHas('error');
     }
 
-    public function test_kuis_create_redirects_with_error_when_materi_belongs_to_another_user(): void
+    public function test_kuis_create_redirects_with_error_when_materi_outside_guru_pengajaran(): void
     {
-        // Ubah kepemilikan M001 ke user lain (admin U001)
-        Materi::findOrFail('M001')->update(['id_user' => 'U001']);
+        // MP004 tidak diajarkan oleh U002
+        $materiLuar = Materi::create([
+            'id_materi' => 'M099',
+            'judul' => 'Materi Luar Pengajaran',
+            'bab' => 'Bab X',
+            'kelas' => 'X',
+            'id_mapel' => 'MP004',
+            'id_user' => 'U001',
+        ]);
 
         $this->actingAs($this->guru)
-            ->get(route('kuis.create', ['materi' => 'M001']))
-            ->assertRedirect(route('materi.index', ['mapel' => 'MP001']))
+            ->get(route('kuis.create', ['materi' => $materiLuar->getKey()]))
+            ->assertRedirect(route('materi.index'))
             ->assertSessionHas('error');
+    }
+
+    public function test_buat_kuis_button_links_in_materi_index_and_show(): void
+    {
+        // Di materi.index (level 2 saat mapel terpilih)
+        $responseIndex = $this->actingAs($this->guru)
+            ->get(route('materi.index', ['mapel' => 'MP001']))
+            ->assertOk();
+
+        $expectedLink = e(route('kuis.create', ['mapel' => 'MP001', 'materi' => 'M001']));
+        $responseIndex->assertSee($expectedLink, false);
+        $responseIndex->assertSee('Buat Kuis');
+
+        // Di materi.show
+        $responseShow = $this->actingAs($this->guru)
+            ->get(route('materi.show', 'M001'))
+            ->assertOk();
+
+        $responseShow->assertSee($expectedLink, false);
+        $responseShow->assertSee('Buat Kuis');
     }
 
     public function test_kuis_create_without_materi_param_passes_null_materiDipreselect_to_view(): void

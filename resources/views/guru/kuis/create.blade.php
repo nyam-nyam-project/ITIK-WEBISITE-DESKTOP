@@ -122,18 +122,30 @@
         </div>
 
         {{-- MATERI PER MAPEL --}}
-        <div id="materi-container" class="{{ $materiDipreselect ? 'special-card u-display-block' : 'special-card u-display-none' }}">
+        <div id="materi-container" class="{{ $materiDipreselect ? 'special-card u-display-block' : 'special-card u-display-none' }}" @if($materiDipreselect) data-locked="true" @endif>
             <div class="field u-margin-bottom-0">
                 @if($materiDipreselect)
-                    {{-- Mode readonly: datang dari shortcut "Buat Kuis" di halaman Materi --}}
-                    <label>Bab Materi</label>
-                    <input
-                        type="text"
-                        value="{{ ($materiDipreselect->bab ? '[' . $materiDipreselect->bab . '] - ' : '') . $materiDipreselect->judul }}"
-                        readonly
-                    >
-                    <input type="hidden" name="materi[]" value="{{ $materiDipreselect->id_materi }}">
-                    <p class="help">Kuis ini akan terhubung ke materi di atas. <a href="{{ route('kuis.create', ['mapel' => $materiDipreselect->id_mapel]) }}">Pilih materi lain</a></p>
+                    {{-- Mode terkunci: datang dari shortcut "Buat Kuis" di halaman Materi --}}
+                    <label>Hubungkan ke Bab Materi</label>
+                    <div class="materi-locked-box">
+                        <label class="checkbox-label u-display-flex u-items-center u-gap-8px">
+                            <input
+                                type="checkbox"
+                                checked
+                                disabled
+                                aria-disabled="true"
+                            >
+                            <span>
+                                @if($materiDipreselect->bab)
+                                    <strong>[{{ $materiDipreselect->bab }}]</strong> -
+                                @endif
+                                {{ $materiDipreselect->judul }}
+                                <span class="muted small">(Terkunci dari materi)</span>
+                            </span>
+                        </label>
+                        <input type="hidden" name="materi[]" value="{{ $materiDipreselect->id_materi }}">
+                    </div>
+                    <p class="help">Materi ini telah dipilih otomatis dan dikunci. <a href="{{ route('kuis.create', ['mapel' => $materiDipreselect->id_mapel]) }}">Pilih materi lain</a></p>
                 @else
                     <label for="materi-select">Hubungkan ke Bab Materi</label>
                     <select class="u-min-height-120px" id="materi-select" name="materi[]" multiple>

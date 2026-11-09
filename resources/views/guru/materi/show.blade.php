@@ -16,8 +16,8 @@
         <p>{{ $materi->bab ?? 'Materi Pembelajaran' }} &bull; Kelas {{ $materi->kelas ?? '-' }}</p>
     </div>
     <div class="actions">
-        <a href="{{ route('kuis.create', ['materi' => $materi->id_materi]) }}" class="btn btn-secondary">
-            + Buat Kuis
+        <a href="{{ route('kuis.create', ['mapel' => $materi->id_mapel, 'materi' => $materi->id_materi]) }}" class="btn btn-secondary">
+            Buat Kuis
         </a>
         <a href="{{ route('materi.edit', $materi->id_materi) }}" class="btn">
             Edit Materi

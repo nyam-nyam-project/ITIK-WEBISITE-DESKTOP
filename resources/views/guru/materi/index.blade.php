@@ -101,8 +101,8 @@
                         <a href="{{ route('materi.show', $item->id_materi) }}" class="btn btn-secondary btn-small">
                             Lihat Dokumen
                         </a>
-                        <a href="{{ route('kuis.create', ['materi' => $item->id_materi]) }}" class="btn btn-secondary btn-small">
-                            + Buat Kuis
+                        <a href="{{ route('kuis.create', ['mapel' => $item->id_mapel, 'materi' => $item->id_materi]) }}" class="btn btn-secondary btn-small">
+                            Buat Kuis
                         </a>
                         <a href="{{ route('materi.edit', $item->id_materi) }}" class="btn btn-secondary btn-small">
                             Edit

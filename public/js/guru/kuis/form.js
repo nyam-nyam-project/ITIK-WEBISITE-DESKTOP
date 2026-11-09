@@ -7,13 +7,14 @@ if (kuisForm.dataset.kuisForm === 'create') {
     const remedialContainer = document.getElementById('field-remedial');
 
     function updateForm() {
-        const value = kategori.value;
+        const value = kategori ? kategori.value : '';
+        const isLocked = materiContainer && materiContainer.dataset.locked === 'true';
         materiContainer.classList.remove('u-display-block');
         materiContainer.classList.add('u-display-none');
         remedialContainer.classList.remove('u-display-block');
         remedialContainer.classList.add('u-display-none');
 
-        if (value === 'post-test' || value === 'pre-test' || value === 'kuis harian' || value === 'ulangan') {
+        if (value === 'post-test' || value === 'pre-test' || value === 'kuis harian' || value === 'ulangan' || (!value && isLocked)) {
             materiContainer.classList.remove('u-display-none');
             materiContainer.classList.add('u-display-block');
         } else if (value === 'remedial') {

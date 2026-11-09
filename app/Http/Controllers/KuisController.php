@@ -5,14 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Kuis;
 use App\Models\Mapel;
 use App\Models\Materi;
-use App\Models\Soal;
+use App\Models\Pengajaran;
 use App\Models\Remedial;
+use App\Models\Soal;
 use App\Models\TahunAjaran;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Auth;
 
 class KuisController extends Controller
 {
@@ -81,11 +83,22 @@ class KuisController extends Controller
                     ->route('materi.index')
                     ->with('error', 'Materi tidak ditemukan.');
             }
-            if ($kandidat->id_user !== Auth::user()->id_user) {
-                return redirect()
-                    ->route('materi.index', ['mapel' => $kandidat->id_mapel])
-                    ->with('error', 'Anda tidak berhak membuat kuis untuk materi ini.');
+
+            $user = Auth::user();
+            if ($user && $user->role === 'guru') {
+                $berhak = Schema::hasTable('pengajaran')
+                    ? Pengajaran::where('id_user', $user->id_user)
+                        ->where('id_mapel', $kandidat->id_mapel)
+                        ->exists()
+                    : ($kandidat->id_user === $user->id_user);
+
+                if (! $berhak) {
+                    return redirect()
+                        ->route('materi.index')
+                        ->with('error', 'Anda tidak berhak membuat kuis untuk materi di luar penugasan pengajaran Anda.');
+                }
             }
+
             $materiDipreselect = $kandidat;
         }
 

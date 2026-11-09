@@ -75,9 +75,15 @@
                 ({{ $kelasTerpilih->total_siswa }} Siswa &bull; Rata-rata Nilai: {{ $kelasTerpilih->rata_nilai ?? '-' }})
             </span>
         </div>
-        <a href="{{ route('guru.nilai.index') }}" class="btn btn-secondary btn-small">
-            ✕ Tampilkan Semua Kelas
-        </a>
+        <div class="u-display-flex u-gap-8px">
+            <a href="{{ route('guru.nilai.unduh', ['kelas' => $kelasTerpilih->id_kelas]) }}"
+               class="btn btn-secondary btn-small">
+                ⬇ Unduh CSV
+            </a>
+            <a href="{{ route('guru.nilai.index') }}" class="btn btn-secondary btn-small">
+                ✕ Tampilkan Semua Kelas
+            </a>
+        </div>
     </div>
 @endif
 
@@ -183,6 +189,13 @@
         </div>
 
     </div>
+</div>
+
+<div class="u-display-flex u-justify-content-flex-end u-margin-bottom-16px">
+    <a href="{{ route('guru.nilai.unduh', $idKelas ? ['kelas' => $idKelas] : []) }}"
+       class="btn btn-secondary btn-small">
+        ⬇ Unduh CSV
+    </a>
 </div>
 
 @if($hasil->isEmpty())

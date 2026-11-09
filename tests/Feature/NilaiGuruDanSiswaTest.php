@@ -179,6 +179,14 @@ class NilaiGuruDanSiswaTest extends TestCase
             $table->date('tanggal_ditugaskan');
             $table->string('status', 20)->default('ditugaskan');
         });
+
+        Schema::create('progress', function (Blueprint $table) {
+            $table->string('id_progress', 50)->primary();
+            $table->string('status', 50)->nullable();
+            $table->date('tanggal')->nullable();
+            $table->string('id_materi', 50);
+            $table->string('id_user', 50);
+        });
     }
 
     private function seedScenario(): void
@@ -385,5 +393,31 @@ class NilaiGuruDanSiswaTest extends TestCase
         $resL2->assertSee($this->mapel->nama_mapel);
         $resL2->assertSee($this->materi->judul);
         $resL2->assertSee('materi-num-badge');
+    }
+
+    public function test_siswa_materi_menampilkan_tombol_dan_daftar_kuis_terkait(): void
+    {
+        $this->actingAs($this->siswa);
+
+        // Hubungkan materi ke kuis yang berstatus terbit dan aktif
+        DB::table('materi_kuis')->insert([
+            'id_materi' => $this->materi->id_materi,
+            'id_kuis' => $this->kuisUlangan->id_kuis,
+        ]);
+
+        // Cek halaman index materi level 2
+        $resIndex = $this->get(route('siswa.materi.index', ['mapel' => $this->mapel->id_mapel]));
+        $resIndex->assertOk();
+        $resIndex->assertSee('Kuis Materi');
+        $expectedKuisLink = e(route('siswa.kuis.index', ['mapel' => $this->mapel->id_mapel, 'materi' => $this->materi->id_materi]));
+        $resIndex->assertSee($expectedKuisLink, false);
+
+        // Cek halaman show materi
+        $resShow = $this->get(route('siswa.materi.show', $this->materi->id_materi));
+        $resShow->assertOk();
+        $resShow->assertSee('Kerjakan Kuis');
+        $resShow->assertSee($expectedKuisLink, false);
+        $resShow->assertSee($this->kuisUlangan->judul);
+        $resShow->assertSee(route('siswa.kuis.mulai', $this->kuisUlangan->id_kuis));
     }
 }

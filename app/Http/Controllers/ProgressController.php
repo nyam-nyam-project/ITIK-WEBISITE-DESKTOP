@@ -27,7 +27,11 @@ class ProgressController extends Controller
         if ($idMapel) {
             $mapelTerpilih = Mapel::find($idMapel);
             if ($mapelTerpilih) {
-                $query = Materi::where('id_mapel', $idMapel);
+                $query = Materi::where('id_mapel', $idMapel)
+                    ->withCount(['kuis' => function ($q) {
+                        $q->where('is_aktif', true)
+                            ->where('status_publikasi', 'terbit');
+                    }]);
 
                 if (\Illuminate\Support\Facades\Schema::hasTable('progress')) {
                     $query->with([
@@ -68,10 +72,16 @@ class ProgressController extends Controller
 
         $pdfUrl = $materi->pdfUrl();
 
+        $kuisTerkait = $materi->kuis()
+            ->where('is_aktif', true)
+            ->where('status_publikasi', 'terbit')
+            ->get();
+
         return view('siswa.materi.show', compact(
             'materi',
             'progress',
-            'pdfUrl'
+            'pdfUrl',
+            'kuisTerkait'
         ));
     }
 

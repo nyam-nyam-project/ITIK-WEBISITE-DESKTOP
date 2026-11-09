@@ -22,10 +22,17 @@
     </div>
 
     @if($mapelAktif->isEmpty())
-        <div class="empty">
-            <h3>Belum Ada Mata Pelajaran Aktif</h3>
-            <p>Materi pembelajaran akan tersedia setelah ditambahkan oleh guru.</p>
-        </div>
+        @if($tanpaKelas ?? false)
+            <div class="empty">
+                <h3>Kamu Belum Terdaftar di Kelas</h3>
+                <p>Hubungi admin atau guru untuk didaftarkan ke kelas agar dapat mengakses materi pembelajaran.</p>
+            </div>
+        @else
+            <div class="empty">
+                <h3>Belum Ada Mata Pelajaran Aktif</h3>
+                <p>Materi pembelajaran akan tersedia setelah ditambahkan oleh guru.</p>
+            </div>
+        @endif
     @else
         <div class="mapel-grid-siswa">
             @foreach($mapelAktif as $mp)

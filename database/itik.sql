@@ -629,6 +629,7 @@ CREATE TABLE `sesi_kuis` (
   `percobaan_ke` int unsigned NOT NULL DEFAULT '1',
   `waktu_mulai` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `waktu_selesai` timestamp NULL DEFAULT NULL,
+  `jumlah_pelanggaran` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id_sesi`),
   UNIQUE KEY `uq_sesi_kuis_siswa_percobaan` (`id_kuis`,`id_user`,`percobaan_ke`),
   KEY `fk_sesi_user` (`id_user`),

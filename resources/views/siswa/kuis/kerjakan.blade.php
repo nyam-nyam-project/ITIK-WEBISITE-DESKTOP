@@ -14,7 +14,38 @@
 
 <body>
 
-<div class="layout">
+<!-- MODAL AWAL: MULAI UJIAN & KUNCI LAYAR PENUH -->
+<div id="fullscreenModal" class="fullscreen-modal-overlay">
+    <div class="fullscreen-modal-card">
+        <div class="fullscreen-modal-icon">🔒</div>
+        <h2>Ujian Moda Layar Penuh (CBT)</h2>
+        <p>
+            Untuk menjaga integritas dan ketertiban ujian, Anda wajib mengaktifkan mode layar penuh.
+            Segala bentuk perpindahan tab, jendela, atau keluar dari layar penuh akan dicatat sebagai pelanggaran.
+        </p>
+        <p class="fullscreen-modal-sub">
+            Maksimal toleransi: <strong>{{ \App\Http\Controllers\SiswaKuisController::BATAS_PELANGGARAN }} kali</strong> pelanggaran sebelum ujian dikumpulkan otomatis.
+        </p>
+        <button type="button" id="btnMulaiLayarPenuh" class="btn-fullscreen-start">
+            Mulai Ujian &amp; Kunci Layar Penuh
+        </button>
+    </div>
+</div>
+
+<!-- OVERLAY MERAH: PERINGATAN PELANGGARAN -->
+<div id="pelanggaranOverlay" class="pelanggaran-overlay is-cbt-hidden" role="alert" aria-live="assertive">
+    <div class="pelanggaran-card">
+        <div class="pelanggaran-icon">⚠️</div>
+        <h2 id="pelanggaranPesan" class="pelanggaran-text">
+            ⚠️ PERINGATAN (0/{{ \App\Http\Controllers\SiswaKuisController::BATAS_PELANGGARAN }}): Anda terdeteksi keluar dari layar penuh atau berpindah jendela. Segera kembali ke mode layar penuh.
+        </h2>
+        <button type="button" id="btnKembaliLayarPenuh" class="btn-warning-action">
+            Kembali ke Layar Penuh
+        </button>
+    </div>
+</div>
+
+<div class="layout is-cbt-hidden" id="cbtLayout">
 
     <!-- SIDEBAR CBT (NAVIGASI LUAR DITUTUP) -->
 
@@ -84,7 +115,11 @@
 
             <div class="section-card">
 
-                <form id="formKuis" data-jawaban-url="{{ route('siswa.kuis.jawaban', $kuis->id_kuis) }}">
+                <form id="formKuis"
+                    data-jawaban-url="{{ route('siswa.kuis.jawaban', $kuis->id_kuis) }}"
+                    data-pelanggaran-url="{{ route('siswa.kuis.pelanggaran', $kuis->id_kuis) }}"
+                    data-hasil-url="{{ route('siswa.kuis.hasil', $kuis->id_kuis) }}"
+                    data-batas="{{ \App\Http\Controllers\SiswaKuisController::BATAS_PELANGGARAN }}">
 
                     @forelse ($soal as $index => $item)
 

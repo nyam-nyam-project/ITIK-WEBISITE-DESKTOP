@@ -116,6 +116,115 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
        PENGUNCI NAVIGASI & KEAMANAN MODA UJIAN (CBT LOCK)
        ======================================================== */
     let formSubmitted = false;
+    let ujianDimulai = false;
+    let waktuPelanggaranTerakhir = 0;
+    const JEDA_DEBOUNCE_MS = 1500;
+
+    // Gerbang Layar Penuh (Wajib sebelum soal ditampilkan)
+    const btnMulaiLayarPenuh = document.getElementById('btnMulaiLayarPenuh');
+    const modalFullscreen = document.getElementById('fullscreenModal');
+    const cbtLayout = document.getElementById('cbtLayout');
+    const overlayPelanggaran = document.getElementById('pelanggaranOverlay');
+    const btnKembaliLayarPenuh = document.getElementById('btnKembaliLayarPenuh');
+
+    async function mintaLayarPenuh() {
+        try {
+            if (!document.fullscreenElement) {
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    await document.documentElement.webkitRequestFullscreen();
+                }
+            }
+            if (navigator.keyboard && typeof navigator.keyboard.lock === 'function') {
+                try {
+                    await navigator.keyboard.lock(['Escape']);
+                } catch (_) {
+                    // Abaikan jika tidak diizinkan atau tidak didukung
+                }
+            }
+        } catch (err) {
+            console.warn('Layar penuh tidak dapat diaktifkan secara otomatis:', err);
+        }
+    }
+
+    if (btnMulaiLayarPenuh) {
+        btnMulaiLayarPenuh.addEventListener('click', async function () {
+            await mintaLayarPenuh();
+            ujianDimulai = true;
+            if (modalFullscreen) {
+                modalFullscreen.classList.add('is-cbt-hidden');
+            }
+            if (cbtLayout) {
+                cbtLayout.classList.remove('is-cbt-hidden');
+            }
+        });
+    }
+
+    if (btnKembaliLayarPenuh) {
+        btnKembaliLayarPenuh.addEventListener('click', async function () {
+            await mintaLayarPenuh();
+            if (overlayPelanggaran) {
+                overlayPelanggaran.classList.add('is-cbt-hidden');
+            }
+        });
+    }
+
+    // Catat pelanggaran ke server
+    function laporkanPelanggaran() {
+        if (!ujianDimulai || formSubmitted || sudahSubmit) {
+            return;
+        }
+
+        const sekarang = Date.now();
+        if (sekarang - waktuPelanggaranTerakhir < JEDA_DEBOUNCE_MS) {
+            return;
+        }
+        waktuPelanggaranTerakhir = sekarang;
+
+        const formKuisEl = document.getElementById('formKuis');
+        const endpoint = formKuisEl?.dataset.pelanggaranUrl;
+        const hasilUrl = formKuisEl?.dataset.hasilUrl;
+
+        if (!endpoint || !csrfToken) {
+            return;
+        }
+
+        fetch(endpoint, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.autoSubmitted) {
+                sudahSubmit = true;
+                formSubmitted = true;
+                if (hasilUrl) {
+                    window.location.href = hasilUrl;
+                } else {
+                    window.location.reload();
+                }
+                return;
+            }
+
+            const pesanEl = document.getElementById('pelanggaranPesan');
+            if (pesanEl) {
+                pesanEl.textContent = '⚠️ PERINGATAN (' + data.jumlah + '/' + data.batas + '): Anda terdeteksi keluar dari layar penuh atau berpindah jendela. Segera kembali ke mode layar penuh.';
+            }
+            if (overlayPelanggaran) {
+                overlayPelanggaran.classList.remove('is-cbt-hidden');
+            }
+        })
+        .catch(err => {
+            console.error('Gagal mencatat pelanggaran:', err);
+        });
+    }
 
     // 1. Tangani submit resmi kuis
     const formKuisSubmit = document.getElementById('form-kuis');
@@ -145,8 +254,16 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
         alert('⚠️ PERINGATAN: Navigasi browser dinonaktifkan selama ujian berlangsung. Harap selesaikan kuis dan klik tombol "Kumpulkan kuis".');
     });
 
-    // 4. Blokir tombol refresh keyboard (F5, Ctrl+R, Alt+Left)
+    // 4. Blokir tombol refresh keyboard (F5, Ctrl+R, Alt+Left) dan tombol sistem (Alt, Windows/Meta)
     window.addEventListener('keydown', function (e) {
+        // Tombol Windows (Meta/OS) dan kombinasi Alt+Tab ditangani langsung oleh sistem operasi (OS)
+        // dan hanya bisa dicegah sebagian oleh browser web.
+        if (e.key === 'Alt' || e.key === 'Meta' || e.key === 'OS') {
+            e.preventDefault();
+            alert('⚠️ Tombol sistem (Alt / Windows / Meta) dinonaktifkan selama ujian.');
+            return false;
+        }
+
         if (
             e.key === 'F5' ||
             (e.ctrlKey && (e.key === 'r' || e.key === 'R')) ||
@@ -158,14 +275,23 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
         }
     });
 
-    // 5. Deteksi siswa berpindah window / tab browser
-    let switchTabCount = 0;
+    // 5. Catat pelanggaran dari tiga kejadian: fullscreenchange, visibilitychange, dan window.blur
+    document.addEventListener('fullscreenchange', function () {
+        if (ujianDimulai && !document.fullscreenElement) {
+            laporkanPelanggaran();
+        } else if (document.fullscreenElement && overlayPelanggaran && !formSubmitted && !sudahSubmit) {
+            overlayPelanggaran.classList.add('is-cbt-hidden');
+        }
+    });
+
     document.addEventListener('visibilitychange', function () {
-        if (document.hidden) {
-            switchTabCount++;
-        } else {
-            if (switchTabCount > 0 && !formSubmitted && !sudahSubmit) {
-                alert('⚠️ PERINGATAN: Anda terdeteksi meninggalkan halaman ujian (' + switchTabCount + ' kali). Harap tetap berada di halaman ujian hingga selesai dikumpulkan!');
-            }
+        if (ujianDimulai && document.hidden) {
+            laporkanPelanggaran();
+        }
+    });
+
+    window.addEventListener('blur', function () {
+        if (ujianDimulai && !formSubmitted && !sudahSubmit) {
+            laporkanPelanggaran();
         }
     });

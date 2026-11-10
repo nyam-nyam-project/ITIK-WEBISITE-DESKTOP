@@ -13,10 +13,13 @@ use App\Models\Mengerjakan;
 use App\Models\RemedialSiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class SiswaKuisController extends Controller
 {
+    public const BATAS_PELANGGARAN = 3;
+
     public function __construct(private KuisSubmissionService $submission)
     {
     }
@@ -548,6 +551,45 @@ class SiswaKuisController extends Controller
             'success' => true,
             'message' => 'Jawaban tersimpan.',
             'id_draft' => $draft->id_draft,
+        ]);
+    }
+
+    /**
+     * Catat pelanggaran CBT (keluar fullscreen / pindah tab / blur).
+     * Jika pelanggaran mencapai batas (3), kuis otomatis disubmit.
+     */
+    public function catatPelanggaran(Request $request, Kuis $kuis)
+    {
+        $user = Auth::user();
+
+        $sesi = $this->submission->sesiAktif($kuis->id_kuis, $user->id_user);
+
+        if (!$sesi) {
+            abort(404, 'Sesi kuis aktif tidak ditemukan.');
+        }
+
+        // Naikkan penghitung secara atomik di database
+        DB::update(
+            'UPDATE sesi_kuis SET jumlah_pelanggaran = jumlah_pelanggaran + 1 WHERE id_sesi = ? AND waktu_selesai IS NULL',
+            [$sesi->id_sesi]
+        );
+
+        $jumlah = (int) DB::table('sesi_kuis')
+            ->where('id_sesi', $sesi->id_sesi)
+            ->value('jumlah_pelanggaran');
+
+        $autoSubmitted = false;
+
+        if ($jumlah >= self::BATAS_PELANGGARAN) {
+            $sesi->refresh();
+            $this->submission->submit($sesi);
+            $autoSubmitted = true;
+        }
+
+        return response()->json([
+            'jumlah' => $jumlah,
+            'batas' => self::BATAS_PELANGGARAN,
+            'autoSubmitted' => $autoSubmitted,
         ]);
     }
 

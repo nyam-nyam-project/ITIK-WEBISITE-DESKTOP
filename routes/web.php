@@ -226,6 +226,9 @@ Route::middleware(['auth', 'role:siswa'])
         Route::post('/kuis/{kuis}/jawaban', [SiswaKuisController::class, 'simpanJawaban'])
             ->name('kuis.jawaban');
 
+        Route::post('/kuis/{kuis}/pelanggaran', [SiswaKuisController::class, 'catatPelanggaran'])
+            ->name('kuis.pelanggaran');
+
         Route::post('/kuis/{kuis}/submit', [SiswaKuisController::class, 'submit'])
             ->name('kuis.submit');
 

@@ -78,6 +78,7 @@ class AdminPanelTest extends TestCase
             $table->string('nama_mapel', 100);
             $table->text('deskripsi')->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
         });
 
@@ -87,6 +88,7 @@ class AdminPanelTest extends TestCase
             $table->string('tingkat', 10);
             $table->string('id_tahun_ajaran', 50);
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
             $table->unique(['nama_kelas', 'id_tahun_ajaran']);
             $table->foreign('id_tahun_ajaran')->references('id_tahun_ajaran')->on('tahun_ajaran')->restrictOnDelete();
@@ -140,6 +142,7 @@ class AdminPanelTest extends TestCase
             $table->string('status_publikasi', 20)->default('draft');
             $table->string('id_publisher', 50)->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->foreign('id_user')->references('id_user')->on('user')->restrictOnDelete();
             $table->foreign('id_publisher')->references('id_user')->on('user')->nullOnDelete();

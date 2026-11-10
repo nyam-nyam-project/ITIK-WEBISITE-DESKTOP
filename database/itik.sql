@@ -219,6 +219,7 @@ CREATE TABLE `kuis` (
   `status_publikasi` varchar(20) NOT NULL DEFAULT 'draft' COMMENT 'draft/terbit - validasi isi soal, bukan nilai',
   `id_publisher` varchar(50) DEFAULT NULL COMMENT 'Guru yang mempublikasikan/memvalidasi kuis ini',
   `is_aktif` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Soft delete: 0 = diarsipkan/dihapus',
+  `tampil_jawaban` enum('tidak','setelah_submit','setelah_kkm') NOT NULL DEFAULT 'setelah_submit' COMMENT 'Kapan siswa boleh melihat benar/salah per soal',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

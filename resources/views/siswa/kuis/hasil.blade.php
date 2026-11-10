@@ -55,6 +55,7 @@
             @endif
         </div>
 
+        @if($tampilDetail ?? false)
         <div class="eval-stats">
             <div class="eval-stat-box">
                 <div class="eval-stat-num u-color-166534">{{ $totalBenar ?? 0 }}</div>
@@ -69,6 +70,7 @@
                 <div class="eval-stat-label">Total Butir Soal</div>
             </div>
         </div>
+        @endif
     </section>
 
     <!-- KANAN: DETAIL KUIS -->
@@ -100,7 +102,8 @@
 </div>
 
 <!-- EVALUASI SOAL BENAR & SALAH -->
-@if(isset($soal) && $soal->isNotEmpty())
+@if($tampilDetail ?? false)
+    @if(isset($soal) && $soal->isNotEmpty())
     <section class="card">
         <div class="card-header">
             <div>
@@ -174,6 +177,12 @@
                 </div>
             </div>
         @endforeach
+    </section>
+    @endif
+@else
+    {{-- Evaluasi tidak ditampilkan sesuai pengaturan kuis --}}
+    <section class="card">
+        <p class="muted">Evaluasi per soal tidak tersedia untuk kuis ini.</p>
     </section>
 @endif
 

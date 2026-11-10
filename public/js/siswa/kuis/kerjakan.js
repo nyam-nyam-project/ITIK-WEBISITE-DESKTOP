@@ -260,7 +260,7 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
         // dan hanya bisa dicegah sebagian oleh browser web.
         if (e.key === 'Alt' || e.key === 'Meta' || e.key === 'OS') {
             e.preventDefault();
-            alert('⚠️ Tombol sistem (Alt / Windows / Meta) dinonaktifkan selama ujian.');
+            alert('⚠️ PERINGATAN: Anda terdeteksi mencoba keluar dari halaman ujian! Harap tetap berada di halaman kuis hingga selesai.');
             return false;
         }
 

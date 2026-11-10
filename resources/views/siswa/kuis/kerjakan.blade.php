@@ -47,40 +47,6 @@
 
 <div class="layout is-cbt-hidden" id="cbtLayout">
 
-    <!-- SIDEBAR CBT (NAVIGASI LUAR DITUTUP) -->
-
-    <aside class="sidebar u-background-linear-gradient-180deg-2c285a-1b173d">
-
-        <div class="logo">
-            <div class="logo-icon u-background-rgba-255-255-255-0p1 u-border-color-rgba-255-255-255-0p25">IT</div>
-
-            <div>
-                <h2>ITIK CBT</h2>
-                <span>Moda Ujian Aktif</span>
-            </div>
-        </div>
-
-        <div class="u-background-rgba-255-75-75-0p18 u-border-1px-solid-rgba-255-100-100-0p4 u-border-radius-16px u-padding-18px-16px u-margin-bottom-25px u-text-align-center">
-            <div class="u-font-size-28px u-margin-bottom-6px">🔒</div>
-            <div class="u-font-weight-bold u-font-size-15px u-color-ffb8b8 u-margin-bottom-6px">Navigasi Dikunci</div>
-            <p class="u-font-size-13px u-color-e0dcf8 u-line-height-1p5 u-margin-0">
-                Semua menu luar dinonaktifkan demi integritas ujian. Harap selesaikan kuis hingga tuntas.
-            </p>
-        </div>
-
-        <div class="menu-title u-color-9f9ac7">
-            Panduan Peserta
-        </div>
-
-        <div class="u-font-size-13px u-color-c4c0e6 u-line-height-1p6">
-            <p class="u-margin-bottom-12px">✓ Jawaban tersimpan otomatis saat memilih opsi.</p>
-            <p class="u-margin-bottom-12px">✓ Jangan menutup browser atau berpindah tab.</p>
-            <p class="u-margin-bottom-0">✓ Klik tombol <strong>Kumpulkan kuis</strong> jika sudah selesai.</p>
-        </div>
-
-    </aside>
-
-
     <!-- CONTENT -->
 
     <main class="content">

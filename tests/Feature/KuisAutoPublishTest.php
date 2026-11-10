@@ -66,6 +66,7 @@ class KuisAutoPublishTest extends TestCase
             $table->string('id_tahun_ajaran', 50)->primary();
             $table->string('nama', 100);
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
         });
 
@@ -73,6 +74,7 @@ class KuisAutoPublishTest extends TestCase
             $table->string('id_mapel', 50)->primary();
             $table->string('nama_mapel', 150);
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
         });
 
@@ -92,6 +94,7 @@ class KuisAutoPublishTest extends TestCase
             $table->string('status_publikasi', 20)->default('draft');
             $table->string('id_publisher', 50)->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamp('created_at')->nullable()->useCurrent();
         });
     }

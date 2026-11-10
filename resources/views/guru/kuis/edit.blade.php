@@ -191,6 +191,24 @@
             </div>
         </div>
 
+        {{-- TAMPIL JAWABAN --}}
+        <div class="field">
+            <label for="tampil_jawaban">Tampilkan Evaluasi Soal ke Siswa</label>
+            <select id="tampil_jawaban" name="tampil_jawaban">
+                <option value="setelah_submit" @selected(old('tampil_jawaban', $kuis->tampil_jawaban ?? 'setelah_submit') === 'setelah_submit')>
+                    Tampilkan setelah siswa submit (default)
+                </option>
+                <option value="setelah_kkm" @selected(old('tampil_jawaban', $kuis->tampil_jawaban) === 'setelah_kkm')>
+                    Tampilkan hanya jika siswa lulus KKM
+                </option>
+                <option value="tidak" @selected(old('tampil_jawaban', $kuis->tampil_jawaban) === 'tidak')>
+                    Jangan tampilkan evaluasi soal
+                </option>
+            </select>
+            <p class="help">Menentukan kapan siswa dapat melihat rincian benar/salah per soal setelah mengerjakan kuis.</p>
+            @error('tampil_jawaban') <div class="error">{{ $message }}</div> @enderror
+        </div>
+
         <div class="form-actions">
             <a href="{{ route('kuis.index', ['mapel' => $kuis->id_mapel]) }}" class="btn btn-secondary">
                 Batal

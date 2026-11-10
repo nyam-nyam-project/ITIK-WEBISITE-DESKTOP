@@ -16,6 +16,8 @@ class Kuis extends Model
 
     public $timestamps = false;
 
+    public const PILIHAN_TAMPIL_JAWABAN = ['tidak', 'setelah_submit', 'setelah_kkm'];
+
     protected $fillable = [
         'id_kuis',
         'judul',
@@ -32,6 +34,7 @@ class Kuis extends Model
         'status_publikasi',
         'id_publisher',
         'is_aktif',
+        'tampil_jawaban',
     ];
 
     protected $casts = [

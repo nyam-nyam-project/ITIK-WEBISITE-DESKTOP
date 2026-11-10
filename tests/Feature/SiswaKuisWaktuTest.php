@@ -86,6 +86,7 @@ class SiswaKuisWaktuTest extends TestCase
             $table->string('nama_mapel', 100);
             $table->text('deskripsi')->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
         });
 
@@ -105,6 +106,7 @@ class SiswaKuisWaktuTest extends TestCase
             $table->string('status_publikasi', 20)->default('draft');
             $table->string('id_publisher', 50)->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->foreign('id_mapel')->references('id_mapel')->on('mapel')->restrictOnDelete();
             $table->foreign('id_tahun_ajaran')->references('id_tahun_ajaran')->on('tahun_ajaran')->restrictOnDelete();

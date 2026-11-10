@@ -706,6 +706,23 @@ class SiswaKuisController extends Controller
 
         $lulus = $hasil->nilai !== null && $kuis->kkm !== null && (float) $hasil->nilai >= (float) $kuis->kkm;
 
+        // Tentukan apakah detail evaluasi soal (benar/salah) boleh ditampilkan ke siswa.
+        // Keputusan dibuat di controller; Blade hanya menerima data yang sudah difilter.
+        $tampilJawaban = $kuis->tampil_jawaban ?? 'setelah_submit';
+        $tampilDetail  = match ($tampilJawaban) {
+            'tidak'       => false,
+            'setelah_kkm' => $lulus,
+            default       => true, // 'setelah_submit'
+        };
+
+        // Jika tidak boleh tampil, kosongkan data evaluasi agar tidak bocor ke view
+        if (! $tampilDetail) {
+            $soal         = collect();
+            $draftJawaban = collect();
+            $totalBenar   = null;
+            $totalSalah   = null;
+        }
+
         return view('siswa.kuis.hasil', compact(
             'kuis',
             'hasil',
@@ -716,7 +733,8 @@ class SiswaKuisController extends Controller
             'soal',
             'draftJawaban',
             'totalBenar',
-            'totalSalah'
+            'totalSalah',
+            'tampilDetail'
         ));
     }
 

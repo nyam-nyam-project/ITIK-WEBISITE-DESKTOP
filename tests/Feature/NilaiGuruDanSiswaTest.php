@@ -69,6 +69,7 @@ class NilaiGuruDanSiswaTest extends TestCase
             $table->date('tanggal_mulai');
             $table->date('tanggal_selesai');
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
         });
 
@@ -77,6 +78,7 @@ class NilaiGuruDanSiswaTest extends TestCase
             $table->string('nama_mapel', 100);
             $table->text('deskripsi')->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
         });
 
@@ -109,6 +111,7 @@ class NilaiGuruDanSiswaTest extends TestCase
             $table->string('status_publikasi', 20)->default('draft');
             $table->string('id_publisher', 50)->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamp('created_at')->nullable()->useCurrent();
         });
 
@@ -194,6 +197,7 @@ class NilaiGuruDanSiswaTest extends TestCase
             $table->string('tingkat', 20)->nullable();
             $table->string('id_tahun_ajaran', 50)->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
         });
 

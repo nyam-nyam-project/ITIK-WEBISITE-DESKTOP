@@ -22,6 +22,8 @@ class KuisController extends Controller
 
     private const KATEGORI = ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'];
 
+    private const PILIHAN_TAMPIL_JAWABAN = ['tidak', 'setelah_submit', 'setelah_kkm'];
+
     private function pilihanMapel(?string $idMapelSaatIni = null)
     {
         $user = Auth::user();
@@ -216,6 +218,8 @@ class KuisController extends Controller
             'materi.*' => 'exists:materi,id_materi',
 
             'id_kuis_asal' => 'nullable|exists:kuis,id_kuis',
+
+            'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
         ], [
             'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
             'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
@@ -315,6 +319,9 @@ class KuisController extends Controller
         */
         unset($validated['materi']);
         unset($validated['id_kuis_asal']);
+
+        // Default tampil_jawaban jika tidak diisi
+        $validated['tampil_jawaban'] = $validated['tampil_jawaban'] ?? 'setelah_submit';
 
         /*
         * Simpan kuis.
@@ -436,6 +443,8 @@ class KuisController extends Controller
             'waktu_selesai' => 'nullable|date',
             'materi' => 'nullable|array',
             'materi.*' => 'exists:materi,id_materi',
+
+            'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
         ], [
             'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
             'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',

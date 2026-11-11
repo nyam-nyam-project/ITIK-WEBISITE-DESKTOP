@@ -10,6 +10,7 @@ use App\Models\Soal;
 use App\Models\SesiKuis;
 use App\Models\DraftJawaban;
 use App\Models\Mengerjakan;
+use App\Models\Progress;
 use App\Models\RemedialSiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -232,6 +233,23 @@ class SiswaKuisController extends Controller
             }
         }
 
+        // Post-test: pastikan materi terkait sudah dipelajari dan diselesaikan siswa
+        if (strtolower(trim($kuis->kategori)) === 'post-test' && Schema::hasTable('progress') && Schema::hasTable('materi') && Schema::hasTable('materi_kuis')) {
+            $materiBelumSelesai = $kuis->materi()
+                ->whereDoesntHave('progress', function ($q) use ($user) {
+                    $q->where('id_user', $user->id_user)
+                        ->where('status', 'selesai');
+                })
+                ->first();
+
+            if ($materiBelumSelesai) {
+                return back()->with(
+                    'error',
+                    'Post-test ini terkunci. Pelajari dan selesaikan materi "' . $materiBelumSelesai->judul . '" terlebih dahulu.'
+                );
+            }
+        }
+
         // Progresi tingkat kesulitan kuis harian (Point 1)
         $isKuisHarian = strtolower(trim($kuis->kategori)) === 'kuis harian';
         $tingkatKuis = strtolower(trim($kuis->tingkat_kesulitan ?? 'mudah'));
@@ -406,6 +424,23 @@ class SiswaKuisController extends Controller
                 abort(
                     403,
                     'Tugas remedial tidak dapat dikerjakan.'
+                );
+            }
+        }
+
+        // Post-test: pastikan materi terkait sudah dipelajari dan diselesaikan siswa
+        if (strtolower(trim($kuis->kategori)) === 'post-test' && Schema::hasTable('progress') && Schema::hasTable('materi') && Schema::hasTable('materi_kuis')) {
+            $materiBelumSelesai = $kuis->materi()
+                ->whereDoesntHave('progress', function ($q) use ($user) {
+                    $q->where('id_user', $user->id_user)
+                        ->where('status', 'selesai');
+                })
+                ->first();
+
+            if ($materiBelumSelesai) {
+                return redirect()->route('siswa.kuis.index')->with(
+                    'error',
+                    'Post-test ini terkunci. Pelajari dan selesaikan materi "' . $materiBelumSelesai->judul . '" terlebih dahulu.'
                 );
             }
         }
@@ -723,6 +758,10 @@ class SiswaKuisController extends Controller
             $totalSalah   = null;
         }
 
+        $materiTerkait = (Schema::hasTable('materi') && Schema::hasTable('materi_kuis'))
+            ? $kuis->materi()->first()
+            : null;
+
         return view('siswa.kuis.hasil', compact(
             'kuis',
             'hasil',
@@ -734,7 +773,8 @@ class SiswaKuisController extends Controller
             'draftJawaban',
             'totalBenar',
             'totalSalah',
-            'tampilDetail'
+            'tampilDetail',
+            'materiTerkait'
         ));
     }
 
@@ -865,6 +905,14 @@ class SiswaKuisController extends Controller
         $lulusMudahPerMapel = [];
         $lulusSedangPerMapel = [];
 
+        $userProgressSelesai = collect();
+        if (Schema::hasTable('progress')) {
+            $userProgressSelesai = Progress::where('id_user', $idUser)
+                ->where('status', 'selesai')
+                ->pluck('id_materi')
+                ->flip();
+        }
+
         $statusKuis = [];
         foreach ($kuis as $item) {
             $riwayat = $nilaiSiswa->get($item->id_kuis);
@@ -898,8 +946,21 @@ class SiswaKuisController extends Controller
         }
 
         foreach ($kuis as $item) {
-            $isKuisHarian = strtolower(trim($item->kategori)) === 'kuis harian';
+            $kat = strtolower(trim($item->kategori ?? ''));
+            $isKuisHarian = $kat === 'kuis harian';
+            $isPostTest = $kat === 'post-test';
             $tingkat = strtolower(trim($item->tingkat_kesulitan ?? 'mudah'));
+
+            if ($isPostTest && Schema::hasTable('progress') && Schema::hasTable('materi') && Schema::hasTable('materi_kuis') && $item->materi->isNotEmpty()) {
+                $materiBelumSelesai = $item->materi->first(function ($m) use ($userProgressSelesai) {
+                    return !isset($userProgressSelesai[$m->id_materi]);
+                });
+
+                if ($materiBelumSelesai) {
+                    $statusKuis[$item->id_kuis]['terkunci'] = true;
+                    $statusKuis[$item->id_kuis]['alasan_kunci'] = 'Pelajari dan selesaikan materi "' . $materiBelumSelesai->judul . '" terlebih dahulu sebelum mengerjakan Post-test.';
+                }
+            }
 
             if ($isKuisHarian) {
                 $idMat = $item->materi->first()?->id_materi;

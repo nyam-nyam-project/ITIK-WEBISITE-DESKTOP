@@ -60,7 +60,7 @@ class GuruController extends Controller
             'nama_lengkap' => $validated['nama_lengkap'],
             'role' => 'guru',
             'status' => 'aktif',
-            'email' => $validated['email'] ?? null,
+            'email' => null,
             'password' => $validated['password'],
             'wajib_ganti_password' => true,
             'dibuat_oleh' => Auth::id(),
@@ -98,7 +98,7 @@ class GuruController extends Controller
         $perubahan = [
             'nomor_induk' => $validated['nomor_induk'],
             'nama_lengkap' => $validated['nama_lengkap'],
-            'email' => $validated['email'] ?? null,
+            'email' => null,
             'status' => $validated['status'],
         ];
 

@@ -59,12 +59,19 @@ class ProgressController extends Controller
 
         $mapelTerpilih = null;
         $materi        = collect();
+        $kuisSelesaiIds = collect();
 
         if ($idMapel) {
             $mapelTerpilih = Mapel::find($idMapel);
 
             if ($mapelTerpilih) {
                 $query = Materi::where('id_mapel', $idMapel)
+                    ->with([
+                        'kuis' => function ($q) {
+                            $q->where('is_aktif', true)
+                                ->where('status_publikasi', 'terbit');
+                        }
+                    ])
                     ->withCount(['kuis' => function ($q) {
                         $q->where('is_aktif', true)
                             ->where('status_publikasi', 'terbit');
@@ -81,6 +88,17 @@ class ProgressController extends Controller
                 $materi = $query->orderBy('bab')
                     ->orderBy('judul')
                     ->get();
+
+                if ($materi->isNotEmpty() && Schema::hasTable('mengerjakan')) {
+                    $semuaKuisIds = $materi->pluck('kuis')->flatten()->pluck('id_kuis')->unique();
+                    if ($semuaKuisIds->isNotEmpty()) {
+                        $kuisSelesaiIds = \App\Models\Mengerjakan::whereIn('id_kuis', $semuaKuisIds)
+                            ->where('id_user', $user->id_user)
+                            ->where('status_pengerjaan', 'final')
+                            ->pluck('id_kuis')
+                            ->flip();
+                    }
+                }
             }
         }
 
@@ -90,6 +108,7 @@ class ProgressController extends Controller
             'materi',
             'idMapel',
             'tanpaKelas',
+            'kuisSelesaiIds',
         ));
     }
     /**
@@ -104,6 +123,25 @@ class ProgressController extends Controller
         [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
         if ($tanpaKelas || !$mapelIds->contains($materi->id_mapel)) {
             abort(403, 'Materi ini tidak termasuk dalam mata pelajaran kelasmu.');
+        }
+
+        // Cek apakah ada Pre-test aktif & terbit yang belum diselesaikan siswa
+        if (Schema::hasTable('mengerjakan')) {
+            $preTestBelumSelesai = $materi->kuis()
+                ->where('is_aktif', true)
+                ->where('status_publikasi', 'terbit')
+                ->whereRaw('LOWER(TRIM(kategori)) = ?', ['pre-test'])
+                ->whereDoesntHave('mengerjakan', function ($q) use ($user) {
+                    $q->where('id_user', $user->id_user)
+                        ->where('status_pengerjaan', 'final');
+                })
+                ->first();
+
+            if ($preTestBelumSelesai) {
+                return redirect()
+                    ->route('siswa.materi.index', ['mapel' => $materi->id_mapel])
+                    ->with('error', 'Materi ini terkunci. Silakan kerjakan Pre-test "' . $preTestBelumSelesai->judul . '" terlebih dahulu.');
+            }
         }
 
         $progress = Progress::firstOrCreate(
@@ -145,6 +183,25 @@ class ProgressController extends Controller
         [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
         if ($tanpaKelas || !$mapelIds->contains($materi->id_mapel)) {
             abort(403, 'Materi ini tidak termasuk dalam mata pelajaran kelasmu.');
+        }
+
+        // Cek apakah ada Pre-test aktif & terbit yang belum diselesaikan
+        if (Schema::hasTable('mengerjakan')) {
+            $preTestBelumSelesai = $materi->kuis()
+                ->where('is_aktif', true)
+                ->where('status_publikasi', 'terbit')
+                ->whereRaw('LOWER(TRIM(kategori)) = ?', ['pre-test'])
+                ->whereDoesntHave('mengerjakan', function ($q) use ($user) {
+                    $q->where('id_user', $user->id_user)
+                        ->where('status_pengerjaan', 'final');
+                })
+                ->first();
+
+            if ($preTestBelumSelesai) {
+                return redirect()
+                    ->route('siswa.materi.index', ['mapel' => $materi->id_mapel])
+                    ->with('error', 'Materi ini terkunci. Silakan selesaikan Pre-test terlebih dahulu.');
+            }
         }
 
         $progress = Progress::firstOrCreate(

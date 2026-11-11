@@ -413,6 +413,38 @@ class AdminPanelTest extends TestCase
         $this->assertDatabaseCount('kuis', 2);
     }
 
+    public function test_admin_can_toggle_mapel_status_from_index_action_and_redirects(): void
+    {
+        $mapel = Mapel::find('MP001');
+        $this->assertTrue($mapel->is_aktif);
+
+        $this->actingAs($this->admin)
+            ->patch(route('admin.mapel.update', 'MP001'), ['is_aktif' => 0])
+            ->assertRedirect(route('admin.mapel.index'))
+            ->assertSessionHas('success');
+
+        $mapel->refresh();
+        $this->assertFalse($mapel->is_aktif);
+        $this->assertSame('TIK', $mapel->kode_mapel);
+        $this->assertSame('Teknologi Informasi', $mapel->nama_mapel);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.mapel.index'));
+        $response->assertOk();
+        $response->assertSee('Aktifkan');
+
+        $this->actingAs($this->admin)
+            ->patch(route('admin.mapel.update', 'MP001'))
+            ->assertRedirect(route('admin.mapel.index'))
+            ->assertSessionHas('success');
+
+        $mapel->refresh();
+        $this->assertTrue($mapel->is_aktif);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.mapel.index'));
+        $response->assertOk();
+        $response->assertSee('Nonaktifkan');
+    }
+
     public function test_mapel_update_rejects_another_normalized_code(): void
     {
         Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
@@ -685,14 +717,14 @@ class AdminPanelTest extends TestCase
         $this->assertDatabaseHas('materi', ['id_materi' => 'M001', 'id_user' => 'U002']);
 
         $this->post(route('logout'))->assertRedirect(route('login'));
-        $this->from(route('login'))->post(route('login.process'), ['email' => strtolower($id).'@example.test', 'password' => 'secret123'])
-            ->assertRedirect(route('login'))->assertSessionHasErrors('email');
+        $this->from(route('login'))->post(route('login.process'), ['nomor_induk' => '000'.substr($id, 1), 'password' => 'secret123'])
+            ->assertRedirect(route('login'))->assertSessionHasErrors(['nomor_induk', 'email']);
         $this->assertGuest();
         $this->actingAs($this->admin)->patch(route('admin.'.$resource.'.aktifkan', $id))
             ->assertRedirect(route('admin.'.$resource.'.index'));
         $this->assertDatabaseHas('user', ['id_user' => $id, 'status' => 'aktif']);
         $this->post(route('logout'));
-        $this->post(route('login.process'), ['email' => strtolower($id).'@example.test', 'password' => 'secret123'])
+        $this->post(route('login.process'), ['nomor_induk' => '000'.substr($id, 1), 'password' => 'secret123'])
             ->assertRedirect(route($landing))->assertSessionHasNoErrors();
         $this->assertAuthenticatedAs(User::findOrFail($id));
         $this->assertSame($before, (array) DB::table('mengerjakan')->where('id_mengerjakan', $scoreId)->first());
@@ -701,7 +733,7 @@ class AdminPanelTest extends TestCase
     #[DataProvider('accountResources')]
     public function test_an_already_authenticated_session_is_denied_after_account_becomes_inactive(string $resource, string $id, string $landing): void
     {
-        $this->post(route('login.process'), ['email' => strtolower($id).'@example.test', 'password' => 'secret123'])
+        $this->post(route('login.process'), ['nomor_induk' => '000'.substr($id, 1), 'password' => 'secret123'])
             ->assertRedirect(route($landing));
         $this->assertAuthenticatedAs(User::findOrFail($id));
         $guardName = $this->app['auth']->guard()->getName();

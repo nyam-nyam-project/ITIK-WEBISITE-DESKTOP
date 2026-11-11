@@ -20,7 +20,7 @@ class KuisController extends Controller
 {
     use MenghasilkanId;
 
-    private const KATEGORI = ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'];
+    public const KATEGORI = ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'];
 
     private const PILIHAN_TAMPIL_JAWABAN = ['tidak', 'setelah_submit', 'setelah_kkm'];
 
@@ -158,6 +158,18 @@ class KuisController extends Controller
             $materiDipreselect = $kandidat;
         }
 
+        // Preselect dan kunci kategori jika dikirim via query
+        $kategoriDipreselect = null;
+        if ($request->filled('kategori')) {
+            $kategoriQuery = strtolower(trim((string) $request->query('kategori')));
+            if (! in_array($kategoriQuery, self::KATEGORI, true)) {
+                return redirect()
+                    ->route('materi.index')
+                    ->with('error', 'Kategori kuis tidak valid.');
+            }
+            $kategoriDipreselect = $kategoriQuery;
+        }
+
         $user = Auth::user();
         $materiQuery = Materi::orderBy('bab')->orderBy('judul');
         if ($user && $user->role === 'guru') {
@@ -171,6 +183,20 @@ class KuisController extends Controller
         ->orderBy('judul')
         ->get();
 
+        // Cek duplikat: satu materi hanya boleh punya 1 pre-test & 1 post-test aktif
+        if ($materiDipreselect && $kategoriDipreselect && in_array($kategoriDipreselect, ['pre-test', 'post-test'], true)) {
+            $sudahAda = $materiDipreselect->kuis()
+                ->where('is_aktif', true)
+                ->whereRaw('LOWER(TRIM(kategori)) = ?', [$kategoriDipreselect])
+                ->exists();
+            if ($sudahAda) {
+                $labelKategori = ucfirst($kategoriDipreselect);
+                return redirect()
+                    ->route('materi.show', $materiDipreselect->id_materi)
+                    ->with('error', "Materi ini sudah memiliki {$labelKategori} aktif. Setiap materi hanya boleh memiliki satu {$kategoriDipreselect}.");
+            }
+        }
+
         // Jika ada materi dipreselect, gunakan mapelnya; jika tidak, pakai query param
         $mapelTerpilih = $materiDipreselect
             ? $materiDipreselect->id_mapel
@@ -182,7 +208,7 @@ class KuisController extends Controller
 
         return view('guru.kuis.create', compact(
             'materi', 'kuisAsal', 'mapel', 'tahunAjaran',
-            'mapelTerpilih', 'materiDipreselect'
+            'mapelTerpilih', 'materiDipreselect', 'kategoriDipreselect'
         ));
     }
 
@@ -341,6 +367,30 @@ class KuisController extends Controller
         }
 
         /*
+        * Validasi: pre-test dan post-test maksimal 1 per materi (aktif).
+        */
+        if (in_array($kuis->kategori, ['pre-test', 'post-test'], true) && $request->filled('materi')) {
+            $labelKategori = ucfirst($kuis->kategori);
+            foreach ($request->materi as $idMateri) {
+                $materiObj = Materi::find($idMateri);
+                if (!$materiObj) {
+                    continue;
+                }
+                $konflik = $materiObj->kuis()
+                    ->where('is_aktif', true)
+                    ->whereRaw('LOWER(TRIM(kategori)) = ?', [$kuis->kategori])
+                    ->exists();
+                if ($konflik) {
+                    // Hapus kuis yang baru dibuat sebelum lempar error
+                    $kuis->delete();
+                    throw ValidationException::withMessages([
+                        'materi' => 'Materi "' . $materiObj->judul . '" sudah memiliki ' . $labelKategori . ' aktif. Setiap materi hanya boleh memiliki satu ' . $kuis->kategori . '.',
+                    ]);
+                }
+            }
+        }
+
+        /*
         * Hubungkan materi untuk:
         * post-test, pre-test, kuis harian, ulangan.
         */
@@ -398,10 +448,11 @@ class KuisController extends Controller
                 ->with('error', 'Kuis yang sudah terbit tidak dapat diedit. Ubah ke status draft terlebih dahulu.');
         }
 
+        $materiDikunci = in_array(strtolower(trim((string) $kuis->kategori)), ['pre-test', 'post-test'], true);
+
         $materi = Materi::orderBy('bab')
             ->orderBy('judul')
             ->get();
-
         $materiTerpilih = $kuis->materi
             ->pluck('id_materi')
             ->toArray();
@@ -410,7 +461,7 @@ class KuisController extends Controller
 
         return view(
             'guru.kuis.edit',
-            compact('kuis', 'materi', 'materiTerpilih', 'mapel')
+            compact('kuis', 'materi', 'materiTerpilih', 'mapel', 'materiDikunci')
         );
     }
 
@@ -501,7 +552,8 @@ class KuisController extends Controller
 
         $kuis->update($validated);
 
-        if ($validated['kategori'] !== 'remedial') {
+        // Pre-test dan Post-test: materi dikunci, tidak boleh diubah saat edit
+        if (!in_array($kuis->kategori, ['pre-test', 'post-test', 'remedial'], true)) {
             $kuis->materi()->sync($request->materi ?? []);
         }
 

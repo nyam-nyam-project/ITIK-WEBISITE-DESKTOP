@@ -106,26 +106,47 @@
         <!-- PILIH MATERI TERKAIT -->
         <div id="materi-container" class="special-card">
             <label class="u-font-weight-700 u-display-block u-margin-bottom-6px" for="materi-select">Materi Terkait</label>
-            <p class="muted small u-margin-bottom-10px">Pilih materi yang berkaitan dengan kuis. Tahan tombol Ctrl (Windows) untuk memilih beberapa bab.</p>
-            <select class="u-height-140px u-width-100pct u-border-1px-solid-d0c8ed u-border-radius-10px u-padding-10px"
-                id="materi-select"
-                name="materi[]"
-                multiple
-
-            >
+            @if ($materiDikunci ?? false)
+                {{-- Pre-test / Post-test: materi dikunci, tidak boleh diubah --}}
                 @foreach ($materi as $itemMateri)
-                    <option
-                        value="{{ $itemMateri->id_materi }}"
-                        data-mapel="{{ $itemMateri->id_mapel }}"
-                        @selected(in_array($itemMateri->id_materi, old('materi', $materiTerpilih ?? [])))
-                    >
-                        @if ($itemMateri->bab) [{{ $itemMateri->bab }}] - @endif {{ $itemMateri->judul }}
-                    </option>
+                    @if (in_array($itemMateri->id_materi, $materiTerpilih ?? []))
+                        <div class="materi-locked-item">
+                            <label class="checkbox-label u-display-flex u-items-center u-gap-8px">
+                                <input type="checkbox" checked disabled aria-disabled="true">
+                                <span>
+                                    @if ($itemMateri->bab)<strong>[{{ $itemMateri->bab }}]</strong> - @endif
+                                    {{ $itemMateri->judul }}
+                                    <span class="muted small">(Terkunci)</span>
+                                </span>
+                            </label>
+                            <input type="hidden" name="materi[]" value="{{ $itemMateri->id_materi }}">
+                        </div>
+                    @endif
                 @endforeach
-            </select>
-            <p id="materi-empty-hint" class="help u-display-none u-color-c98200 u-font-weight-700 u-margin-top-8px">
-                ⚠️ Belum ada materi untuk mata pelajaran ini.
-            </p>
+                <p class="help u-margin-top-8px">
+                    ⚠️ Materi {{ ucfirst($kuis->kategori) }} dikunci dan tidak dapat diubah saat edit.
+                </p>
+            @else
+                <p class="muted small u-margin-bottom-10px">Pilih materi yang berkaitan dengan kuis. Tahan tombol Ctrl (Windows) untuk memilih beberapa bab.</p>
+                <select class="u-height-140px u-width-100pct u-border-1px-solid-d0c8ed u-border-radius-10px u-padding-10px"
+                    id="materi-select"
+                    name="materi[]"
+                    multiple
+                >
+                    @foreach ($materi as $itemMateri)
+                        <option
+                            value="{{ $itemMateri->id_materi }}"
+                            data-mapel="{{ $itemMateri->id_mapel }}"
+                            @selected(in_array($itemMateri->id_materi, old('materi', $materiTerpilih ?? [])))
+                        >
+                            @if ($itemMateri->bab) [{{ $itemMateri->bab }}] - @endif {{ $itemMateri->judul }}
+                        </option>
+                    @endforeach
+                </select>
+                <p id="materi-empty-hint" class="help u-display-none u-color-c98200 u-font-weight-700 u-margin-top-8px">
+                    ⚠️ Belum ada materi untuk mata pelajaran ini.
+                </p>
+            @endif
         </div>
 
         <div class="grid grid-2">

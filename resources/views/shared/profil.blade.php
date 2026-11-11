@@ -34,10 +34,6 @@
             <dd>{{ $pengguna?->nama_lengkap ?? '—' }}</dd>
         </div>
         <div>
-            <dt>Email</dt>
-            <dd>{{ $pengguna?->email ?? 'Belum diisi' }}</dd>
-        </div>
-        <div>
             <dt>Peran</dt>
             <dd>{{ ucfirst($pengguna?->role ?? '—') }}</dd>
         </div>

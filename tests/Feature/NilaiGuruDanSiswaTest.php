@@ -466,4 +466,71 @@ class NilaiGuruDanSiswaTest extends TestCase
         $resShow->assertSee($this->kuisUlangan->judul);
         $resShow->assertSee(route('siswa.kuis.mulai', $this->kuisUlangan->id_kuis));
     }
+
+    public function test_siswa_yang_punya_remedial_melihatnya_di_halaman_nilai(): void
+    {
+        // 1. Buat kuis remedial
+        $kuisRemedial = Kuis::create([
+            'id_kuis' => 'K_REM_01',
+            'judul' => 'Remedial Ulangan Harian 1',
+            'kategori' => 'remedial',
+            'tingkat_kesulitan' => 'sedang',
+            'id_mapel' => $this->mapel->id_mapel,
+            'id_tahun_ajaran' => 'TA001',
+            'alokasi_waktu' => 20,
+            'kkm' => 75.00,
+            'id_user' => $this->guru->id_user,
+            'status_publikasi' => 'terbit',
+            'is_aktif' => true,
+        ]);
+
+        Remedial::create([
+            'id_kuis_remedial' => $kuisRemedial->id_kuis,
+            'id_kuis_asal' => $this->kuisUlangan->id_kuis,
+        ]);
+
+        // 2. Buat riwayat pengerjaan siswa yang gagal
+        $mengerjakan = Mengerjakan::create([
+            'id_user' => $this->siswa->id_user,
+            'id_kuis' => $this->kuisUlangan->id_kuis,
+            'nilai' => 50.00,
+            'status_pengerjaan' => 'final',
+            'percobaan_ke' => 1,
+            'tanggal' => now(),
+            'status_validasi' => 'divalidasi',
+        ]);
+
+        // 3. Tugaskan remedial ke siswa
+        $remedialSiswa = RemedialSiswa::create([
+            'id_kuis_remedial' => $kuisRemedial->id_kuis,
+            'id_mengerjakan_asal' => $mengerjakan->id_mengerjakan,
+            'id_guru' => $this->guru->id_user,
+            'tanggal_ditugaskan' => now()->toDateString(),
+            'status' => 'ditugaskan',
+        ]);
+
+        $this->actingAs($this->siswa);
+
+        // 4. Kunjungi halaman nilai siswa
+        $response = $this->get(route('siswa.nilai'));
+        $response->assertOk();
+
+        // 5. Pastikan bagian tugas remedial tampil dengan data yang tepat
+        $response->assertSee('Tugas Remedial Saya');
+        $response->assertSee($kuisRemedial->judul);
+        $response->assertSee($this->kuisUlangan->judul);
+        $response->assertSee('50.00'); // Nilai awal
+        $response->assertSee(route('siswa.remedial.kerjakan', $remedialSiswa->id_remedial_siswa));
+        $response->assertSee('Kerjakan Remedial');
+
+        // 6. Pastikan menu sidebar 'Remedial' sudah tidak ada lagi
+        $response->assertDontSee('<span>Remedial</span>', false);
+        $response->assertDontSee('href="' . route('siswa.remedial.index') . '"', false);
+
+        // 7. Route siswa.remedial.index tetap ada dan dapat diakses (misal dari dashboard)
+        $resRemedialPage = $this->get(route('siswa.remedial.index'));
+        $resRemedialPage->assertOk();
+        $resRemedialPage->assertSee('Tugas Remedial Saya');
+        $resRemedialPage->assertSee($kuisRemedial->judul);
+    }
 }

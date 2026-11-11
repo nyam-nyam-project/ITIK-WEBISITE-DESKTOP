@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\KuisSubmissionService;
+use App\Services\RemedialService;
 use App\Models\Kuis;
 use App\Models\Mapel;
 use App\Models\Materi;
@@ -21,8 +22,11 @@ class SiswaKuisController extends Controller
 {
     public const BATAS_PELANGGARAN = 3;
 
-    public function __construct(private KuisSubmissionService $submission)
-    {
+    public function __construct(
+        private KuisSubmissionService $submission,
+        private ?RemedialService $remedialService = null
+    ) {
+        $this->remedialService = $remedialService ?? app(RemedialService::class);
     }
 
     /**
@@ -879,6 +883,8 @@ class SiswaKuisController extends Controller
             });
         }
 
+        $tugas = $this->remedialService->untukSiswa($user->id_user);
+
         return view('siswa.nilai.index', compact(
             'mapelAktif',
             'mapelTerpilih',
@@ -887,7 +893,8 @@ class SiswaKuisController extends Controller
             'ringkasanBab',
             'hasil',
             'hasilUlanganUmum',
-            'semuaHasil'
+            'semuaHasil',
+            'tugas'
         ));
     }
     /**

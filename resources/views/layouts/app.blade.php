@@ -65,7 +65,6 @@
                 ['siswa.materi.index', 'siswa.materi.*', 'Materi', 'M4 4h16v16H4zM9 9h6M9 12h6M9 15h4'],
                 ['siswa.kuis.index', 'siswa.kuis.*', 'Kuis', 'M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2'],
                 ['siswa.nilai', 'siswa.nilai*', 'Nilai Saya', 'M4 3v18h17M8 17v-5M13 17V7M18 17v-8'],
-                ['siswa.remedial.index', 'siswa.remedial.*', 'Remedial', 'M4 4v7l8 4 8-4V4M4 11v7l8 4 8-4v-7'],
                 ['profil', 'profil', 'Profil Saya', 'M20 21v-2a7 7 0 0 0-14 0v2M13 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8'],
             ];
         }

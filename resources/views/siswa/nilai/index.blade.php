@@ -293,4 +293,7 @@
     </section>
 @endif
 
+{{-- BAGIAN TUGAS REMEDIAL --}}
+@include('siswa.remedial._tabel')
+
 @endsection

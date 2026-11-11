@@ -101,6 +101,16 @@
                                 <div class="soal-text">{{ $item->pertanyaan }}</div>
                             </div>
 
+                            @if ($item->tipe === 'essay')
+                                <div class="essay-entry">
+                                    <label for="essay-{{ $item->id_soal }}">Jawaban essay</label>
+                                    <textarea id="essay-{{ $item->id_soal }}"
+                                        name="jawaban_teks[{{ $item->id_soal }}]"
+                                        form="form-kuis" rows="6"
+                                        data-essay-answer data-soal="{{ $item->id_soal }}"
+                                        aria-describedby="essay-submit-note">{{ old('jawaban_teks.'.$item->id_soal, $draftJawaban->get($item->id_soal)?->jawaban_teks) }}</textarea>
+                                </div>
+                            @else
                             <div class="opsi-list">
 
                                 <label class="opsi">
@@ -161,6 +171,7 @@
                                 @endif
 
                             </div>
+                            @endif
 
                         </div>
 
@@ -226,8 +237,22 @@
                 <div class="section-card">
 
                     <p class="submit-note">
-                        Jawabanmu tersimpan otomatis. Kumpulkan kuis setelah semua soal selesai dikerjakan.
+                        Jawaban pilihan ganda tersimpan otomatis. Kumpulkan kuis setelah selesai dikerjakan.
                     </p>
+                    @if ($soal->contains('tipe', 'essay'))
+                        <p class="submit-note essay-submit-note" id="essay-submit-note">
+                            Jawaban essay tidak tersimpan otomatis. Klik Kumpulkan kuis sebelum waktu habis.
+                            Jawaban essay yang belum dikumpulkan dapat hilang saat halaman dimuat ulang,
+                            waktu habis, atau kuis dikumpulkan otomatis karena pelanggaran.
+                        </p>
+                    @endif
+                    @if ($errors->any())
+                        <div class="submit-note essay-submit-note" role="alert">
+                            @foreach ($errors->all() as $error)
+                                <p>{{ $error }}</p>
+                            @endforeach
+                        </div>
+                    @endif
 
                     <form
                         id="form-kuis"

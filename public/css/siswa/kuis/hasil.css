@@ -12,6 +12,14 @@
 .score-number.gagal {
     color: #991b1b;
 }
+.score-number.pending {
+    color: var(--muted);
+}
+.essay-review-note {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
 .eval-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

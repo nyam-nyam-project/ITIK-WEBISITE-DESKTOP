@@ -1,3 +1,7 @@
+[data-pg-only][hidden] {
+    display: none !important;
+}
+
 .options-entry {
     background: #fbfafd;
     border: 1px dashed #d0c8ed;

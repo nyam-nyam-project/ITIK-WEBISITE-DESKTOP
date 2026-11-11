@@ -196,6 +196,35 @@ body {
     padding-top: 6px;
 }
 
+.essay-entry {
+    display: grid;
+    gap: 10px;
+}
+
+.essay-entry textarea {
+    width: 100%;
+    min-height: 150px;
+    resize: vertical;
+    padding: 14px 18px;
+    border: 1px solid #e3e0f5;
+    border-radius: 16px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: inherit;
+}
+
+.essay-entry textarea:focus-visible {
+    outline: 3px solid #b9aefc;
+    outline-offset: 2px;
+}
+
+.submit-note.essay-submit-note {
+    color: #842029;
+    background: #fdf0f0;
+    border-radius: 12px;
+    padding: 12px;
+}
+
 .opsi-list {
     display: grid;
     gap: 10px;

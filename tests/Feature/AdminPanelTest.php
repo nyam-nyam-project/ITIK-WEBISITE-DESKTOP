@@ -69,6 +69,7 @@ class AdminPanelTest extends TestCase
             $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();
             $table->boolean('is_aktif')->default(false);
+            $table->tinyInteger('aktif_unik')->storedAs('CASE WHEN is_aktif = 1 THEN 1 ELSE NULL END')->unique();
             $table->timestamps();
         });
 
@@ -1076,9 +1077,48 @@ class AdminPanelTest extends TestCase
             'id_user' => 'U002',
             'id_kelas' => 'KLS001',
             'id_mapel' => 'MP001',
-        ])->assertSessionHasErrors('id_user');
+        ])->assertRedirect(route('admin.pengajaran.index'))->assertSessionHas('success');
 
         $this->assertDatabaseCount('pengajaran', 1);
+    }
+
+    public function test_tiga_pasangan_dibuat_dan_duplikat_dilewati(): void
+    {
+        // KLS001 dan KLS002 sudah ada di seedScenario dengan MP001 terdaftar di mapel_kelas
+        Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
+
+        // Daftarkan MP002 ke KLS001 dan KLS002 sehingga ada 4 kombinasi di kurikulum:
+        // (KLS001, MP001), (KLS001, MP002), (KLS002, MP001), (KLS002, MP002)
+        DB::table('mapel_kelas')->insert([
+            ['id_mapel' => 'MP002', 'id_kelas' => 'KLS001'],
+            ['id_mapel' => 'MP002', 'id_kelas' => 'KLS002'],
+        ]);
+
+        // Pasangan 1 sudah ada sebelumnya (duplikat): (U002, KLS001, MP001)
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        // Kirim 2 kelas dan 2 mapel (total kombinasi perkalian = 2 x 2 = 4 pasangan)
+        $response = $this->actingAs($this->admin)->post(route('admin.pengajaran.store'), [
+            'id_user' => 'U002',
+            'id_kelas' => ['KLS001', 'KLS002'],
+            'id_mapel' => ['MP001', 'MP002'],
+        ]);
+
+        $response->assertRedirect(route('admin.pengajaran.index'));
+        $response->assertSessionHas('success');
+
+        // Verifikasi flash message memuat info 3 dibuat dan 1 dilewati
+        $successMsg = session('success');
+        $this->assertStringContainsString('3 dibuat', $successMsg);
+        $this->assertStringContainsString('1 dilewati', $successMsg);
+
+        // Verifikasi di database: awalnya 1, tambah 3 baru = total 4 penugasan
+        $this->assertDatabaseCount('pengajaran', 4);
+
+        // 3 pasangan baru harus ada di database
+        $this->assertDatabaseHas('pengajaran', ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP002']);
+        $this->assertDatabaseHas('pengajaran', ['id_user' => 'U002', 'id_kelas' => 'KLS002', 'id_mapel' => 'MP001']);
+        $this->assertDatabaseHas('pengajaran', ['id_user' => 'U002', 'id_kelas' => 'KLS002', 'id_mapel' => 'MP002']);
     }
 
     public function test_admin_can_destroy_pengajaran_without_deleting_user_class_or_mapel(): void
@@ -1143,5 +1183,60 @@ class AdminPanelTest extends TestCase
         // Materi inside pengajaran is accessible
         $this->actingAs($this->guru)->get(route('materi.show', 'M001'))->assertOk();
         $this->actingAs($this->guru)->get(route('materi.edit', 'M001'))->assertOk();
+    }
+
+    public function test_salin_tahun_ajaran_menyalin_kelas_dan_mapel_tanpa_pengajaran_atau_anggota(): void
+    {
+        // Beri pengajaran ke KLS001
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.tahun-ajaran.salin', 'TA001'));
+
+        $response->assertRedirect(route('admin.tahun-ajaran.index'));
+        $response->assertSessionHas('success');
+
+        // Tahun baru tercipta dengan is_aktif = 0
+        $tahunBaru = TahunAjaran::where('id_tahun_ajaran', '!=', 'TA001')->first();
+        $this->assertNotNull($tahunBaru);
+        $this->assertSame(0, (int) $tahunBaru->is_aktif);
+        $this->assertStringContainsString('2026/2027', $tahunBaru->nama);
+
+        // Kelas disalin ke tahun baru
+        $kelasBaru = Kelas::where('id_tahun_ajaran', $tahunBaru->id_tahun_ajaran)->get();
+        $this->assertCount(2, $kelasBaru);
+        $this->assertEqualsCanonicalizing(['X TKJ 1', 'X TKJ 2'], $kelasBaru->pluck('nama_kelas')->all());
+
+        // Mapel kelas ikut disalin
+        foreach ($kelasBaru as $kb) {
+            $this->assertDatabaseHas('mapel_kelas', [
+                'id_kelas' => $kb->id_kelas,
+                'id_mapel' => 'MP001',
+            ]);
+            // Anggota kelas tidak disalin
+            $this->assertDatabaseMissing('anggota_kelas', [
+                'id_kelas' => $kb->id_kelas,
+            ]);
+            // Pengajaran tidak disalin
+            $this->assertDatabaseMissing('pengajaran', [
+                'id_kelas' => $kb->id_kelas,
+            ]);
+        }
+    }
+
+    public function test_dua_tahun_tidak_bisa_aktif_bersamaan_di_database(): void
+    {
+        // TA001 saat ini aktif (is_aktif = 1)
+        $this->assertSame(1, (int) TahunAjaran::where('is_aktif', 1)->count());
+
+        // Mencoba update row kedua menjadi is_aktif = 1 tanpa menonaktifkan yang pertama harus gagal karena constraint
+        TahunAjaran::create([
+            'id_tahun_ajaran' => 'TA002',
+            'nama' => '2027/2028',
+            'is_aktif' => 0,
+        ]);
+
+        $this->expectException(\Illuminate\Database\QueryException::class);
+        DB::table('tahun_ajaran')->where('id_tahun_ajaran', 'TA002')->update(['is_aktif' => 1]);
     }
 }

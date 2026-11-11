@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Kelas;
 use App\Models\TahunAjaran;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
@@ -68,6 +69,53 @@ class TahunAjaranController extends Controller
         return redirect()
             ->route('admin.tahun-ajaran.index')
             ->with('success', "Tahun ajaran {$tahunAjaran->nama} sekarang aktif.");
+    }
+
+    public function salin(TahunAjaran $sumber)
+    {
+        DB::transaction(function () use ($sumber) {
+            $idBaru = $this->idBerikutnya('tahun_ajaran', 'id_tahun_ajaran', 'TA');
+            $suffix = ' (Salinan)';
+            $namaBaru = mb_substr($sumber->nama, 0, 20 - mb_strlen($suffix)) . $suffix;
+
+            $counter = 1;
+            while (TahunAjaran::where('nama', $namaBaru)->exists()) {
+                $suffix = " (Sal.{$counter})";
+                $namaBaru = mb_substr($sumber->nama, 0, 20 - mb_strlen($suffix)) . $suffix;
+                $counter++;
+            }
+
+            $tahunBaru = TahunAjaran::create([
+                'id_tahun_ajaran' => $idBaru,
+                'nama'            => $namaBaru,
+                'tanggal_mulai'   => $sumber->tanggal_mulai,
+                'tanggal_selesai' => $sumber->tanggal_selesai,
+                'is_aktif'        => 0,
+            ]);
+
+            $kelasSumber = $sumber->kelas()->get();
+
+            foreach ($kelasSumber as $kelas) {
+                $idKelasBaru = $this->idBerikutnya('kelas', 'id_kelas', 'KLS');
+
+                $kelasBaru = Kelas::create([
+                    'id_kelas'        => $idKelasBaru,
+                    'nama_kelas'      => $kelas->nama_kelas,
+                    'tingkat'         => $kelas->tingkat,
+                    'id_tahun_ajaran' => $tahunBaru->id_tahun_ajaran,
+                    'is_aktif'        => true,
+                ]);
+
+                $mapelIds = $kelas->mapel()->pluck('mapel.id_mapel')->toArray();
+                if (! empty($mapelIds)) {
+                    $kelasBaru->mapel()->attach($mapelIds);
+                }
+            }
+        });
+
+        return redirect()
+            ->route('admin.tahun-ajaran.index')
+            ->with('success', "Tahun ajaran berhasil disalin dari {$sumber->nama}. Kelas dan kurikulum mapel disalin; pengajaran dan anggota kelas tidak disalin.");
     }
 
     private function validasi(Request $request, ?string $kecuali = null): array

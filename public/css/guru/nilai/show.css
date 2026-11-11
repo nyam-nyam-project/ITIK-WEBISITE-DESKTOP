@@ -83,3 +83,84 @@
     background: #fee2e2;
     color: #991b1b;
 }
+.essay-pending-summary {
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    background: #f8f7fc;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+.essay-pending-summary p {
+    margin: 8px 0 0;
+}
+.soal-guru-item.essay {
+    border-left-color: #94a3b8;
+}
+.essay-question,
+.essay-answer,
+.essay-comment {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 14px;
+    line-height: 1.6;
+}
+.essay-question {
+    margin-bottom: 16px;
+}
+.essay-label {
+    font-size: 14px;
+    margin: 12px 0 8px;
+}
+.essay-answer {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #f9fafb;
+}
+.essay-score {
+    margin: 16px 0;
+}
+.essay-grade-form {
+    display: grid;
+    gap: 16px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+.essay-field {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+.essay-field label {
+    font-size: 14px;
+    font-weight: 600;
+}
+.essay-field input,
+.essay-field textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font: inherit;
+}
+.essay-field textarea {
+    resize: vertical;
+}
+.essay-field input:focus-visible,
+.essay-field textarea:focus-visible {
+    outline: 2px solid var(--purple);
+    outline-offset: 2px;
+}
+.essay-field [aria-invalid="true"] {
+    border-color: #b91c1c;
+}
+.essay-field-error {
+    margin: 0;
+    color: #991b1b;
+    font-size: 13px;
+}
+.essay-grade-form .btn {
+    justify-self: start;
+}

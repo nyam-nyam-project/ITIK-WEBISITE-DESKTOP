@@ -237,6 +237,10 @@ class ValidasiNilaiController extends Controller
             ->get()
             ->keyBy('id_soal');
 
+        $nilaiEssay = $soal->contains('tipe', 'essay')
+            ? NilaiEssay::where('id_mengerjakan', $mengerjakan->id_mengerjakan)->get()->keyBy('id_soal')
+            : collect();
+
         $totalBenar = 0;
         $totalSalah = 0;
         foreach ($soal as $s) {
@@ -259,6 +263,7 @@ class ValidasiNilaiController extends Controller
                 'remedial',
                 'soal',
                 'draftJawaban',
+                'nilaiEssay',
                 'totalBenar',
                 'totalSalah'
             )

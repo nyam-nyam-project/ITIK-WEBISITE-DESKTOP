@@ -8,6 +8,7 @@
 @section('content')
 @php
     $lulus = $lulus ?? ($hasil->nilai !== null && $kuis->kkm !== null && (float) $hasil->nilai >= (float) $kuis->kkm);
+    $menungguPenilaian = $hasil->status_validasi === 'menunggu penilaian';
 @endphp
 
 <div class="page-heading">
@@ -29,11 +30,11 @@
                 Buka Materi Pembelajaran →
             </a>
         @endif
-        @if(!$lulus && $bolehUlang)
+        @if(!$menungguPenilaian && !$lulus && $bolehUlang)
             <a href="{{ route('siswa.kuis.mulai', $kuis->id_kuis) }}" class="btn btn-warning">
                 ↻ Kerjakan Ulang Kuis
             </a>
-        @elseif(!$lulus && $katKuis === 'ulangan')
+        @elseif(!$menungguPenilaian && !$lulus && $katKuis === 'ulangan')
             <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning">
                 Lihat Tugas Remedial
             </a>
@@ -48,12 +49,15 @@
     <!-- KIRI: KARTU NILAI -->
     <section class="card score-card">
         <span class="muted small">Nilai Akhir Kamu</span>
-        <div class="score-number {{ $lulus ? '' : 'gagal' }}">
-            {{ $hasil->nilai }}
+        <div class="score-number {{ $menungguPenilaian ? 'pending' : ($lulus ? '' : 'gagal') }}">
+            {{ $menungguPenilaian ? '—' : $hasil->nilai }}
         </div>
 
         <div>
-            @if($lulus)
+            @if($menungguPenilaian)
+                <span class="badge">Menunggu penilaian</span>
+                <p class="essay-review-note">Nilai akhir tersedia setelah seluruh essay dinilai oleh guru.</p>
+            @elseif($lulus)
                 <span class="badge badge-success">✓ Lulus (≥ KKM {{ $kuis->kkm ?? '-' }})</span>
             @else
                 <span class="badge badge-warning">⚠️ Tidak Lulus (&lt; KKM {{ $kuis->kkm ?? '-' }})</span>
@@ -112,12 +116,23 @@
     <section class="card">
         <div class="card-header">
             <div>
-                <h2>📋 Evaluasi Soal (Benar &amp; Salah)</h2>
+                <h2>Evaluasi Soal</h2>
                 <p class="muted">Pelajari butir soal untuk mengevaluasi pemahaman materi Anda.</p>
             </div>
         </div>
 
         @foreach($soal as $itemSoal)
+            @if($itemSoal->tipe === 'essay')
+                <div class="soal-card essay-review" data-essay-review="{{ $itemSoal->id_soal }}">
+                    <div class="soal-card-header">
+                        <div class="soal-card-title">Soal #{{ $loop->iteration }}</div>
+                        <span class="badge">Essay</span>
+                    </div>
+                    <div class="soal-pertanyaan">{{ $itemSoal->pertanyaan }}</div>
+                    <p class="essay-review-note">Soal essay dinilai oleh guru berdasarkan bobot {{ $itemSoal->bobot }}.</p>
+                </div>
+                @continue
+            @endif
             @php
                 $jawabanDipilih = $draftJawaban->get($itemSoal->id_soal)?->jawaban_dipilih;
                 $kunciBenar = $itemSoal->jawaban ? strtoupper($itemSoal->jawaban) : null;

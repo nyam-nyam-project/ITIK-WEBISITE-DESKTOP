@@ -1,4 +1,22 @@
 (() => {
+    const typeSelect = document.querySelector('[data-soal-type]');
+    if (typeSelect) {
+        const pgGroups = typeSelect.form.querySelectorAll('[data-pg-only]');
+        const updateType = function () {
+            const isEssay = typeSelect.value === 'essay';
+            pgGroups.forEach(group => {
+                group.hidden = isEssay;
+                group.querySelectorAll('input, select, textarea').forEach(input => {
+                    input.disabled = isEssay;
+                    input.required = !isEssay && input.hasAttribute('data-pg-required');
+                });
+            });
+        };
+
+        typeSelect.addEventListener('change', updateType);
+        updateType();
+    }
+
     const optionsEntry = document.querySelector('.options-entry[data-jawaban]');
     const answerInput = document.getElementById('hidden-jawaban');
     if (!optionsEntry || !answerInput) return;
@@ -15,6 +33,8 @@
 
     rows.forEach(row => {
         row.addEventListener('click', function () {
+            if (answerInput.disabled) return;
+
             rows.forEach(option => option.classList.remove('selected'));
             row.classList.add('selected');
             answerInput.value = row.dataset.opsi;

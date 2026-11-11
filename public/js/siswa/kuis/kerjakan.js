@@ -10,6 +10,12 @@ function perbaruiNavigasi() {
         terjawab.add(radio.dataset.soal);
     });
 
+    document.querySelectorAll('[data-essay-answer]').forEach(function (textarea) {
+        if (textarea.value.trim()) {
+            terjawab.add(textarea.dataset.soal);
+        }
+    });
+
     document.querySelectorAll('[data-nav]').forEach(function (link) {
         link.classList.toggle('answered', terjawab.has(link.dataset.nav));
     });
@@ -18,6 +24,10 @@ function perbaruiNavigasi() {
 }
 
 perbaruiNavigasi();
+
+document.querySelectorAll('[data-essay-answer]').forEach(function (textarea) {
+    textarea.addEventListener('input', perbaruiNavigasi);
+});
 
 document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
 

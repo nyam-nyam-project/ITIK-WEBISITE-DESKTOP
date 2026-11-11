@@ -187,7 +187,7 @@
                             $nilaiTertinggi = $status['nilai_tertinggi'] ?? null;
                             $alasanKunci = $status['alasan_kunci'] ?? null;
                             $katItem = strtolower(trim($item->kategori ?? ''));
-                            $bisaUlang = in_array($katItem, ['kuis harian', 'pre-test', 'pass-test']);
+                            $bisaUlang = in_array($katItem, ['kuis harian', 'pre-test', 'post-test']);
                         @endphp
 
                         <div class="kuis-item {{ $terkunci ? 'terkunci' : '' }}">
@@ -298,7 +298,7 @@
                             $nilaiTertinggi = $status['nilai_tertinggi'] ?? null;
                             $alasanKunci = $status['alasan_kunci'] ?? null;
                             $katBabItem = strtolower(trim($item->kategori ?? ''));
-                            $bisaBabUlang = in_array($katBabItem, ['kuis harian', 'pre-test', 'pass-test']);
+                            $bisaBabUlang = in_array($katBabItem, ['kuis harian', 'pre-test', 'post-test']);
                         @endphp
 
                         <div class="kuis-item {{ $terkunci ? 'terkunci' : '' }}">

@@ -69,6 +69,11 @@ class Kuis extends Model
         return $this->hasMany(Soal::class, 'id_kuis', 'id_kuis');
     }
 
+    public function mengerjakan()
+    {
+        return $this->hasMany(Mengerjakan::class, 'id_kuis', 'id_kuis');
+    }
+
     public function materi()
     {
         return $this->belongsToMany(Materi::class,

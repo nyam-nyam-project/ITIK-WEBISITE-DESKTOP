@@ -142,6 +142,29 @@ class LoginNisnNipTest extends TestCase
         $this->assertAuthenticatedAs($this->guru);
     }
 
+    public function test_email_cannot_be_used_to_login_for_siswa_and_guru(): void
+    {
+        // Mencoba login siswa menggunakan email via field email
+        $responseSiswa = $this->from(route('login'))->post(route('login.process'), [
+            'email' => 'siti@siswa.sch.id',
+            'password' => 'password123',
+        ]);
+
+        $responseSiswa->assertRedirect(route('login'));
+        $responseSiswa->assertSessionHasErrors(['nomor_induk' => 'NISN, NIP, atau password salah.']);
+        $this->assertGuest();
+
+        // Mencoba login guru menggunakan email via field nomor_induk
+        $responseGuru = $this->from(route('login'))->post(route('login.process'), [
+            'nomor_induk' => 'budi@guru.sch.id',
+            'password' => 'password123',
+        ]);
+
+        $responseGuru->assertRedirect(route('login'));
+        $responseGuru->assertSessionHasErrors(['nomor_induk' => 'NISN, NIP, atau password salah.']);
+        $this->assertGuest();
+    }
+
     public function test_admin_cannot_login_through_regular_login_portal(): void
     {
         $response = $this->from(route('login'))->post(route('login.process'), [

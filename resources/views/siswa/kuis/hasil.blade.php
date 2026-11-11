@@ -21,9 +21,14 @@
     <div class="actions">
         @php
             $katKuis = strtolower(trim($kuis->kategori ?? ''));
-            $bolehUlang = in_array($katKuis, ['kuis harian', 'pre-test', 'pass-test']);
+            $bolehUlang = in_array($katKuis, ['kuis harian', 'pre-test', 'post-test']);
         @endphp
 
+        @if($katKuis === 'pre-test' && isset($materiTerkait))
+            <a href="{{ route('siswa.materi.show', $materiTerkait->id_materi) }}" class="btn">
+                Buka Materi Pembelajaran →
+            </a>
+        @endif
         @if(!$lulus && $bolehUlang)
             <a href="{{ route('siswa.kuis.mulai', $kuis->id_kuis) }}" class="btn btn-warning">
                 ↻ Kerjakan Ulang Kuis

@@ -55,11 +55,6 @@ class AuthController extends Controller
         // Siswa dan guru login menggunakan NISN/NIP (nomor_induk)
         $user = User::where('nomor_induk', $identifier)->first();
 
-        // Fallback email jika dikirim dari automated test
-        if (! $user && $request->filled('email')) {
-            $user = User::where('email', $identifier)->first();
-        }
-
         if (! $user || ! Hash::check($request->input('password'), $user->password)) {
             return back()
                 ->withErrors([

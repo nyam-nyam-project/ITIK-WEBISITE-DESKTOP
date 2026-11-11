@@ -109,14 +109,32 @@
 
             <div class="field">
                 <label for="kategori">Kategori Kuis <span class="u-color-a52a3b">*</span></label>
-                <select id="kategori" name="kategori" required>
-                    <option value="" {{ old('kategori') ? '' : 'selected' }}>-- Pilih Kategori --</option>
-                    <option value="post-test" {{ old('kategori') === 'post-test' ? 'selected' : '' }}>Post-test</option>
-                    <option value="pre-test" {{ old('kategori') === 'pre-test' ? 'selected' : '' }}>Pre-test</option>
-                    <option value="kuis harian" {{ old('kategori') === 'kuis harian' ? 'selected' : '' }}>Kuis Harian</option>
-                    <option value="ulangan" {{ old('kategori') === 'ulangan' ? 'selected' : '' }}>Ulangan</option>
-                    <option value="remedial" {{ old('kategori') === 'remedial' ? 'selected' : '' }}>Remedial</option>
-                </select>
+                @if(!empty($kategoriDipreselect))
+                    @php
+                        $kategoriLabelMap = [
+                            'post-test' => 'Post-test',
+                            'pre-test' => 'Pre-test',
+                            'kuis harian' => 'Kuis Harian',
+                            'ulangan' => 'Ulangan',
+                            'remedial' => 'Remedial',
+                        ];
+                        $kategoriTerpilih = old('kategori', $kategoriDipreselect);
+                    @endphp
+                    <select id="kategori-tampil" disabled aria-disabled="true">
+                        <option value="{{ $kategoriTerpilih }}" selected>{{ $kategoriLabelMap[$kategoriTerpilih] ?? ucfirst($kategoriTerpilih) }}</option>
+                    </select>
+                    <input type="hidden" id="kategori" name="kategori" value="{{ $kategoriTerpilih }}">
+                    <p class="help">Kategori dikunci berdasarkan tautan pembuatan kuis.</p>
+                @else
+                    <select id="kategori" name="kategori" required>
+                        <option value="" {{ old('kategori') ? '' : 'selected' }}>-- Pilih Kategori --</option>
+                        <option value="post-test" {{ old('kategori') === 'post-test' ? 'selected' : '' }}>Post-test</option>
+                        <option value="pre-test" {{ old('kategori') === 'pre-test' ? 'selected' : '' }}>Pre-test</option>
+                        <option value="kuis harian" {{ old('kategori') === 'kuis harian' ? 'selected' : '' }}>Kuis Harian</option>
+                        <option value="ulangan" {{ old('kategori') === 'ulangan' ? 'selected' : '' }}>Ulangan</option>
+                        <option value="remedial" {{ old('kategori') === 'remedial' ? 'selected' : '' }}>Remedial</option>
+                    </select>
+                @endif
                 @error('kategori') <div class="error">{{ $message }}</div> @enderror
             </div>
         </div>

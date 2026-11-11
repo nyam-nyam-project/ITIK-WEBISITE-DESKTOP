@@ -206,7 +206,7 @@ class KuisMateriMapelTest extends TestCase
     private function makeKuis(string $id, array $attributes = []): Kuis
     {
         return Kuis::create(array_replace([
-            'id_kuis' => $id, 'judul' => 'Kuis '.$id, 'kategori' => 'pre-test',
+            'id_kuis' => $id, 'judul' => 'Kuis '.$id, 'kategori' => 'kuis harian',
             'tingkat_kesulitan' => 'mudah', 'id_mapel' => 'MP001', 'id_tahun_ajaran' => 'TA001',
             'id_user' => 'U002', 'alokasi_waktu' => 20, 'kkm' => 75, 'status_publikasi' => 'draft', 'is_aktif' => true,
         ], $attributes));
@@ -223,7 +223,7 @@ class KuisMateriMapelTest extends TestCase
     private function payload(string $resource, array $attributes = []): array
     {
         $defaults = $resource === 'kuis'
-            ? ['judul' => 'Kuis baru', 'deskripsi' => 'Latihan algoritma', 'kategori' => 'pre-test',
+            ? ['judul' => 'Kuis baru', 'deskripsi' => 'Latihan algoritma', 'kategori' => 'kuis harian',
                 'id_mapel' => 'MP001', 'tingkat_kesulitan' => 'sedang', 'alokasi_waktu' => 30, 'kkm' => 80]
             : ['judul' => 'Materi baru', 'bab' => 'Bab 2', 'kelas' => 'XI', 'id_mapel' => 'MP001',
                 'deskripsi' => 'Materi pemrograman', 'link_youtube' => 'https://www.youtube.com/watch?v=regression123'];
@@ -319,7 +319,7 @@ class KuisMateriMapelTest extends TestCase
             ->assertOk()->assertViewIs('guru.'.$resource.'.edit');
         $this->assertOptions($response->getContent(), 'id_mapel', ['MP001', 'MP002', 'MP003'], 'MP003');
         if ($resource === 'kuis') {
-            $this->assertOptions($response->getContent(), 'kategori', ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'], 'pre-test');
+            $this->assertOptions($response->getContent(), 'kategori', ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'], 'kuis harian');
             $this->assertOptions($response->getContent(), 'tingkat_kesulitan', ['mudah', 'sedang', 'sulit'], 'mudah');
             $this->assertOptions($response->getContent(), 'materi[]', ['M001', 'M002'], 'M001');
         }
@@ -357,7 +357,7 @@ class KuisMateriMapelTest extends TestCase
         $response->assertRedirect(route('kuis.index', ['mapel' => 'MP002']))->assertSessionHasNoErrors();
         $id = $action === 'store' ? 'K002' : 'K001';
         $kuis = Kuis::findOrFail($id);
-        $this->assertSame('pre-test', $kuis->kategori);
+        $this->assertSame('kuis harian', $kuis->kategori);
         $this->assertSame($difficulty, $kuis->tingkat_kesulitan);
         $this->assertSame('MP002', $kuis->mapel->getKey());
         $this->assertSame('TA001', $kuis->tahunAjaran->getKey());
@@ -871,24 +871,60 @@ class KuisMateriMapelTest extends TestCase
             ->assertSessionHas('error');
     }
 
-    public function test_buat_kuis_button_links_in_materi_index_and_show(): void
+    public function test_buat_post_test_dan_pre_test_button_links_in_materi_index_and_show(): void
     {
+        $expectedLinkPost = e(route('kuis.create', ['mapel' => 'MP001', 'materi' => 'M001', 'kategori' => 'post-test']));
+        $expectedLinkPre = e(route('kuis.create', ['mapel' => 'MP001', 'materi' => 'M001', 'kategori' => 'pre-test']));
+
         // Di materi.index (level 2 saat mapel terpilih)
         $responseIndex = $this->actingAs($this->guru)
             ->get(route('materi.index', ['mapel' => 'MP001']))
             ->assertOk();
 
-        $expectedLink = e(route('kuis.create', ['mapel' => 'MP001', 'materi' => 'M001']));
-        $responseIndex->assertSee($expectedLink, false);
-        $responseIndex->assertSee('Buat Kuis');
+        $responseIndex->assertSee($expectedLinkPost, false);
+        $responseIndex->assertSee('Buat Post-test');
+        $responseIndex->assertSee($expectedLinkPre, false);
+        $responseIndex->assertSee('Buat Pre-test');
 
         // Di materi.show
         $responseShow = $this->actingAs($this->guru)
             ->get(route('materi.show', 'M001'))
             ->assertOk();
 
-        $responseShow->assertSee($expectedLink, false);
-        $responseShow->assertSee('Buat Kuis');
+        $responseShow->assertSee($expectedLinkPost, false);
+        $responseShow->assertSee('Buat Post-test');
+        $responseShow->assertSee($expectedLinkPre, false);
+        $responseShow->assertSee('Buat Pre-test');
+    }
+
+    public function test_kuis_create_preselects_and_locks_kategori_from_query(): void
+    {
+        $response = $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M001', 'kategori' => 'post-test']))
+            ->assertOk()
+            ->assertViewIs('guru.kuis.create');
+
+        $response->assertViewHas('kategoriDipreselect', 'post-test');
+        $response->assertSee('Post-test');
+        $response->assertSee('disabled', false);
+
+        $responsePre = $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M001', 'kategori' => 'pre-test']))
+            ->assertOk()
+            ->assertViewIs('guru.kuis.create');
+
+        $responsePre->assertViewHas('kategoriDipreselect', 'pre-test');
+        $responsePre->assertSee('Pre-test');
+        $responsePre->assertSee('disabled', false);
+    }
+
+    public function test_kuis_create_rejects_invalid_kategori_query(): void
+    {
+        $response = $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M001', 'kategori' => 'kategori_palsu']));
+
+        $response->assertRedirect(route('materi.index'))
+            ->assertSessionHas('error', 'Kategori kuis tidak valid.');
     }
 
     public function test_kuis_create_without_materi_param_passes_null_materiDipreselect_to_view(): void

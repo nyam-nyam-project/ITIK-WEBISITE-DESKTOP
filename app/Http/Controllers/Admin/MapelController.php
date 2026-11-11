@@ -46,6 +46,19 @@ class MapelController extends Controller
 
     public function update(Request $request, Mapel $mapel)
     {
+        if (! $request->has('nama_mapel')) {
+            $isAktif = $request->has('is_aktif')
+                ? $request->boolean('is_aktif')
+                : ! $mapel->is_aktif;
+
+            $mapel->update(['is_aktif' => $isAktif]);
+            $statusText = $isAktif ? 'diaktifkan' : 'dinonaktifkan';
+
+            return redirect()
+                ->route('admin.mapel.index')
+                ->with('success', "Mata pelajaran {$mapel->nama_mapel} berhasil {$statusText}.");
+        }
+
         $validated = $this->validasi($request, $mapel->id_mapel);
 
         $mapel->update($validated);

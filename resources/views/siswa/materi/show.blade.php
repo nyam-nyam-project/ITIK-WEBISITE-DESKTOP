@@ -126,6 +126,18 @@
                 <div class="alert alert-success u-margin-bottom-0">
                     ✓ Materi ini sudah kamu tandai selesai dipelajari!
                 </div>
+                @php
+                    $postTestMateri = isset($kuisTerkait)
+                        ? $kuisTerkait->first(fn($k) => strtolower(trim($k->kategori ?? '')) === 'post-test')
+                        : null;
+                @endphp
+                @if($postTestMateri)
+                    <div class="u-margin-top-12px">
+                        <a href="{{ route('siswa.kuis.mulai', $postTestMateri->id_kuis) }}" class="btn u-width-100pct u-text-align-center">
+                            → Lanjutkan ke Post-test
+                        </a>
+                    </div>
+                @endif
             @endif
         </section>
 
@@ -143,14 +155,27 @@
                 </p>
                 <div class="kuis-materi-list">
                     @foreach($kuisTerkait as $itemKuis)
+                        @php
+                            $isPostTest = strtolower(trim($itemKuis->kategori ?? '')) === 'post-test';
+                            $postTestTerkunci = $isPostTest && $progress->status !== 'selesai';
+                        @endphp
                         <div class="kuis-materi-item">
                             <div>
                                 <strong>{{ $itemKuis->judul }}</strong>
                                 <span class="badge small">{{ ucfirst($itemKuis->kategori) }}</span>
+                                @if($postTestTerkunci)
+                                    <span class="badge badge-muted small">🔒 Terkunci</span>
+                                @endif
                             </div>
-                            <a href="{{ route('siswa.kuis.mulai', $itemKuis->id_kuis) }}" class="btn btn-small">
-                                Mulai Kuis
-                            </a>
+                            @if($postTestTerkunci)
+                                <button type="button" class="btn btn-secondary btn-small" disabled title="Tandai materi selesai terlebih dahulu">
+                                    🔒 Materi Belum Selesai
+                                </button>
+                            @else
+                                <a href="{{ route('siswa.kuis.mulai', $itemKuis->id_kuis) }}" class="btn btn-small">
+                                    Mulai Kuis
+                                </a>
+                            @endif
                         </div>
                     @endforeach
                 </div>

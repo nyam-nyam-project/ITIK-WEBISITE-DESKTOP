@@ -7,7 +7,13 @@
         @if($mapel->isNotEmpty())
             <div class="table-wrap"><table><thead><tr><th scope="col">Kode</th><th scope="col">Mata pelajaran</th><th scope="col" class="number">Kelas</th><th scope="col" class="number">Materi</th><th scope="col" class="number">Kuis</th><th scope="col">Status</th><th scope="col">Tindakan</th></tr></thead><tbody>
                 @foreach($mapel as $item)
-                    <tr><td class="nowrap"><strong>{{ $item->kode_mapel }}</strong></td><td class="text-break"><strong>{{ $item->nama_mapel }}</strong>@if($item->deskripsi)<span class="muted small">{{ $item->deskripsi }}</span>@endif</td><td class="number">{{ $item->kelas_count }}</td><td class="number">{{ $item->materi_count }}</td><td class="number">{{ $item->kuis_count }}</td><td><span class="badge {{ $item->is_aktif ? 'badge-success' : 'badge-muted' }}">{{ $item->is_aktif ? 'Aktif' : 'Nonaktif' }}</span></td><td><a class="btn btn-secondary btn-small" href="{{ route('admin.mapel.edit', $item) }}" aria-label="Ubah mata pelajaran {{ $item->nama_mapel }}">Ubah</a></td></tr>
+                    <tr><td class="nowrap"><strong>{{ $item->kode_mapel }}</strong></td><td class="text-break"><strong>{{ $item->nama_mapel }}</strong>@if($item->deskripsi)<span class="muted small">{{ $item->deskripsi }}</span>@endif</td><td class="number">{{ $item->kelas_count }}</td><td class="number">{{ $item->materi_count }}</td><td class="number">{{ $item->kuis_count }}</td><td><span class="badge {{ $item->is_aktif ? 'badge-success' : 'badge-muted' }}">{{ $item->is_aktif ? 'Aktif' : 'Nonaktif' }}</span></td><td><div class="actions"><a class="btn btn-secondary btn-small" href="{{ route('admin.mapel.edit', $item) }}" aria-label="Ubah mata pelajaran {{ $item->nama_mapel }}">Ubah</a>
+                        <form action="{{ route('admin.mapel.update', $item) }}" method="POST" data-confirm="{{ $item->is_aktif ? 'Nonaktifkan mata pelajaran '.$item->nama_mapel.'? Materi dan kuis tetap tersimpan.' : 'Aktifkan kembali mata pelajaran '.$item->nama_mapel.'?' }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="is_aktif" value="{{ $item->is_aktif ? 0 : 1 }}">
+                            <button class="btn btn-small {{ $item->is_aktif ? 'btn-warning' : '' }}" type="submit" aria-label="{{ $item->is_aktif ? 'Nonaktifkan' : 'Aktifkan' }} {{ $item->nama_mapel }}">{{ $item->is_aktif ? 'Nonaktifkan' : 'Aktifkan' }}</button>
+                        </form>
+                    </div></td></tr>
                 @endforeach
             </tbody></table></div>
         @else

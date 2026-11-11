@@ -694,14 +694,14 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`id_user`, `nomor_induk`, `nama_lengkap`, `role`, `status`, `kelas`, `email`, `password`, `wajib_ganti_password`, `dibuat_oleh`, `created_at`, `updated_at`) VALUES
-('U001', '198001', 'Budi Guru', 'guru', 'aktif', NULL, 'budi@guru.sch.id', '$2y$12$eKPWxbVjXMbny45BTDjmnOyo1TTQmJqYjQoISOPlhn88ikQedvf/u', 0, NULL, '2026-10-28 19:32:59', '2026-10-28 19:32:59'),
-('U002', '202401', 'Siti Siswa', 'siswa', 'aktif', 'X', 'siti@siswa.sch.id', '$2y$12$Kg6QdWb756qCRmbnJqA7xeUqbzCBpP0mDWI9nkSSTX3iDWmGO4EsS', 0, NULL, '2026-10-28 19:32:59', '2026-10-28 19:32:59'),
+('U001', '198001', 'Budi Guru', 'guru', 'aktif', NULL, NULL, '$2y$12$eKPWxbVjXMbny45BTDjmnOyo1TTQmJqYjQoISOPlhn88ikQedvf/u', 0, NULL, '2026-10-28 19:32:59', '2026-10-28 19:32:59'),
+('U002', '202401', 'Siti Siswa', 'siswa', 'aktif', 'X', NULL, '$2y$12$Kg6QdWb756qCRmbnJqA7xeUqbzCBpP0mDWI9nkSSTX3iDWmGO4EsS', 0, NULL, '2026-10-28 19:32:59', '2026-10-28 19:32:59'),
 ('U003', '199001', 'Andi Operator', 'admin', 'aktif', NULL, 'andi@sekolah.sch.id', '$2y$12$AndWwgSGI0s7e43BJSdHK.au6idJPVbW0V8C9VlEzA6vmJh3eiQiq', 0, NULL, '2026-10-28 19:32:59', '2026-10-28 21:11:35'),
-('U004', '0113377232', 'ABI REPALDI', 'siswa', 'aktif', 'X', 'abi@gmail.sch.id', '$2y$12$X8oVSo3gXuWPWfwPMM2bge.kXgNWuYCLLf/S8Ya16240qS6.PcjnS', 1, 'U003', '2026-10-28 23:05:38', '2026-10-28 23:45:37'),
-('U005', '0092980660', 'ABDUL WAHAB MALIQ', 'siswa', 'aktif', 'XI', 'abdul@gmail.sch.id', '$2y$12$Ckljf/3aYq9D9mvU4onNP.WU.DASpdqtKO99bOVMu9cKtBdMbd5oq', 1, 'U003', '2026-10-28 23:54:31', '2026-10-28 23:54:31'),
-('U006', '0094659443', 'ACHMAD INGGAR ROSIDI', 'siswa', 'aktif', 'XI', 'achmad@gmail.sch.id', '$2y$12$jYC2mnt15C9rXE5uZw8XA.UJSVoBFChOHud6oJxaYBt724G/zPDWu', 0, 'U003', '2026-10-29 00:31:02', '2026-11-09 06:23:16'),
-('U007', '7846746', 'Sadan', 'guru', 'nonaktif', NULL, 'diputra3@gmail.com', '$2y$12$3NQO83otZoiGnj3il4APqe.AAQ/9lB3r0gvqIs.NE4TOESnmQA1au', 1, 'U003', '2026-10-29 00:32:10', '2026-10-31 16:58:04'),
-('U008', '0987654321', 'DesuDesu', 'siswa', 'aktif', 'X', 'sardiart6@gmail.com', '$2y$12$BzrQTmxlAGBuBDCiVbpHK.jLPfvwhTqrX4e2TK2KQIz8bizJDERXS', 0, 'U003', '2026-11-09 19:05:13', '2026-11-09 19:06:32');
+('U004', '0113377232', 'ABI REPALDI', 'siswa', 'aktif', 'X', NULL, '$2y$12$X8oVSo3gXuWPWfwPMM2bge.kXgNWuYCLLf/S8Ya16240qS6.PcjnS', 1, 'U003', '2026-10-28 23:05:38', '2026-10-28 23:45:37'),
+('U005', '0092980660', 'ABDUL WAHAB MALIQ', 'siswa', 'aktif', 'XI', NULL, '$2y$12$Ckljf/3aYq9D9mvU4onNP.WU.DASpdqtKO99bOVMu9cKtBdMbd5oq', 1, 'U003', '2026-10-28 23:54:31', '2026-10-28 23:54:31'),
+('U006', '0094659443', 'ACHMAD INGGAR ROSIDI', 'siswa', 'aktif', 'XI', NULL, '$2y$12$jYC2mnt15C9rXE5uZw8XA.UJSVoBFChOHud6oJxaYBt724G/zPDWu', 0, 'U003', '2026-10-29 00:31:02', '2026-11-09 06:23:16'),
+('U007', '7846746', 'Sadan', 'guru', 'nonaktif', NULL, NULL, '$2y$12$3NQO83otZoiGnj3il4APqe.AAQ/9lB3r0gvqIs.NE4TOESnmQA1au', 1, 'U003', '2026-10-29 00:32:10', '2026-10-31 16:58:04'),
+('U008', '0987654321', 'DesuDesu', 'siswa', 'aktif', 'X', NULL, '$2y$12$BzrQTmxlAGBuBDCiVbpHK.jLPfvwhTqrX4e2TK2KQIz8bizJDERXS', 0, 'U003', '2026-11-09 19:05:13', '2026-11-09 19:06:32');
 
 --
 -- Indexes for dumped tables

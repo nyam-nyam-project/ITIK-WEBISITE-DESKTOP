@@ -82,6 +82,19 @@
             @foreach($materi as $idx => $item)
                 @php
                     $prog = $item->relationLoaded('progress') ? $item->progress->first() : null;
+                    $preTest = $item->relationLoaded('kuis')
+                        ? $item->kuis->first(fn($k) => strtolower(trim($k->kategori ?? '')) === 'pre-test')
+                        : null;
+                    $postTest = $item->relationLoaded('kuis')
+                        ? $item->kuis->first(fn($k) => strtolower(trim($k->kategori ?? '')) === 'post-test')
+                        : null;
+
+                    $preTestSelesai = $preTest && isset($kuisSelesaiIds[$preTest->id_kuis]);
+                    $materiSelesai = $prog && $prog->status === 'selesai';
+                    $postTestSelesai = $postTest && isset($kuisSelesaiIds[$postTest->id_kuis]);
+
+                    $isMateriTerkunci = (bool) ($preTest && !$preTestSelesai);
+                    $isPostTestTerkunci = (bool) ($postTest && !$materiSelesai);
                 @endphp
                 <div class="materi-card-link">
                     <div class="materi-main-info">
@@ -99,24 +112,71 @@
                                     &bull; {{ Str::limit($item->deskripsi, 85) }}
                                 @endif
                             </p>
+                            <div class="materi-badge-group">
+                                @if($preTest)
+                                    @if($preTestSelesai)
+                                        <span class="badge badge-success">✓ Pre-test Selesai</span>
+                                    @else
+                                        <span class="badge badge-warning">Pre-test Wajib</span>
+                                    @endif
+                                @endif
+
+                                @if($isMateriTerkunci)
+                                    <span class="badge badge-muted">🔒 Materi Terkunci</span>
+                                @elseif(!$prog)
+                                    <span class="badge badge-muted">Belum Mulai</span>
+                                @elseif($prog->status === 'sedang belajar')
+                                    <span class="badge badge-warning">Sedang Belajar</span>
+                                @elseif($materiSelesai)
+                                    <span class="badge badge-success">✓ Materi Selesai</span>
+                                @else
+                                    <span class="badge">{{ $prog->status }}</span>
+                                @endif
+
+                                @if($postTest)
+                                    @if($postTestSelesai)
+                                        <span class="badge badge-success">✓ Post-test Selesai</span>
+                                    @elseif($isPostTestTerkunci)
+                                        <span class="badge badge-muted">🔒 Post-test Terkunci</span>
+                                    @else
+                                        <span class="badge badge-warning">Post-test Siap</span>
+                                    @endif
+                                @endif
+                            </div>
                         </div>
                     </div>
 
                     <div class="materi-side-info">
-                        @if(!$prog)
-                            <span class="badge badge-muted">Belum Mulai</span>
-                        @elseif($prog->status === 'sedang belajar')
-                            <span class="badge badge-warning">Sedang Belajar</span>
-                        @elseif($prog->status === 'selesai')
-                            <span class="badge badge-success">✓ Selesai</span>
+                        @if($isMateriTerkunci)
+                            <a href="{{ route('siswa.kuis.mulai', $preTest->id_kuis) }}" class="btn btn-small">
+                                Mulai Pre-test
+                            </a>
+                            <button type="button" class="btn btn-secondary btn-small" disabled title="Selesaikan Pre-test terlebih dahulu">
+                                🔒 Baca Materi
+                            </button>
                         @else
-                            <span class="badge">{{ $prog->status }}</span>
+                            <a href="{{ route('siswa.materi.show', $item->id_materi) }}" class="btn btn-secondary btn-small">
+                                Baca Materi
+                            </a>
+
+                            @if($postTest)
+                                @if($postTestSelesai)
+                                    <a href="{{ route('siswa.kuis.hasil', $postTest->id_kuis) }}" class="btn btn-secondary btn-small">
+                                        Hasil Post-test
+                                    </a>
+                                @elseif($isPostTestTerkunci)
+                                    <button type="button" class="btn btn-secondary btn-small" disabled title="Selesaikan materi terlebih dahulu">
+                                        🔒 Post-test
+                                    </button>
+                                @else
+                                    <a href="{{ route('siswa.kuis.mulai', $postTest->id_kuis) }}" class="btn btn-small">
+                                        Kerjakan Post-test
+                                    </a>
+                                @endif
+                            @endif
                         @endif
 
-                        <a href="{{ route('siswa.materi.show', $item->id_materi) }}" class="btn btn-secondary btn-small">
-                            Baca Materi
-                        </a>
-                        <a href="{{ route('siswa.kuis.index', ['mapel' => $item->id_mapel, 'materi' => $item->id_materi]) }}" class="btn btn-small">
+                        <a href="{{ route('siswa.kuis.index', ['mapel' => $item->id_mapel, 'materi' => $item->id_materi]) }}" class="btn btn-secondary btn-small">
                             Kuis Materi
                         </a>
                     </div>

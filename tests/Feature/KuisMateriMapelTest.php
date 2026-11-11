@@ -149,6 +149,7 @@ class KuisMateriMapelTest extends TestCase
         Schema::create('soal', function (Blueprint $table) {
             $table->string('id_soal', 50)->primary();
             $table->string('id_kuis', 50);
+            $table->enum('tipe', ['pilihan_ganda', 'essay'])->default('pilihan_ganda');
             $table->text('pertanyaan');
             foreach (['a', 'b', 'c', 'd', 'e'] as $option) {
                 $table->string('opsi_'.$option)->nullable();
@@ -165,6 +166,21 @@ class KuisMateriMapelTest extends TestCase
             $table->string('id_kelas', 50)->nullable();
             $table->string('id_mapel', 50);
             $table->timestamp('created_at')->nullable()->useCurrent();
+        });
+
+        Schema::create('mengerjakan', function (Blueprint $table) {
+            $table->increments('id_mengerjakan');
+            $table->string('id_kuis', 50);
+            $table->string('id_user', 50);
+            $table->decimal('nilai', 5, 2)->nullable();
+            $table->date('tanggal')->nullable();
+            $table->integer('percobaan_ke')->default(1);
+            $table->string('status_pengerjaan', 20)->default('final');
+            $table->string('status_validasi', 50)->nullable()->default('belum divalidasi');
+            $table->string('id_validator', 50)->nullable();
+            $table->unique(['id_kuis', 'id_user', 'percobaan_ke']);
+            $table->foreign('id_kuis')->references('id_kuis')->on('kuis')->restrictOnDelete();
+            $table->foreign('id_user')->references('id_user')->on('user')->cascadeOnDelete();
         });
     }
 

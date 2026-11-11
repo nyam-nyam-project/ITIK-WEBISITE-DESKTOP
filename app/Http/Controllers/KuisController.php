@@ -9,9 +9,11 @@ use App\Models\Pengajaran;
 use App\Models\Remedial;
 use App\Models\Soal;
 use App\Models\TahunAjaran;
+use App\Services\KuisPenilaianService;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -244,12 +246,14 @@ class KuisController extends Controller
             'materi.*' => 'exists:materi,id_materi',
 
             'id_kuis_asal' => 'nullable|exists:kuis,id_kuis',
+            'soal' => 'prohibited',
 
             'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
         ], [
             'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
             'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
             'tingkat_kesulitan.required' => 'Tingkat kesulitan wajib dipilih.',
+            'soal.prohibited' => 'Gunakan endpoint soal untuk mengelola soal kuis.',
         ]);
 
         /*
@@ -343,7 +347,7 @@ class KuisController extends Controller
         * id_kuis_asal bukan kolom tabel kuis,
         * jadi jangan ikut disimpan ke tabel kuis.
         */
-        unset($validated['materi']);
+        unset($validated['materi'], $validated['soal']);
         unset($validated['id_kuis_asal']);
 
         // Default tampil_jawaban jika tidak diisi
@@ -467,99 +471,107 @@ class KuisController extends Controller
 
     public function update(Request $request, $id)
     {
-        $kuis = Kuis::findOrFail($id);
-        $user = Auth::user();
+        return DB::transaction(function () use ($request, $id) {
+            $kuis = Kuis::whereKey($id)->lockForUpdate()->firstOrFail();
+            $user = Auth::user();
 
-        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
-            abort(403, 'Anda tidak berhak mengubah kuis milik guru lain.');
-        }
+            if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+                abort(403, 'Anda tidak berhak mengubah kuis milik guru lain.');
+            }
 
-        if ($kuis->status_publikasi === 'terbit') {
-            return back()
-                ->withErrors([
-                    'kuis' => 'Kuis yang sudah terbit tidak dapat diedit. Ubah ke status draft terlebih dahulu.',
-                ])
-                ->with('error', 'Kuis yang sudah terbit tidak dapat diedit. Ubah ke status draft terlebih dahulu.');
-        }
+            $this->pastikanTidakAdaPenilaianTertunda($kuis);
 
-        $validated = $request->validate([
-            'judul' => 'required|string|max:150',
-            'deskripsi' => 'nullable|string',
-            'kategori' => ['required', Rule::in(self::KATEGORI)],
-            'id_mapel' => $this->aturanMapel($kuis->id_mapel),
-            'tingkat_kesulitan' => ['required', Rule::in(['mudah', 'sedang', 'sulit'])],
-            'alokasi_waktu' => 'nullable|integer|min:1|max:300',
-            'kkm' => 'nullable|numeric|min:0|max:100',
-            'waktu_mulai' => 'nullable|date',
-            'waktu_selesai' => 'nullable|date',
-            'materi' => 'nullable|array',
-            'materi.*' => 'exists:materi,id_materi',
+            if ($kuis->status_publikasi === 'terbit') {
+                return back()
+                    ->withErrors([
+                        'kuis' => 'Kuis yang sudah terbit tidak dapat diedit. Ubah ke status draft terlebih dahulu.',
+                    ])
+                    ->with('error', 'Kuis yang sudah terbit tidak dapat diedit. Ubah ke status draft terlebih dahulu.');
+            }
 
-            'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
-        ], [
-            'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
-            'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
-            'tingkat_kesulitan.required' => 'Tingkat kesulitan wajib dipilih.',
-        ]);
+            $validated = $request->validate([
+                'judul' => 'required|string|max:150',
+                'deskripsi' => 'nullable|string',
+                'kategori' => ['required', Rule::in(self::KATEGORI)],
+                'id_mapel' => $this->aturanMapel($kuis->id_mapel),
+                'tingkat_kesulitan' => ['required', Rule::in(['mudah', 'sedang', 'sulit'])],
+                'alokasi_waktu' => 'nullable|integer|min:1|max:300',
+                'kkm' => 'nullable|numeric|min:0|max:100',
+                'waktu_mulai' => 'nullable|date',
+                'waktu_selesai' => 'nullable|date',
+                'materi' => 'nullable|array',
+                'materi.*' => 'exists:materi,id_materi',
+                'soal' => 'prohibited',
+                'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
+            ], [
+                'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
+                'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
+                'tingkat_kesulitan.required' => 'Tingkat kesulitan wajib dipilih.',
+                'soal.prohibited' => 'Gunakan endpoint soal untuk mengelola soal kuis.',
+            ]);
 
-        if ($validated['kategori'] === 'ulangan') {
-
-            if (!$request->waktu_mulai || !$request->waktu_selesai) {
+            if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)
+                && $kuis->soal()->where('tipe', 'essay')->exists()) {
                 throw ValidationException::withMessages([
-                    'waktu_mulai' => 'Waktu mulai dan waktu selesai wajib diisi untuk ulangan.',
+                    'kategori' => 'Kuis yang memiliki essay tidak dapat menjadi pre-test atau post-test.',
                 ]);
             }
 
-            $waktuMulai = \Carbon\Carbon::parse($request->waktu_mulai);
-            $waktuSelesai = \Carbon\Carbon::parse($request->waktu_selesai);
+            if ($validated['kategori'] === 'ulangan') {
+                if (!$request->waktu_mulai || !$request->waktu_selesai) {
+                    throw ValidationException::withMessages([
+                        'waktu_mulai' => 'Waktu mulai dan waktu selesai wajib diisi untuk ulangan.',
+                    ]);
+                }
 
-            if ($waktuMulai->lt(now())) {
-                throw ValidationException::withMessages([
-                    'waktu_mulai' => 'Waktu mulai ulangan tidak boleh sebelum waktu sekarang.',
-                ]);
-            }
-
-            if ($waktuSelesai->lte($waktuMulai)) {
-                throw ValidationException::withMessages([
-                    'waktu_selesai' => 'Waktu selesai harus setelah waktu mulai.',
-                ]);
-            }
-
-            $validated['waktu_mulai'] = $request->waktu_mulai;
-            $validated['waktu_selesai'] = $request->waktu_selesai;
-
-        } elseif (!empty($request->waktu_mulai) || !empty($request->waktu_selesai)) {
-            if (!empty($request->waktu_mulai) && !empty($request->waktu_selesai)) {
                 $waktuMulai = \Carbon\Carbon::parse($request->waktu_mulai);
                 $waktuSelesai = \Carbon\Carbon::parse($request->waktu_selesai);
+
+                if ($waktuMulai->lt(now())) {
+                    throw ValidationException::withMessages([
+                        'waktu_mulai' => 'Waktu mulai ulangan tidak boleh sebelum waktu sekarang.',
+                    ]);
+                }
 
                 if ($waktuSelesai->lte($waktuMulai)) {
                     throw ValidationException::withMessages([
                         'waktu_selesai' => 'Waktu selesai harus setelah waktu mulai.',
                     ]);
                 }
+
+                $validated['waktu_mulai'] = $request->waktu_mulai;
+                $validated['waktu_selesai'] = $request->waktu_selesai;
+            } elseif (!empty($request->waktu_mulai) || !empty($request->waktu_selesai)) {
+                if (!empty($request->waktu_mulai) && !empty($request->waktu_selesai)) {
+                    $waktuMulai = \Carbon\Carbon::parse($request->waktu_mulai);
+                    $waktuSelesai = \Carbon\Carbon::parse($request->waktu_selesai);
+
+                    if ($waktuSelesai->lte($waktuMulai)) {
+                        throw ValidationException::withMessages([
+                            'waktu_selesai' => 'Waktu selesai harus setelah waktu mulai.',
+                        ]);
+                    }
+                }
+
+                $validated['waktu_mulai'] = $request->waktu_mulai ?: null;
+                $validated['waktu_selesai'] = $request->waktu_selesai ?: null;
+            } else {
+                $validated['waktu_mulai'] = null;
+                $validated['waktu_selesai'] = null;
             }
 
-            $validated['waktu_mulai'] = $request->waktu_mulai ?: null;
-            $validated['waktu_selesai'] = $request->waktu_selesai ?: null;
+            unset($validated['materi'], $validated['soal']);
+            $kuis->update($validated);
 
-        } else {
-            $validated['waktu_mulai'] = null;
-            $validated['waktu_selesai'] = null;
-        }
+            // Pre-test dan Post-test: materi dikunci, tidak boleh diubah saat edit
+            if (!in_array($kuis->kategori, ['pre-test', 'post-test', 'remedial'], true)) {
+                $kuis->materi()->sync($request->materi ?? []);
+            }
 
-        unset($validated['materi']);
-
-        $kuis->update($validated);
-
-        // Pre-test dan Post-test: materi dikunci, tidak boleh diubah saat edit
-        if (!in_array($kuis->kategori, ['pre-test', 'post-test', 'remedial'], true)) {
-            $kuis->materi()->sync($request->materi ?? []);
-        }
-
-        return redirect()
-            ->route('kuis.index', ['mapel' => $kuis->id_mapel])
-            ->with('success', 'Kuis berhasil diperbarui.');
+            return redirect()
+                ->route('kuis.index', ['mapel' => $kuis->id_mapel])
+                ->with('success', 'Kuis berhasil diperbarui.');
+        });
     }
 
     public function destroy($id)
@@ -589,200 +601,133 @@ class KuisController extends Controller
 
     public function publish($id)
     {
-        $kuis = Kuis::with('soal')->findOrFail($id);
-        $user = Auth::user();
+        return DB::transaction(function () use ($id) {
+            $kuis = Kuis::whereKey($id)->lockForUpdate()->firstOrFail();
+            $kuis->load('soal');
+            $user = Auth::user();
 
-        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
-            abort(403, 'Anda tidak berhak mengubah status kuis milik guru lain.');
-        }
-
-        /*
-        * 1. Kkuis masih draft
-        */
-        if ($kuis->status_publikasi !== 'draft') {
-            return back()->withErrors([
-                'kuis' => 'Kuis ini sudah terbit dan tidak dapat dipublikasikan ulang.',
-            ]);
-        }
-
-        /*
-        * 2. Kuis masih aktif
-        */
-        if (!$kuis->is_aktif) {
-            return back()->withErrors([
-                'kuis' => 'Kuis yang sudah diarsipkan tidak dapat dipublikasikan.',
-            ]);
-        }
-
-        /*
-        * 3. Validasi data utama kuis
-        */
-        $errors = [];
-
-        if (empty($kuis->judul)) {
-            $errors[] = 'Judul kuis wajib diisi.';
-        }
-
-        if (empty($kuis->kategori)) {
-            $errors[] = 'Kategori kuis wajib diisi.';
-        }
-
-        if (empty($kuis->alokasi_waktu) || $kuis->alokasi_waktu <= 0) {
-            $errors[] = 'Alokasi waktu kuis wajib diisi dan harus lebih dari 0 menit.';
-        }
-
-        if ($kuis->kkm === null || $kuis->kkm < 0 || $kuis->kkm > 100) {
-            $errors[] = 'KKM wajib diisi dengan nilai antara 0 sampai 100.';
-        }
-
-        /*
-        * 4. Validasi khusus ulangan
-        */
-        if ($kuis->kategori === 'ulangan') {
-
-            if (empty($kuis->waktu_mulai)) {
-                $errors[] = 'Waktu mulai wajib diisi untuk kategori ulangan.';
+            if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+                abort(403, 'Anda tidak berhak mengubah status kuis milik guru lain.');
             }
 
-            if (empty($kuis->waktu_selesai)) {
-                $errors[] = 'Waktu selesai wajib diisi untuk kategori ulangan.';
+            $this->pastikanTidakAdaPenilaianTertunda($kuis);
+
+            if ($kuis->status_publikasi !== 'draft') {
+                return back()->withErrors([
+                    'kuis' => 'Kuis ini sudah terbit dan tidak dapat dipublikasikan ulang.',
+                ]);
             }
 
-            if (
-                $kuis->waktu_mulai &&
-                $kuis->waktu_selesai &&
-                $kuis->waktu_selesai <= $kuis->waktu_mulai
-            ) {
-                $errors[] = 'Waktu selesai harus lebih besar dari waktu mulai.';
-            }
-        }
-
-        /*
-        * 5. Pastikan kuis memiliki soal
-        */
-        if ($kuis->soal->count() === 0) {
-            $errors[] = 'Kuis belum memiliki soal. Tambahkan minimal 1 soal.';
-        }
-
-        /*
-        * 6. Validasi setiap soal
-        */
-        $totalBobot = 0;
-
-        foreach ($kuis->soal as $index => $soal) {
-
-            $nomor = $index + 1;
-
-            if (empty(trim($soal->pertanyaan))) {
-                $errors[] = "Soal nomor {$nomor}: pertanyaan wajib diisi.";
+            if (!$kuis->is_aktif) {
+                return back()->withErrors([
+                    'kuis' => 'Kuis yang sudah diarsipkan tidak dapat dipublikasikan.',
+                ]);
             }
 
-            /*
-            * Opsi A-D wajib
-            */
-            if (empty(trim($soal->opsi_a ?? ''))) {
-                $errors[] = "Soal nomor {$nomor}: opsi A wajib diisi.";
+            $errors = [];
+
+            if (empty($kuis->judul)) {
+                $errors[] = 'Judul kuis wajib diisi.';
             }
 
-            if (empty(trim($soal->opsi_b ?? ''))) {
-                $errors[] = "Soal nomor {$nomor}: opsi B wajib diisi.";
+            if (empty($kuis->kategori)) {
+                $errors[] = 'Kategori kuis wajib diisi.';
             }
 
-            if (empty(trim($soal->opsi_c ?? ''))) {
-                $errors[] = "Soal nomor {$nomor}: opsi C wajib diisi.";
+            if (empty($kuis->alokasi_waktu) || $kuis->alokasi_waktu <= 0) {
+                $errors[] = 'Alokasi waktu kuis wajib diisi dan harus lebih dari 0 menit.';
             }
 
-            if (empty(trim($soal->opsi_d ?? ''))) {
-                $errors[] = "Soal nomor {$nomor}: opsi D wajib diisi.";
+            if ($kuis->kkm === null || $kuis->kkm < 0 || $kuis->kkm > 100) {
+                $errors[] = 'KKM wajib diisi dengan nilai antara 0 sampai 100.';
             }
 
-            /*
-            * Jawaban benar wajib
-            */
-            if (empty($soal->jawaban)) {
+            if ($kuis->kategori === 'ulangan') {
+                if (empty($kuis->waktu_mulai)) {
+                    $errors[] = 'Waktu mulai wajib diisi untuk kategori ulangan.';
+                }
 
-                $errors[] = "Soal nomor {$nomor}: jawaban benar wajib ditentukan.";
+                if (empty($kuis->waktu_selesai)) {
+                    $errors[] = 'Waktu selesai wajib diisi untuk kategori ulangan.';
+                }
 
-            } else {
-
-                $jawaban = strtoupper($soal->jawaban);
-
-                if (!in_array($jawaban, ['A', 'B', 'C', 'D', 'E'])) {
-
-                    $errors[] =
-                        "Soal nomor {$nomor}: jawaban harus A, B, C, D, atau E.";
-
-                } else {
-
-                    /*
-                    * Jika jawaban E dipilih,
-                    * opsi E harus tersedia.
-                    */
-                    $opsi = 'opsi_' . strtolower($jawaban);
-
-                    if (empty(trim($soal->$opsi ?? ''))) {
-
-                        $errors[] =
-                            "Soal nomor {$nomor}: jawaban {$jawaban} dipilih tetapi opsi {$jawaban} kosong.";
-                    }
+                if ($kuis->waktu_mulai && $kuis->waktu_selesai && $kuis->waktu_selesai <= $kuis->waktu_mulai) {
+                    $errors[] = 'Waktu selesai harus lebih besar dari waktu mulai.';
                 }
             }
 
-            /*
-            * Validasi bobot
-            */
-            if ($soal->bobot === null || $soal->bobot <= 0) {
-
-                $errors[] =
-                    "Soal nomor {$nomor}: bobot harus lebih dari 0.";
-
-            } else {
-
-                $totalBobot += (float) $soal->bobot;
+            if ($kuis->soal->count() === 0) {
+                $errors[] = 'Kuis belum memiliki soal. Tambahkan minimal 1 soal.';
             }
-        }
 
-        /*
-        * 7. Total bobot harus tepat 100 (diseimbangkan otomatis jika perlu)
-        */
-        if ($kuis->soal()->count() > 0) {
-            $this->seimbangkanBobot($kuis);
-            $totalBobot = (float) $kuis->soal()->sum('bobot');
-        }
+            $totalBobot = 0;
 
-        if ($kuis->soal->count() > 0 && round($totalBobot, 2) != 100) {
+            foreach ($kuis->soal as $index => $soal) {
+                $nomor = $index + 1;
 
-            $errors[] =
-                'Total bobot semua soal harus tepat 100. Total saat ini: '
-                . number_format($totalBobot, 2)
-                . '.';
-        }
+                if (empty(trim($soal->pertanyaan))) {
+                    $errors[] = "Soal nomor {$nomor}: pertanyaan wajib diisi.";
+                }
 
-        /*
-        * 8. Kalau ada kesalahan, jangan publish
-        */
-        if (!empty($errors)) {
-            return back()
-                ->withErrors([
-                    'publish' => $errors,
-                ])
-                ->withInput();
-        }
+                if ($soal->tipe === 'essay') {
+                    if (in_array(strtolower(trim((string) $kuis->kategori)), ['pre-test', 'post-test'], true)) {
+                        $errors[] = "Soal nomor {$nomor}: essay tidak diperbolehkan untuk pre-test atau post-test.";
+                    }
+                } else {
+                    foreach (['a', 'b', 'c', 'd'] as $opsiWajib) {
+                        if (empty(trim($soal->{'opsi_'.$opsiWajib} ?? ''))) {
+                            $label = strtoupper($opsiWajib);
+                            $errors[] = "Soal nomor {$nomor}: opsi {$label} wajib diisi.";
+                        }
+                    }
 
-        /*
-        * 9. Semua valid → publish
-        */
-        $kuis->update([
-            'status_publikasi' => 'terbit',
-            'id_publisher' => Auth::user()->id_user,
-        ]);
+                    if (empty($soal->jawaban)) {
+                        $errors[] = "Soal nomor {$nomor}: jawaban benar wajib ditentukan.";
+                    } else {
+                        $jawaban = strtoupper($soal->jawaban);
 
-        return redirect()
-            ->route('kuis.show', $kuis->id_kuis)
-            ->with(
-                'success',
-                'Kuis berhasil divalidasi dan dipublikasikan.'
-            );
+                        if (!in_array($jawaban, ['A', 'B', 'C', 'D', 'E'])) {
+                            $errors[] = "Soal nomor {$nomor}: jawaban harus A, B, C, D, atau E.";
+                        } else {
+                            $opsi = 'opsi_' . strtolower($jawaban);
+
+                            if (empty(trim($soal->$opsi ?? ''))) {
+                                $errors[] = "Soal nomor {$nomor}: jawaban {$jawaban} dipilih tetapi opsi {$jawaban} kosong.";
+                            }
+                        }
+                    }
+                }
+
+                if ($soal->bobot === null || $soal->bobot <= 0) {
+                    $errors[] = "Soal nomor {$nomor}: bobot harus lebih dari 0.";
+                } else {
+                    $totalBobot += (float) $soal->bobot;
+                }
+            }
+
+            if ($kuis->soal()->count() > 0) {
+                $this->seimbangkanBobot($kuis);
+                $totalBobot = (float) $kuis->soal()->sum('bobot');
+            }
+
+            if ($kuis->soal->count() > 0 && round($totalBobot, 2) != 100) {
+                $errors[] = 'Total bobot semua soal harus tepat 100. Total saat ini: '
+                    . number_format($totalBobot, 2) . '.';
+            }
+
+            if (!empty($errors)) {
+                return back()->withErrors(['publish' => $errors])->withInput();
+            }
+
+            $kuis->update([
+                'status_publikasi' => 'terbit',
+                'id_publisher' => Auth::user()->id_user,
+            ]);
+
+            return redirect()
+                ->route('kuis.show', $kuis->id_kuis)
+                ->with('success', 'Kuis berhasil divalidasi dan dipublikasikan.');
+        });
     }
 
     public function unpublish($id)
@@ -808,6 +753,15 @@ class KuisController extends Controller
         return redirect()
             ->route('kuis.show', $kuis->id_kuis)
             ->with('success', 'Kuis berhasil ditarik kembali menjadi draft.');
+    }
+
+    private function pastikanTidakAdaPenilaianTertunda(Kuis $kuis): void
+    {
+        if (app(KuisPenilaianService::class)->adaPenilaianTertunda($kuis->id_kuis)) {
+            throw ValidationException::withMessages([
+                'kuis' => 'Kuis tidak dapat diubah selama masih ada jawaban yang menunggu penilaian.',
+            ]);
+        }
     }
 
     private function seimbangkanBobot(Kuis $kuis): void

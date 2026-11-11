@@ -122,6 +122,7 @@ class KuisPrePostTestUnikTest extends TestCase
         Schema::create('soal', function (Blueprint $table) {
             $table->string('id_soal', 50)->primary();
             $table->string('id_kuis', 50);
+            $table->enum('tipe', ['pilihan_ganda', 'essay'])->default('pilihan_ganda');
             $table->text('pertanyaan');
             $table->string('jawaban', 5)->nullable();
             $table->decimal('bobot', 5, 2)->default(1);

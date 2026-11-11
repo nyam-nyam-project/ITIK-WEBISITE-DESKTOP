@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\DraftJawaban;
 use App\Models\Kuis;
 use App\Models\Mengerjakan;
+use App\Models\NilaiEssay;
 use App\Models\Remedial;
 use App\Models\RemedialSiswa;
+use App\Models\Soal;
+use App\Services\KuisPenilaianService;
 use App\Services\RekapNilaiGuruService;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ValidasiNilaiController extends Controller
 {
@@ -235,6 +240,10 @@ class ValidasiNilaiController extends Controller
         $totalBenar = 0;
         $totalSalah = 0;
         foreach ($soal as $s) {
+            if ($s->tipe === 'essay') {
+                continue;
+            }
+
             $jw = $draftJawaban->get($s->id_soal)?->jawaban_dipilih;
             if ($jw && $s->jawaban && strtoupper($jw) === strtoupper($s->jawaban)) {
                 $totalBenar++;
@@ -261,6 +270,12 @@ class ValidasiNilaiController extends Controller
      */
     public function validasi(Mengerjakan $mengerjakan)
     {
+        if ($mengerjakan->status_validasi === 'menunggu penilaian') {
+            return redirect()
+                ->route('guru.nilai.show', $mengerjakan->id_mengerjakan)
+                ->withErrors(['nilai' => 'Semua essay harus dinilai sebelum nilai kuis divalidasi.']);
+        }
+
         if ($mengerjakan->status_validasi === 'sudah divalidasi') {
             return redirect()
                 ->route('guru.nilai.show', $mengerjakan->id_mengerjakan)
@@ -275,6 +290,57 @@ class ValidasiNilaiController extends Controller
         return redirect()
             ->route('guru.nilai.show', $mengerjakan->id_mengerjakan)
             ->with('success', 'Nilai siswa berhasil divalidasi.');
+    }
+
+    public function nilaiEssay(Request $request, Mengerjakan $mengerjakan, Soal $soal, KuisPenilaianService $penilaian)
+    {
+        DB::transaction(function () use ($request, $mengerjakan, $soal, $penilaian) {
+            $kuis = Kuis::whereKey($mengerjakan->id_kuis)->lockForUpdate()->firstOrFail();
+            abort_unless($kuis->id_user === $request->user()->id_user, 403);
+
+            $mengerjakan = Mengerjakan::whereKey($mengerjakan->id_mengerjakan)->lockForUpdate()->firstOrFail();
+            $soal = $kuis->soal()->whereKey($soal->id_soal)->where('tipe', 'essay')->firstOrFail();
+            $nilaiEssay = NilaiEssay::where('id_mengerjakan', $mengerjakan->id_mengerjakan)
+                ->where('id_soal', $soal->id_soal)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($mengerjakan->status_pengerjaan !== 'final' || $mengerjakan->status_validasi !== 'menunggu penilaian') {
+                throw ValidationException::withMessages([
+                    'nilai' => 'Percobaan ini tidak sedang menunggu penilaian essay.',
+                ]);
+            }
+
+            $validated = $request->validate([
+                'nilai' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:'.$soal->bobot],
+                'catatan_guru' => ['nullable', 'string'],
+            ]);
+
+            $nilaiEssay->update([
+                'nilai' => $validated['nilai'],
+                'catatan_guru' => $validated['catatan_guru'] ?? null,
+                'id_penilai' => $request->user()->id_user,
+                'dinilai_at' => now(),
+            ]);
+
+            $nilai = $penilaian->hitung(
+                $kuis->soal()->get(),
+                DraftJawaban::where('id_kuis', $kuis->id_kuis)->where('id_user', $mengerjakan->id_user)->get(),
+                NilaiEssay::where('id_mengerjakan', $mengerjakan->id_mengerjakan)->get()
+            );
+
+            if ($nilai !== null) {
+                $mengerjakan->update([
+                    'nilai' => $nilai,
+                    'status_validasi' => 'sudah divalidasi',
+                    'id_validator' => $request->user()->id_user,
+                ]);
+            }
+        });
+
+        return redirect()
+            ->route('guru.nilai.show', $mengerjakan->id_mengerjakan)
+            ->with('success', 'Penilaian essay berhasil disimpan.');
     }
 
     /**

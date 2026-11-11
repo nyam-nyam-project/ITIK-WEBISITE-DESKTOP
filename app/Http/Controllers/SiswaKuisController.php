@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\KuisPenilaianService;
 use App\Services\KuisSubmissionService;
 use App\Services\RemedialService;
 use App\Models\Kuis;
@@ -337,29 +338,42 @@ class SiswaKuisController extends Controller
         |--------------------------------------------------------------------------
         */
         if (!$sesi) {
+            DB::transaction(function () use ($kuis, $user) {
+                Kuis::whereKey($kuis->id_kuis)->lockForUpdate()->firstOrFail();
 
-            $percobaanSesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
-                ->where('id_user', $user->id_user)
-                ->max('percobaan_ke');
+                if (app(KuisPenilaianService::class)->adaPenilaianTertunda($kuis->id_kuis, $user->id_user)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'kuis' => 'Kuis tidak dapat diulang sebelum seluruh essay Anda selesai dinilai.',
+                    ]);
+                }
 
-            $percobaanNilai = Mengerjakan::where('id_kuis', $kuis->id_kuis)
-                ->where('id_user', $user->id_user)
-                ->max('percobaan_ke');
+                if ($this->submission->sesiAktif($kuis->id_kuis, $user->id_user)) {
+                    return;
+                }
 
-            $percobaanKe = max($percobaanSesi ?? 0, $percobaanNilai ?? 0) + 1;
+                $percobaanSesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
+                    ->where('id_user', $user->id_user)
+                    ->max('percobaan_ke');
 
-            // Bersihkan draft jawaban lama untuk percobaan baru
-            DraftJawaban::where('id_kuis', $kuis->id_kuis)
-                ->where('id_user', $user->id_user)
-                ->delete();
+                $percobaanNilai = Mengerjakan::where('id_kuis', $kuis->id_kuis)
+                    ->where('id_user', $user->id_user)
+                    ->max('percobaan_ke');
 
-            $sesi = SesiKuis::create([
-                'id_kuis' => $kuis->id_kuis,
-                'id_user' => $user->id_user,
-                'percobaan_ke' => $percobaanKe,
-                'waktu_mulai' => now(),
-                'waktu_selesai' => null,
-            ]);
+                $percobaanKe = max($percobaanSesi ?? 0, $percobaanNilai ?? 0) + 1;
+
+                // Bersihkan draft jawaban lama untuk percobaan baru
+                DraftJawaban::where('id_kuis', $kuis->id_kuis)
+                    ->where('id_user', $user->id_user)
+                    ->delete();
+
+                SesiKuis::create([
+                    'id_kuis' => $kuis->id_kuis,
+                    'id_user' => $user->id_user,
+                    'percobaan_ke' => $percobaanKe,
+                    'waktu_mulai' => now(),
+                    'waktu_selesai' => null,
+                ]);
+            });
         }
 
         return redirect()->route(
@@ -661,8 +675,52 @@ class SiswaKuisController extends Controller
                 ->with('error', 'Pengerjaan kuis ini sudah selesai.');
         }
 
-        // Delegasikan submit ke service (mencakup transaksi, nilai, tutup sesi, hapus draft).
-        $hasil = $this->submission->submit($sesi);
+        $hasil = DB::transaction(function () use ($request, $kuis, $sesi) {
+            $kuis = Kuis::whereKey($kuis->id_kuis)->lockForUpdate()->firstOrFail();
+            $sesi = SesiKuis::whereKey($sesi->id_sesi)->lockForUpdate()->firstOrFail();
+            $sesi->setRelation('kuis', $kuis);
+
+            if ($sesi->waktu_selesai) {
+                return null;
+            }
+
+            $sudahAda = Mengerjakan::where('id_kuis', $sesi->id_kuis)
+                ->where('id_user', $sesi->id_user)
+                ->where('percobaan_ke', $sesi->percobaan_ke)
+                ->exists();
+
+            if (! $sudahAda && now()->lt($this->submission->batasWaktu($sesi))) {
+                $validated = $request->validate([
+                    'jawaban_teks' => ['sometimes', 'array'],
+                    'jawaban_teks.*' => ['nullable', 'string'],
+                ]);
+                $jawabanEssay = $validated['jawaban_teks'] ?? [];
+
+                if ($jawabanEssay !== []) {
+                    $idSoalEssay = $kuis->soal()->where('tipe', 'essay')->pluck('id_soal')->all();
+
+                    if (array_diff(array_keys($jawabanEssay), $idSoalEssay)) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'jawaban_teks' => 'Jawaban teks hanya boleh dikirim untuk soal essay dalam kuis ini.',
+                        ]);
+                    }
+
+                    foreach ($jawabanEssay as $idSoal => $teks) {
+                        DB::table('draft_jawaban')->updateOrInsert(
+                            [
+                                'id_kuis' => $kuis->id_kuis,
+                                'id_user' => $sesi->id_user,
+                                'id_soal' => $idSoal,
+                            ],
+                            ['jawaban_teks' => $teks, 'updated_at' => now()]
+                        );
+                    }
+                }
+            }
+
+            // Draft dipertahankan untuk evaluasi sampai siswa memulai percobaan baru.
+            return $this->submission->submit($sesi);
+        });
 
         if (!$hasil) {
             return redirect()
@@ -735,6 +793,10 @@ class SiswaKuisController extends Controller
         $totalBenar = 0;
         $totalSalah = 0;
         foreach ($soal as $s) {
+            if ($s->tipe === 'essay') {
+                continue;
+            }
+
             $jw = $draftJawaban->get($s->id_soal)?->jawaban_dipilih;
             if ($jw && $s->jawaban && strtoupper($jw) === strtoupper($s->jawaban)) {
                 $totalBenar++;

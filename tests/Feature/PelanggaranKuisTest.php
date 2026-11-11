@@ -354,4 +354,63 @@ class PelanggaranKuisTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    public function test_autosave_dan_submit_menolak_remedial_yang_tidak_ditugaskan_ke_siswa(): void
+    {
+        $kuisRemedial = Kuis::create([
+            'id_kuis' => 'KREM001',
+            'judul' => 'Remedial Ulangan',
+            'kategori' => ' Remedial ',
+            'tingkat_kesulitan' => 'sedang',
+            'id_mapel' => 'MP001',
+            'id_tahun_ajaran' => 'TA001',
+            'alokasi_waktu' => 20,
+            'kkm' => 75,
+            'id_user' => $this->guru->id_user,
+            'status_publikasi' => 'terbit',
+            'is_aktif' => true,
+        ]);
+
+        $pengerjaanAsal = Mengerjakan::create([
+            'id_kuis' => $this->kuis->id_kuis,
+            'id_user' => $this->siswaLain->id_user,
+            'nilai' => 40,
+            'tanggal' => now()->toDateString(),
+            'percobaan_ke' => 1,
+            'status_pengerjaan' => 'final',
+            'status_validasi' => 'sudah divalidasi',
+        ]);
+
+        DB::table('remedial_siswa')->insert([
+            'id_kuis_remedial' => $kuisRemedial->id_kuis,
+            'id_mengerjakan_asal' => $pengerjaanAsal->id_mengerjakan,
+            'id_guru' => $this->guru->id_user,
+            'tanggal_ditugaskan' => now()->toDateString(),
+            'status' => 'ditugaskan',
+        ]);
+
+        SesiKuis::create([
+            'id_kuis' => $kuisRemedial->id_kuis,
+            'id_user' => $this->siswa->id_user,
+            'percobaan_ke' => 1,
+            'waktu_mulai' => now(),
+            'waktu_selesai' => null,
+            'jumlah_pelanggaran' => 0,
+        ]);
+
+        $this->actingAs($this->siswa)
+            ->postJson(route('siswa.kuis.jawaban', $kuisRemedial->id_kuis), [
+                'id_soal' => 'SOAL001',
+                'jawaban' => 'A',
+            ])
+            ->assertForbidden();
+
+        $this->postJson(route('siswa.kuis.submit', $kuisRemedial->id_kuis))
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('draft_jawaban', [
+            'id_kuis' => $kuisRemedial->id_kuis,
+            'id_user' => $this->siswa->id_user,
+        ]);
+    }
 }

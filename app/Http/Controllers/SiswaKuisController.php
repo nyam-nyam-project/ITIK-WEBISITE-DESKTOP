@@ -53,6 +53,23 @@ class SiswaKuisController extends Controller
         return [$mapelIds, $idKelas, false];
     }
 
+    private function kuisRemedial(Kuis $kuis): bool
+    {
+        return strtolower(trim($kuis->kategori ?? '')) === 'remedial';
+    }
+
+    private function tugasRemedial(Kuis $kuis, string $idUser, bool $lock = false): ?RemedialSiswa
+    {
+        $query = RemedialSiswa::where('id_kuis_remedial', $kuis->id_kuis)
+            ->whereHas('mengerjakanAsal', fn ($query) => $query->where('id_user', $idUser));
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
+    }
+
     public function index(Request $request)
     {
         Kuis::sinkronisasiStatus();
@@ -140,20 +157,14 @@ class SiswaKuisController extends Controller
 
         $kuis = $kuisQuery->get();
 
-        $kuis = $kuis->filter(function ($item) use ($user) {
+        $kuisRemedialDitugaskan = $remedial->pluck('id_kuis_remedial')->flip();
+
+        $kuis = $kuis->filter(function ($item) use ($kuisRemedialDitugaskan) {
             if (strtolower(trim($item->kategori)) !== 'remedial') {
                 return true;
             }
 
-            return RemedialSiswa::where(
-                'id_kuis_remedial',
-                $item->id_kuis
-            )
-                ->whereHas('mengerjakanAsal', function ($query) use ($user) {
-                    $query->where('id_user', $user->id_user);
-                })
-                ->where('status', 'ditugaskan')
-                ->exists();
+            return $kuisRemedialDitugaskan->has($item->id_kuis);
         })->values();
 
         $statusKuis = $this->hitungStatusDanProgresiKuis($kuis, $user->id_user);
@@ -198,16 +209,8 @@ class SiswaKuisController extends Controller
         }
 
         // Jika kuis remedial, pastikan siswa memang mendapat tugas
-        if ($kuis->kategori === 'remedial') {
-
-            $tugasRemedial = RemedialSiswa::where(
-                'id_kuis_remedial',
-                $kuis->id_kuis
-            )
-                ->whereHas('mengerjakanAsal', function ($query) use ($user) {
-                    $query->where('id_user', $user->id_user);
-                })
-                ->first();
+        if ($this->kuisRemedial($kuis)) {
+            $tugasRemedial = $this->tugasRemedial($kuis, $user->id_user);
 
             // Siswa tidak mendapatkan tugas remedial ini
             if (!$tugasRemedial) {
@@ -405,16 +408,8 @@ class SiswaKuisController extends Controller
          * Pastikan siswa memang mendapatkan
          * tugas remedial dari guru.
          */
-        if ($kuis->kategori === 'remedial') {
-
-            $tugasRemedial = RemedialSiswa::where(
-                'id_kuis_remedial',
-                $kuis->id_kuis
-            )
-                ->whereHas('mengerjakanAsal', function ($query) use ($user) {
-                    $query->where('id_user', $user->id_user);
-                })
-                ->first();
+        if ($this->kuisRemedial($kuis)) {
+            $tugasRemedial = $this->tugasRemedial($kuis, $user->id_user);
 
             // Siswa tidak mendapatkan tugas remedial ini
             if (!$tugasRemedial) {
@@ -520,6 +515,16 @@ class SiswaKuisController extends Controller
     public function simpanJawaban(Request $request, Kuis $kuis)
     {
         $user = Auth::user();
+
+        if ($this->kuisRemedial($kuis)) {
+            $tugas = $this->tugasRemedial($kuis, $user->id_user);
+            if (! $tugas || $tugas->status !== 'ditugaskan') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki tugas remedial aktif untuk kuis ini.',
+                ], 403);
+            }
+        }
 
         if (strtolower(trim($kuis->kategori)) !== 'remedial') {
             [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
@@ -657,6 +662,11 @@ class SiswaKuisController extends Controller
             abort(403);
         }
 
+        if ($this->kuisRemedial($kuis)) {
+            $tugas = $this->tugasRemedial($kuis, $user->id_user);
+            abort_unless($tugas && $tugas->status === 'ditugaskan', 403, 'Anda tidak memiliki tugas remedial aktif untuk kuis ini.');
+        }
+
         // Pastikan kuis termasuk mapel kelas siswa, kecuali remedial yang sesuai penugasan
         if (strtolower(trim($kuis->kategori)) !== 'remedial') {
             [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
@@ -684,6 +694,11 @@ class SiswaKuisController extends Controller
                 return null;
             }
 
+            if ($this->kuisRemedial($kuis)) {
+                $tugas = $this->tugasRemedial($kuis, $sesi->id_user, true);
+                abort_unless($tugas && $tugas->status === 'ditugaskan', 403, 'Tugas remedial ini tidak lagi aktif.');
+            }
+
             $sudahAda = Mengerjakan::where('id_kuis', $sesi->id_kuis)
                 ->where('id_user', $sesi->id_user)
                 ->where('percobaan_ke', $sesi->percobaan_ke)
@@ -692,7 +707,7 @@ class SiswaKuisController extends Controller
             if (! $sudahAda && now()->lt($this->submission->batasWaktu($sesi))) {
                 $validated = $request->validate([
                     'jawaban_teks' => ['sometimes', 'array'],
-                    'jawaban_teks.*' => ['nullable', 'string'],
+                    'jawaban_teks.*' => ['nullable', 'string', 'max:10000'],
                 ]);
                 $jawabanEssay = $validated['jawaban_teks'] ?? [];
 

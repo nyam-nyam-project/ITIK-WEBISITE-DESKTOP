@@ -657,7 +657,8 @@ CREATE TABLE `tahun_ajaran` (
   `tanggal_selesai` date DEFAULT NULL,
   `is_aktif` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Hanya satu baris boleh aktif',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `aktif_unik` tinyint GENERATED ALWAYS AS (if((`is_aktif` = 1),1,NULL)) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
@@ -898,7 +899,8 @@ ALTER TABLE `soal`
 --
 ALTER TABLE `tahun_ajaran`
   ADD PRIMARY KEY (`id_tahun_ajaran`),
-  ADD UNIQUE KEY `uq_tahun_ajaran_nama` (`nama`);
+  ADD UNIQUE KEY `uq_tahun_ajaran_nama` (`nama`),
+  ADD UNIQUE KEY `uq_hanya_satu_aktif` (`aktif_unik`);
 
 --
 -- Indexes for table `user`

@@ -30,39 +30,61 @@
         <div class="card-header">
             <div>
                 <h2>Tambah Penugasan Pengajaran</h2>
-                <p class="muted small">Tugaskan guru untuk mengajar mata pelajaran tertentu pada suatu kelas.</p>
+                <p class="muted small">Tugaskan guru untuk mengajar mata pelajaran tertentu pada beberapa kelas sekaligus.</p>
             </div>
         </div>
         <form action="{{ route('admin.pengajaran.store') }}" method="POST">
             @csrf
+            <div class="field u-margin-bottom-16px">
+                <label for="id_user">Guru Pengajar *</label>
+                <select id="id_user" name="id_user" required>
+                    <option value="">-- Pilih Guru --</option>
+                    @foreach($daftarGuru as $g)
+                        <option value="{{ $g->id_user }}" @selected(old('id_user') === $g->id_user)>
+                            {{ $g->nama_lengkap }} (NIP {{ $g->nomor_induk ?? '—' }})
+                        </option>
+                    @endforeach
+                </select>
+                @error('id_user')<p class="error">{{ $message }}</p>@enderror
+            </div>
+
             <div class="grid grid-2">
                 <div class="field">
-                    <label for="id_user">Guru Pengajar *</label>
-                    <select id="id_user" name="id_user" required>
-                        <option value="">-- Pilih Guru --</option>
-                        @foreach($daftarGuru as $g)
-                            <option value="{{ $g->id_user }}" @selected(old('id_user') === $g->id_user)>
-                                {{ $g->nama_lengkap }} (NIP {{ $g->nomor_induk ?? '—' }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('id_user')<p class="error">{{ $message }}</p>@enderror
-                </div>
-                <div class="field">
-                    <label for="mapel_kelas">Kelas &amp; Mata Pelajaran *</label>
-                    <select id="mapel_kelas" name="mapel_kelas" required>
-                        <option value="">-- Pilih Kelas &amp; Mata Pelajaran --</option>
-                        @foreach($mapelKelas as $mk)
-                            <option value="{{ $mk->id_kelas }}:{{ $mk->id_mapel }}" @selected(old('mapel_kelas') === "{$mk->id_kelas}:{$mk->id_mapel}")>
-                                {{ $mk->nama_kelas }} — {{ $mk->kode_mapel }} - {{ $mk->nama_mapel }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <p class="help">Pilihan diambil dari mata pelajaran yang telah diatur pada kelas di tahun ajaran ini.</p>
+                    <label class="u-font-weight-700 u-display-block u-margin-bottom-8px">Pilih Kelas *</label>
+                    <p class="muted small u-margin-bottom-8px">Centang satu atau lebih kelas.</p>
+                    <div class="check-list">
+                        @forelse($daftarKelas as $kls)
+                            <label class="check u-margin-bottom-6px" for="kelas-{{ $kls->id_kelas }}">
+                                <input id="kelas-{{ $kls->id_kelas }}" type="checkbox" name="id_kelas[]" value="{{ $kls->id_kelas }}"
+                                    @checked(in_array($kls->id_kelas, (array) old('id_kelas', []), true))>
+                                <span>{{ $kls->nama_kelas }}</span>
+                            </label>
+                        @empty
+                            <p class="muted small">Belum ada kelas aktif pada tahun ajaran ini.</p>
+                        @endforelse
+                    </div>
                     @error('id_kelas')<p class="error">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="field">
+                    <label class="u-font-weight-700 u-display-block u-margin-bottom-8px">Pilih Mata Pelajaran *</label>
+                    <p class="muted small u-margin-bottom-8px">Centang satu atau lebih mata pelajaran.</p>
+                    <div class="check-list">
+                        @forelse($daftarMapel as $mp)
+                            <label class="check u-margin-bottom-6px" for="mapel-{{ $mp->id_mapel }}">
+                                <input id="mapel-{{ $mp->id_mapel }}" type="checkbox" name="id_mapel[]" value="{{ $mp->id_mapel }}"
+                                    @checked(in_array($mp->id_mapel, (array) old('id_mapel', []), true))>
+                                <span>{{ $mp->nama_mapel }}<small>{{ $mp->kode_mapel ?? '' }}</small></span>
+                            </label>
+                        @empty
+                            <p class="muted small">Belum ada mata pelajaran aktif.</p>
+                        @endforelse
+                    </div>
+                    <p class="help u-margin-top-8px">Kombinasi kelas dan mata pelajaran akan dibuat otomatis. Pasangan yang tidak ada di kurikulum kelas atau yang sudah ditugaskan akan dilewati.</p>
                     @error('id_mapel')<p class="error">{{ $message }}</p>@enderror
                 </div>
             </div>
+
             <div class="form-actions">
                 <button class="btn" type="submit">Tugaskan Pengajaran</button>
             </div>

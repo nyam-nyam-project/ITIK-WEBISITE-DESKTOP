@@ -147,6 +147,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::view('/profil', 'admin.profil')->name('profil');
         Route::patch('/tahun-ajaran/{tahunAjaran}/aktifkan', [TahunAjaranController::class, 'aktifkan'])
             ->name('tahun-ajaran.aktifkan');
+        Route::post('/tahun-ajaran/{sumber}/salin', [TahunAjaranController::class, 'salin'])
+            ->name('tahun-ajaran.salin');
         Route::resource('tahun-ajaran', TahunAjaranController::class)
             ->parameters(['tahun-ajaran' => 'tahunAjaran'])
             ->except(['show', 'destroy']);

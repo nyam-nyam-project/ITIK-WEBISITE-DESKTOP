@@ -14,6 +14,10 @@
                         <td class="number"><a href="{{ route('admin.kelas.index', ['tahun_ajaran' => $item->id_tahun_ajaran]) }}">{{ $item->kelas_count }}</a></td>
                         <td><span class="badge {{ $item->is_aktif ? 'badge-success' : 'badge-muted' }}">{{ $item->is_aktif ? 'Aktif' : 'Nonaktif' }}</span></td>
                         <td><div class="actions"><a class="btn btn-secondary btn-small" href="{{ route('admin.tahun-ajaran.edit', $item) }}" aria-label="Ubah tahun ajaran {{ $item->nama }}">Ubah</a>
+                            <form action="{{ route('admin.tahun-ajaran.salin', $item) }}" method="POST" data-confirm="Salin tahun ajaran {{ $item->nama }}? Kelas dan mapelnya akan disalin ke tahun baru. Pengajaran dan anggota kelas tidak akan ikut disalin.">
+                                @csrf
+                                <button class="btn btn-secondary btn-small" type="submit" aria-label="Salin tahun ajaran {{ $item->nama }}">Salin</button>
+                            </form>
                             @unless($item->is_aktif)
                                 <form action="{{ route('admin.tahun-ajaran.aktifkan', $item) }}" method="POST" data-confirm="Aktifkan tahun ajaran {{ $item->nama }}? Tahun aktif sebelumnya akan dinonaktifkan.">
                                     @csrf @method('PATCH')

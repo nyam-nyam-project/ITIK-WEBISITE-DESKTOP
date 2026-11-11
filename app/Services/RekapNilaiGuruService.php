@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\Pengajaran;
 use App\Models\Mengerjakan;
+use App\Models\Pengajaran;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -27,16 +27,25 @@ class RekapNilaiGuruService
      */
     public function rekapUntukGuru(User $guru, ?string $idKelas): Collection
     {
-        // 1. Ambil id_mapel dari pengajaran guru
-        $mapelIds = Pengajaran::where('id_user', $guru->id_user)->pluck('id_mapel');
+        $mapelIds = Pengajaran::where('id_user', $guru->id_user)->distinct()->pluck('id_mapel');
 
         if ($mapelIds->isEmpty()) {
             return collect();
         }
 
-        // 2. Ambil id_siswa dari kelas (jika filter kelas diberikan)
+        // 1. Ambil id_siswa dari kelas (jika filter kelas diberikan)
         $siswaIds = null;
         if ($idKelas) {
+            $mapelIdsKelas = Pengajaran::where('id_user', $guru->id_user)
+                ->where(fn ($query) => $query->whereNull('id_kelas')->orWhere('id_kelas', $idKelas))
+                ->distinct()
+                ->pluck('id_mapel');
+
+            $mapelIds = $mapelIds->intersect($mapelIdsKelas)->values();
+            if ($mapelIds->isEmpty()) {
+                return collect();
+            }
+
             $siswaIds = DB::table('anggota_kelas')
                 ->where('id_kelas', $idKelas)
                 ->pluck('id_user');
@@ -46,12 +55,11 @@ class RekapNilaiGuruService
             }
         }
 
-        // 3. Query mengerjakan: hanya status final, hanya mapel milik guru
+        // 2. Rekap hanya mencakup mata pelajaran yang ditugaskan kepada guru.
         $query = Mengerjakan::with(['siswa', 'kuis'])
-            ->where('status_pengerjaan', 'final')
-            ->whereHas('kuis', function ($q) use ($mapelIds) {
-                $q->whereIn('id_mapel', $mapelIds);
-            });
+            ->where('status_pengerjaan', 'final');
+
+        $query->whereHas('kuis', fn ($kuis) => $kuis->whereIn('id_mapel', $mapelIds));
 
         if ($siswaIds !== null) {
             $query->whereIn('id_user', $siswaIds);
@@ -59,7 +67,7 @@ class RekapNilaiGuruService
 
         $semua = $query->get();
 
-        // 4. Kelompokkan per siswa + kuis, ambil percobaan dengan nilai tertinggi
+        // 3. Kelompokkan per siswa + kuis, ambil percobaan dengan nilai tertinggi
         return $semua
             ->groupBy(fn($m) => $m->id_user . '___' . $m->id_kuis)
             ->map(function (Collection $rows) {

@@ -7,15 +7,21 @@ use App\Models\Kuis;
 use App\Models\Mapel;
 use App\Models\Materi;
 use App\Models\Mengerjakan;
+use App\Models\NilaiEssay;
 use App\Models\Remedial;
 use App\Models\RemedialSiswa;
 use App\Models\SesiKuis;
 use App\Models\Soal;
 use App\Models\TahunAjaran;
 use App\Models\User;
+use App\Http\Controllers\Api\GuruNilaiController;
+use App\Services\KuisEssayGradingService;
+use App\Services\KuisPenilaianService;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class NilaiGuruDanSiswaTest extends TestCase
@@ -124,6 +130,7 @@ class NilaiGuruDanSiswaTest extends TestCase
         Schema::create('soal', function (Blueprint $table) {
             $table->string('id_soal', 50)->primary();
             $table->string('id_kuis', 50);
+            $table->string('tipe', 20)->default('pilihan ganda');
             $table->text('pertanyaan');
             $table->string('opsi_a')->nullable();
             $table->string('opsi_b')->nullable();
@@ -166,6 +173,17 @@ class NilaiGuruDanSiswaTest extends TestCase
             $table->dateTime('tanggal');
             $table->string('status_validasi', 30)->default('belum divalidasi');
             $table->string('id_validator', 50)->nullable();
+        });
+
+        Schema::create('nilai_essay', function (Blueprint $table) {
+            $table->increments('id_nilai_essay');
+            $table->unsignedInteger('id_mengerjakan');
+            $table->string('id_soal', 50);
+            $table->text('jawaban_teks')->nullable();
+            $table->decimal('nilai', 5, 2)->nullable();
+            $table->text('catatan_guru')->nullable();
+            $table->string('id_penilai', 50)->nullable();
+            $table->timestamp('dinilai_at')->nullable();
         });
 
         Schema::create('remedial', function (Blueprint $table) {
@@ -213,6 +231,13 @@ class NilaiGuruDanSiswaTest extends TestCase
             $table->string('id_mapel', 50);
             $table->string('id_kelas', 50);
             $table->timestamp('created_at')->nullable()->useCurrent();
+        });
+
+        Schema::create('pengajaran', function (Blueprint $table) {
+            $table->increments('id_pengajaran');
+            $table->string('id_user', 50);
+            $table->string('id_kelas', 50);
+            $table->string('id_mapel', 50);
         });
     }
 
@@ -335,6 +360,306 @@ class NilaiGuruDanSiswaTest extends TestCase
             'tanggal' => '2026-10-31',
         ]));
         $resFilter->assertOk();
+    }
+
+    public function test_ringkasan_kelas_menggunakan_agregat_guru(): void
+    {
+        DB::table('pengajaran')->insert([
+            'id_user' => $this->guru->id_user,
+            'id_kelas' => 'KLS001',
+            'id_mapel' => $this->mapel->id_mapel,
+        ]);
+        Mengerjakan::create([
+            'id_user' => $this->siswa->id_user,
+            'id_kuis' => $this->kuisUlangan->id_kuis,
+            'nilai' => 80,
+            'status_pengerjaan' => 'final',
+            'percobaan_ke' => 1,
+            'tanggal' => now(),
+            'status_validasi' => 'sudah divalidasi',
+        ]);
+
+        $this->actingAs($this->guru)
+            ->get(route('guru.nilai.index'))
+            ->assertOk()
+            ->assertViewHas('kelasList', function ($kelasList): bool {
+                $kelas = $kelasList->firstWhere('id_kelas', 'KLS001');
+
+                return $kelas !== null
+                    && $kelas->total_siswa === 1
+                    && $kelas->total_materi === 1
+                    && $kelas->kuis_aktif === 2
+                    && $kelas->rata_nilai === 80.0;
+            });
+    }
+
+    public function test_scope_nilai_hanya_mengembalikan_pengerjaan_yang_dikelola_guru(): void
+    {
+        $pengerjaanGuru = Mengerjakan::create([
+            'id_user' => $this->siswa->id_user,
+            'id_kuis' => $this->kuisUlangan->id_kuis,
+            'nilai' => 80,
+            'status_pengerjaan' => 'final',
+            'percobaan_ke' => 1,
+            'tanggal' => now(),
+            'status_validasi' => 'belum divalidasi',
+        ]);
+
+        $guruLain = User::create([
+            'id_user' => 'U003',
+            'nama_lengkap' => 'Guru Lain',
+            'role' => 'guru',
+            'status' => 'aktif',
+            'wajib_ganti_password' => false,
+            'password' => bcrypt('password'),
+        ]);
+
+        $kuisGuruLain = Kuis::create([
+            'id_kuis' => 'K002',
+            'judul' => 'Kuis Guru Lain',
+            'kategori' => 'ulangan',
+            'tingkat_kesulitan' => 'sedang',
+            'id_mapel' => $this->mapel->id_mapel,
+            'id_tahun_ajaran' => 'TA001',
+            'alokasi_waktu' => 20,
+            'kkm' => 75,
+            'id_user' => $guruLain->id_user,
+            'status_publikasi' => 'terbit',
+            'is_aktif' => true,
+        ]);
+
+        $pengerjaanGuruLain = Mengerjakan::create([
+            'id_user' => $this->siswa->id_user,
+            'id_kuis' => $kuisGuruLain->id_kuis,
+            'nilai' => 50,
+            'status_pengerjaan' => 'final',
+            'percobaan_ke' => 1,
+            'tanggal' => now(),
+            'status_validasi' => 'belum divalidasi',
+        ]);
+
+        $terlihat = Mengerjakan::query()->dikelolaOlehGuru($this->guru)->pluck('id_mengerjakan');
+
+        $this->assertTrue($terlihat->contains($pengerjaanGuru->id_mengerjakan));
+        $this->assertFalse($terlihat->contains($pengerjaanGuruLain->id_mengerjakan));
+
+        DB::table('pengajaran')->insert([
+            'id_user' => $this->guru->id_user,
+            'id_kelas' => 'KLS001',
+            'id_mapel' => $this->mapel->id_mapel,
+        ]);
+
+        $terlihatSetelahDitugaskan = Mengerjakan::query()->dikelolaOlehGuru($this->guru)->pluck('id_mengerjakan');
+        $this->assertTrue($terlihatSetelahDitugaskan->contains($pengerjaanGuruLain->id_mengerjakan));
+    }
+
+    public function test_guru_lain_tidak_bisa_membaca_atau_mengubah_nilai(): void
+    {
+        $pengerjaan = Mengerjakan::create([
+            'id_user' => $this->siswa->id_user,
+            'id_kuis' => $this->kuisUlangan->id_kuis,
+            'nilai' => 40,
+            'status_pengerjaan' => 'final',
+            'percobaan_ke' => 1,
+            'tanggal' => now(),
+            'status_validasi' => 'belum divalidasi',
+        ]);
+
+        $guruLain = User::create([
+            'id_user' => 'U003',
+            'nama_lengkap' => 'Guru Lain',
+            'role' => 'guru',
+            'status' => 'aktif',
+            'wajib_ganti_password' => false,
+            'password' => bcrypt('password'),
+        ]);
+
+        $this->actingAs($guruLain);
+        $this->get(route('guru.nilai.index'))->assertDontSee($this->kuisUlangan->judul);
+        $this->get(route('guru.nilai.show', $pengerjaan->id_mengerjakan))->assertForbidden();
+        $this->patch(route('guru.nilai.validasi', $pengerjaan->id_mengerjakan))->assertForbidden();
+        $this->post(route('guru.nilai.remedial', $pengerjaan->id_mengerjakan))->assertForbidden();
+
+        $api = new GuruNilaiController();
+        $request = Request::create('/api/guru/nilai', 'GET');
+        $request->setUserResolver(fn () => $guruLain);
+
+        $this->assertSame([], $api->index($request)->getData(true)['data']);
+        try {
+            $api->show($request, $pengerjaan);
+            $this->fail('Guru lain tidak boleh membaca detail nilai.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+
+        try {
+            $api->validasi($request, $pengerjaan);
+            $this->fail('Guru lain tidak boleh memvalidasi nilai.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+    }
+
+    public function test_api_guru_hanya_dapat_memvalidasi_nilai_yang_belum_divalidasi(): void
+    {
+        $pengerjaan = Mengerjakan::create([
+            'id_user' => $this->siswa->id_user,
+            'id_kuis' => $this->kuisUlangan->id_kuis,
+            'nilai' => null,
+            'status_pengerjaan' => 'final',
+            'percobaan_ke' => 1,
+            'tanggal' => now(),
+            'status_validasi' => 'menunggu penilaian',
+        ]);
+
+        $request = Request::create('/api/guru/nilai/'.$pengerjaan->id_mengerjakan.'/validasi', 'PATCH');
+        $request->setUserResolver(fn () => $this->guru);
+
+        try {
+            (new GuruNilaiController())->validasi($request, $pengerjaan);
+            $this->fail('Nilai yang menunggu penilaian tidak boleh divalidasi langsung.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+        }
+
+        $this->assertDatabaseHas('mengerjakan', [
+            'id_mengerjakan' => $pengerjaan->id_mengerjakan,
+            'status_validasi' => 'menunggu penilaian',
+        ]);
+    }
+
+    public function test_web_dan_api_memakai_alur_penilaian_essay_yang_sama(): void
+    {
+        $kuis = Kuis::create([
+            'id_kuis' => 'K_ESSAY',
+            'judul' => 'Kuis Essay',
+            'kategori' => 'ulangan',
+            'tingkat_kesulitan' => 'sedang',
+            'id_mapel' => $this->mapel->id_mapel,
+            'id_tahun_ajaran' => 'TA001',
+            'alokasi_waktu' => 20,
+            'kkm' => 75,
+            'id_user' => $this->guru->id_user,
+            'status_publikasi' => 'terbit',
+            'is_aktif' => true,
+        ]);
+        $soal = Soal::create([
+            'id_soal' => 'SE001',
+            'id_kuis' => $kuis->id_kuis,
+            'tipe' => 'essay',
+            'pertanyaan' => 'Jelaskan konsepnya.',
+            'bobot' => 50,
+        ]);
+
+        $buatPengerjaan = function (int $percobaan) use ($kuis): Mengerjakan {
+            return Mengerjakan::create([
+                'id_user' => $this->siswa->id_user,
+                'id_kuis' => $kuis->id_kuis,
+                'nilai' => null,
+                'status_pengerjaan' => 'final',
+                'percobaan_ke' => $percobaan,
+                'tanggal' => now(),
+                'status_validasi' => 'menunggu penilaian',
+            ]);
+        };
+
+        $pengerjaanApi = $buatPengerjaan(1);
+        $essayApi = NilaiEssay::create([
+            'id_mengerjakan' => $pengerjaanApi->id_mengerjakan,
+            'id_soal' => $soal->id_soal,
+            'jawaban_teks' => 'Jawaban siswa.',
+        ]);
+        $request = Request::create('/api/guru/nilai/'.$pengerjaanApi->id_mengerjakan.'/essay/'.$soal->id_soal, 'POST', [
+            'nilai' => '35',
+            'catatan_guru' => 'Cukup baik.',
+        ]);
+        $request->setUserResolver(fn () => $this->guru);
+
+        $responseApi = (new GuruNilaiController())->nilaiEssay(
+            $request,
+            $pengerjaanApi,
+            $soal,
+            new KuisEssayGradingService(new KuisPenilaianService())
+        );
+
+        $this->assertSame('70.00', $responseApi->getData(true)['data']['nilai']);
+        $this->assertDatabaseHas('nilai_essay', [
+            'id_nilai_essay' => $essayApi->id_nilai_essay,
+            'id_penilai' => $this->guru->id_user,
+        ]);
+
+        $pengerjaanWeb = $buatPengerjaan(2);
+        NilaiEssay::create([
+            'id_mengerjakan' => $pengerjaanWeb->id_mengerjakan,
+            'id_soal' => $soal->id_soal,
+            'jawaban_teks' => 'Jawaban siswa kedua.',
+        ]);
+
+        $this->actingAs($this->guru)
+            ->post(route('guru.nilai.essay.store', [
+                'mengerjakan' => $pengerjaanWeb->id_mengerjakan,
+                'soal' => $soal->id_soal,
+            ]), ['nilai' => '40'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('mengerjakan', [
+            'id_mengerjakan' => $pengerjaanWeb->id_mengerjakan,
+            'nilai' => 80,
+            'status_validasi' => 'sudah divalidasi',
+        ]);
+    }
+
+    public function test_penilaian_essay_membatasi_panjang_catatan_guru(): void
+    {
+        $kuis = Kuis::create([
+            'id_kuis' => 'K_ESSAY',
+            'judul' => 'Kuis Essay',
+            'kategori' => 'ulangan',
+            'tingkat_kesulitan' => 'sedang',
+            'id_mapel' => $this->mapel->id_mapel,
+            'id_tahun_ajaran' => 'TA001',
+            'alokasi_waktu' => 20,
+            'kkm' => 75,
+            'id_user' => $this->guru->id_user,
+            'status_publikasi' => 'terbit',
+            'is_aktif' => true,
+        ]);
+        $soal = Soal::create([
+            'id_soal' => 'SE001',
+            'id_kuis' => $kuis->id_kuis,
+            'tipe' => 'essay',
+            'pertanyaan' => 'Jelaskan konsepnya.',
+            'bobot' => 50,
+        ]);
+        $pengerjaan = Mengerjakan::create([
+            'id_user' => $this->siswa->id_user,
+            'id_kuis' => $kuis->id_kuis,
+            'nilai' => null,
+            'status_pengerjaan' => 'final',
+            'percobaan_ke' => 1,
+            'tanggal' => now(),
+            'status_validasi' => 'menunggu penilaian',
+        ]);
+        NilaiEssay::create([
+            'id_mengerjakan' => $pengerjaan->id_mengerjakan,
+            'id_soal' => $soal->id_soal,
+            'jawaban_teks' => 'Jawaban siswa.',
+        ]);
+
+        $this->actingAs($this->guru)
+            ->post(route('guru.nilai.essay.store', [
+                'mengerjakan' => $pengerjaan->id_mengerjakan,
+                'soal' => $soal->id_soal,
+            ]), [
+                'nilai' => '40',
+                'catatan_guru' => str_repeat('x', 10001),
+            ])
+            ->assertSessionHasErrors('catatan_guru');
+
+        $this->assertDatabaseHas('mengerjakan', [
+            'id_mengerjakan' => $pengerjaan->id_mengerjakan,
+            'status_validasi' => 'menunggu penilaian',
+        ]);
     }
 
     public function test_guru_bisa_tugaskan_remedial_dari_menu_nilai_untuk_ulangan_tidak_lulus(): void

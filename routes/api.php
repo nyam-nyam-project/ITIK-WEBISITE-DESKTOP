@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/kuis/{kuis}/publish', [GuruKuisController::class, 'publish']);
         Route::get('/nilai', [GuruNilaiController::class, 'index']);
         Route::get('/nilai/{mengerjakan}', [GuruNilaiController::class, 'show']);
+        Route::post('/nilai/{mengerjakan}/essay/{soal}', [GuruNilaiController::class, 'nilaiEssay']);
         Route::patch('/nilai/{mengerjakan}/validasi', [GuruNilaiController::class, 'validasi']);
         Route::get('/remedial', [GuruRemedialController::class, 'index']);
         Route::post('/remedial', [GuruRemedialController::class, 'store']);

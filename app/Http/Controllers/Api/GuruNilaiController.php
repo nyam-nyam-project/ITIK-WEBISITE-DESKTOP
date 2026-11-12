@@ -13,6 +13,22 @@ class GuruNilaiController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        Mengerjakan::query()
+            ->where('status_pengerjaan', 'final')
+            ->where(function ($query): void {
+                $query->whereNull('status_validasi')
+                    ->orWhere('status_validasi', '!=', 'sudah divalidasi');
+            })
+            ->whereNotNull('nilai')
+            ->whereHas('kuis', function ($query): void {
+                $query->whereNotNull('kkm')
+                    ->whereColumn('tm_kuis.kkm', '<=', 'tr_mengerjakan.nilai');
+            })
+            ->update([
+                'status_validasi' => 'sudah divalidasi',
+                'id_validator' => null,
+            ]);
+
         $query = Mengerjakan::query()
             ->dikelolaOlehGuru($request->user())
             ->with(['kuis:id_kuis,judul,kategori,kkm', 'siswa:id_user,nama_lengkap,nomor_induk,kelas', 'validator:id_user,nama_lengkap'])
@@ -27,7 +43,47 @@ class GuruNilaiController extends Controller
             $query->where('status_validasi', $validated['status_validasi']);
         }
 
-        return response()->json($query->paginate(20));
+        $nilai = $query->paginate(20);
+        $hasilPadaHalaman = $nilai->getCollection();
+
+        if ($hasilPadaHalaman->isNotEmpty()) {
+            $sesiKuis = SesiKuis::query()
+                ->where(function ($query) use ($hasilPadaHalaman): void {
+                    foreach ($hasilPadaHalaman as $hasil) {
+                        $query->orWhere(function ($query) use ($hasil): void {
+                            $query->where('id_kuis', $hasil->id_kuis)
+                                ->where('id_user', $hasil->id_user)
+                                ->where('percobaan_ke', $hasil->percobaan_ke);
+                        });
+                    }
+                })
+                ->get(['id_kuis', 'id_user', 'percobaan_ke', 'waktu_mulai', 'waktu_selesai'])
+                ->keyBy(fn (SesiKuis $sesi): string => implode('|', [
+                    $sesi->id_kuis,
+                    $sesi->id_user,
+                    $sesi->percobaan_ke,
+                ]));
+
+            $hasilPadaHalaman->each(function (Mengerjakan $hasil) use ($sesiKuis): void {
+                $key = implode('|', [
+                    $hasil->id_kuis,
+                    $hasil->id_user,
+                    $hasil->percobaan_ke,
+                ]);
+                $sesi = $sesiKuis->get($key);
+                $durasi = $sesi?->waktu_mulai && $sesi->waktu_selesai
+                    ? max(
+                        0,
+                        $sesi->waktu_selesai->getTimestamp()
+                            - $sesi->waktu_mulai->getTimestamp()
+                    )
+                    : null;
+
+                $hasil->setAttribute('durasi_detik', $durasi);
+            });
+        }
+
+        return response()->json($nilai);
     }
 
     public function show(Request $request, Mengerjakan $mengerjakan): JsonResponse
@@ -67,6 +123,15 @@ class GuruNilaiController extends Controller
 
         if ($mengerjakan->status_validasi !== 'belum divalidasi') {
             abort(409, 'Nilai ini tidak menunggu validasi.');
+        }
+
+        $mengerjakan->loadMissing('kuis:id_kuis,kkm');
+        if (
+            $mengerjakan->nilai !== null
+            && $mengerjakan->kuis?->kkm !== null
+            && (float) $mengerjakan->nilai >= (float) $mengerjakan->kuis->kkm
+        ) {
+            abort(409, 'Nilai sudah mencapai KKM dan otomatis dinyatakan lulus.');
         }
 
         $mengerjakan->update([

@@ -15,6 +15,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -29,8 +30,14 @@ class SiswaController extends Controller
             ->with([
                 'progress' => fn ($query) => $query->where('id_user', $user->id_user),
             ])
-            ->orderBy('id_materi')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id_materi')
             ->paginate(20);
+
+        $materi->getCollection()->transform(fn (Materi $item): array => [
+            ...$item->toArray(),
+            'pdf_url' => $item->pdfUrl(),
+        ]);
 
         return response()->json($materi);
     }
@@ -50,7 +57,10 @@ class SiswaController extends Controller
         );
 
         return response()->json([
-            'data' => $materi,
+            'data' => [
+                ...$materi->toArray(),
+                'pdf_url' => $materi->pdfUrl(),
+            ],
             'progress' => $progress,
         ]);
     }
@@ -86,6 +96,7 @@ class SiswaController extends Controller
         $kuis = Kuis::query()
             ->where('status_publikasi', 'terbit')
             ->where('is_aktif', true)
+            ->whereHas('soal')
             ->where(function (Builder $query) use ($user): void {
                 $query->where('kategori', '!=', 'remedial')
                     ->orWhereHas('remedialSiswa', function (Builder $query) use ($user): void {
@@ -96,7 +107,9 @@ class SiswaController extends Controller
                     });
             })
             ->with('materi:id_materi,judul,bab,kelas')
+            ->withCount('soal')
             ->orderByDesc('created_at')
+            ->orderByDesc('id_kuis')
             ->paginate(20);
 
         return response()->json($kuis);
@@ -107,7 +120,7 @@ class SiswaController extends Controller
         $user = $request->user();
         $this->ensureKuisIsAvailable($kuis, $user);
 
-        if (!$kuis->alokasi_waktu || $kuis->alokasi_waktu < 1) {
+        if (! $kuis->alokasi_waktu || $kuis->alokasi_waktu < 1) {
             throw ValidationException::withMessages([
                 'alokasi_waktu' => ['Alokasi waktu kuis belum diatur.'],
             ]);
@@ -241,7 +254,7 @@ class SiswaController extends Controller
             ->latest('id_sesi')
             ->first();
 
-        if (!$sesi) {
+        if (! $sesi) {
             return response()->json([
                 'message' => 'Sesi kuis tidak ditemukan.',
             ], 404);
@@ -258,7 +271,7 @@ class SiswaController extends Controller
             ->where('id_kuis', $kuis->id_kuis)
             ->first();
 
-        if (!$soal) {
+        if (! $soal) {
             return response()->json([
                 'message' => 'Soal tidak ditemukan dalam kuis ini.',
             ], 404);
@@ -300,7 +313,7 @@ class SiswaController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$sesi) {
+            if (! $sesi) {
                 return null;
             }
 
@@ -332,6 +345,7 @@ class SiswaController extends Controller
             $nilai = $totalBobot > 0
                 ? round(($bobotBenar / $totalBobot) * 100, 2)
                 : 0;
+            $lulusOtomatis = $kuis->kkm !== null && $nilai >= (float) $kuis->kkm;
 
             $hasil = Mengerjakan::create([
                 'id_kuis' => $kuis->id_kuis,
@@ -340,7 +354,10 @@ class SiswaController extends Controller
                 'tanggal' => now()->toDateString(),
                 'percobaan_ke' => $sesi->percobaan_ke,
                 'status_pengerjaan' => 'final',
-                'status_validasi' => 'belum divalidasi',
+                'status_validasi' => $lulusOtomatis
+                    ? 'sudah divalidasi'
+                    : 'belum divalidasi',
+                'id_validator' => null,
             ]);
 
             if ($kuis->kategori === 'remedial') {
@@ -361,7 +378,7 @@ class SiswaController extends Controller
             return $hasil;
         });
 
-        if (!$hasil) {
+        if (! $hasil) {
             return response()->json([
                 'message' => 'Pengerjaan kuis ini sudah selesai atau belum dimulai.',
             ], 409);
@@ -375,8 +392,30 @@ class SiswaController extends Controller
 
     public function nilai(Request $request): JsonResponse
     {
+        Mengerjakan::query()
+            ->where('id_user', $request->user()->id_user)
+            ->where('status_pengerjaan', 'final')
+            ->where(function (Builder $query): void {
+                $query->whereNull('status_validasi')
+                    ->orWhere('status_validasi', '!=', 'sudah divalidasi');
+            })
+            ->whereNotNull('nilai')
+            ->whereHas('kuis', function (Builder $query): void {
+                $query->whereNotNull('kkm')
+                    ->whereColumn('tm_kuis.kkm', '<=', 'tr_mengerjakan.nilai');
+            })
+            ->update([
+                'status_validasi' => 'sudah divalidasi',
+                'id_validator' => null,
+            ]);
+
         $nilai = Mengerjakan::query()
-            ->with('kuis:id_kuis,judul,kategori,kkm')
+            ->with([
+                'kuis:id_kuis,judul,kategori,kkm',
+                'remedialSiswa' => fn ($query) => $query
+                    ->with('kuisRemedial:id_kuis,judul,deskripsi,alokasi_waktu,kkm,status_publikasi,is_aktif')
+                    ->orderByDesc('tanggal_ditugaskan'),
+            ])
             ->where('id_user', $request->user()->id_user)
             ->where('status_pengerjaan', 'final')
             ->orderByDesc('tanggal')
@@ -391,7 +430,7 @@ class SiswaController extends Controller
         $tugas = RemedialSiswa::query()
             ->with([
                 'kuisRemedial:id_kuis,judul,deskripsi,alokasi_waktu,kkm,status_publikasi,is_aktif',
-                'mengerjakanAsal.kuis:id_kuis,judul,kkm',
+                'mengerjakanAsal.kuis:id_kuis,judul,kategori,kkm',
             ])
             ->whereHas('mengerjakanAsal', function (Builder $query) use ($request): void {
                 $query->where('id_user', $request->user()->id_user);
@@ -419,7 +458,7 @@ class SiswaController extends Controller
         abort_unless($hasAssignment, 403, 'Kamu tidak memiliki tugas remedial untuk kuis ini.');
     }
 
-    private function batasWaktu(Kuis $kuis, SesiKuis $sesi): \Illuminate\Support\Carbon
+    private function batasWaktu(Kuis $kuis, SesiKuis $sesi): Carbon
     {
         $batasWaktu = $sesi->waktu_mulai->copy()->addMinutes($kuis->alokasi_waktu);
 

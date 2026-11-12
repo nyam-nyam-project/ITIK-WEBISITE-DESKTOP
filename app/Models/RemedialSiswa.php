@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RemedialSiswa extends Model
 {
-    protected $table = 'remedial_siswa';
+    protected $table = 'tr_remedial_siswa';
 
     protected $primaryKey = 'id_remedial_siswa';
 

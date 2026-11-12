@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Kelas extends Model
 {
-    protected $table = 'kelas';
+    protected $table = 'tm_kelas';
 
     protected $primaryKey = 'id_kelas';
 
@@ -35,7 +35,7 @@ class Kelas extends Model
     {
         return $this->belongsToMany(
             Mapel::class,
-            'mapel_kelas',
+            'tp_mapel_kelas',
             'id_kelas',
             'id_mapel',
             'id_kelas',
@@ -47,7 +47,7 @@ class Kelas extends Model
     {
         return $this->belongsToMany(
             User::class,
-            'anggota_kelas',
+            'tp_anggota_kelas',
             'id_kelas',
             'id_user',
             'id_kelas',

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Progress extends Model
 {
-    protected $table = 'progress';
+    protected $table = 'tr_progress';
 
     protected $primaryKey = 'id_progress';
 

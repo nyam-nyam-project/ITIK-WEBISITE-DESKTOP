@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\DraftJawaban;
+use App\Models\Kelas;
 use App\Models\Kuis;
+use App\Models\Materi;
 use App\Models\Mengerjakan;
 use App\Models\NilaiEssay;
 use App\Models\Pengajaran;
@@ -15,6 +17,7 @@ use App\Services\RekapNilaiGuruService;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 class ValidasiNilaiController extends Controller
@@ -89,6 +92,22 @@ class ValidasiNilaiController extends Controller
      */
     public function index(Request $request)
     {
+        Mengerjakan::query()
+            ->where('status_pengerjaan', 'final')
+            ->where(function ($query) {
+                $query->whereNull('status_validasi')
+                    ->orWhere('status_validasi', '!=', 'sudah divalidasi');
+            })
+            ->whereNotNull('nilai')
+            ->whereHas('kuis', function ($query) {
+                $query->whereNotNull('kkm')
+                    ->whereColumn('kuis.kkm', '<=', 'mengerjakans.nilai');
+            })
+            ->update([
+                'status_validasi' => 'sudah divalidasi',
+                'id_validator' => null,
+            ]);
+
         $guru = Auth::user();
         $kategori = $request->query('kategori');
         $percobaan = $request->query('percobaan');
@@ -99,6 +118,8 @@ class ValidasiNilaiController extends Controller
         $kelasList = collect();
         $kelasTerpilih = null;
 
+        if (Schema::hasTable('kelas')) {
+            $daftarKelas = Kelas::aktif()
         if (\Illuminate\Support\Facades\Schema::hasTable('kelas') && \Illuminate\Support\Facades\Schema::hasTable('pengajaran')) {
             $kelasQuery = \App\Models\Kelas::aktif();
             $penugasanGlobal = Pengajaran::where('id_user', $guru->id_user)
@@ -160,6 +181,25 @@ class ValidasiNilaiController extends Controller
                 $mapelIds = $k->mapel->pluck('id_mapel')->toArray();
 
                 $totalSiswa = count($siswaIds);
+
+                $totalMateri = Materi::when(! empty($mapelIds), function ($q) use ($mapelIds) {
+                    $q->whereIn('id_mapel', $mapelIds);
+                }, function ($q) use ($k) {
+                    $q->where('kelas', $k->tingkat)->orWhere('kelas', $k->nama_kelas);
+                })->count();
+
+                $kuisAktif = Kuis::where('is_aktif', true)
+                    ->where('status_publikasi', 'terbit')
+                    ->when(! empty($mapelIds), function ($q) use ($mapelIds) {
+                        $q->whereIn('id_mapel', $mapelIds);
+                    })->count();
+
+                $rataNilai = ! empty($siswaIds)
+                    ? Mengerjakan::whereIn('id_user', $siswaIds)
+                        ->where('status_pengerjaan', 'final')
+                        ->whereNotNull('nilai')
+                        ->avg('nilai')
+                    : null;
                 $totalMateri = ! empty($mapelIds)
                     ? collect($mapelIds)->sum(fn ($idMapel) => (int) ($materiPerMapel->get($idMapel)?->total ?? 0))
                     : collect([$k->tingkat, $k->nama_kelas])
@@ -231,8 +271,9 @@ class ValidasiNilaiController extends Controller
                 if ($kelulusan === 'lulus') {
                     return $lulus;
                 } elseif ($kelulusan === 'tidak_lulus') {
-                    return !$lulus;
+                    return ! $lulus;
                 }
+
                 return true;
             })->values();
         }
@@ -264,7 +305,7 @@ class ValidasiNilaiController extends Controller
      */
     public function show($id)
     {
-        $mengerjakan = Mengerjakan::with(['siswa','kuis','validator',])
+        $mengerjakan = Mengerjakan::with(['siswa', 'kuis', 'validator'])
             ->findOrFail($id);
         abort_unless($mengerjakan->dikelolaOleh(Auth::user()), 403);
 
@@ -352,6 +393,16 @@ class ValidasiNilaiController extends Controller
                 ->with('error', 'Nilai ini sudah divalidasi.');
         }
 
+        if (
+            $mengerjakan->nilai !== null
+            && $mengerjakan->kuis?->kkm !== null
+            && (float) $mengerjakan->nilai >= (float) $mengerjakan->kuis->kkm
+        ) {
+            return redirect()
+                ->route('guru.nilai.show', $mengerjakan->id_mengerjakan)
+                ->with('success', 'Nilai sudah mencapai KKM dan siswa otomatis dinyatakan lulus.');
+        }
+
         $mengerjakan->update([
             'status_validasi' => 'sudah divalidasi',
             'id_validator' => Auth::user()->id_user,
@@ -389,6 +440,28 @@ class ValidasiNilaiController extends Controller
                 return back()->with('error', 'Tugas remedial hanya dapat diberikan untuk kuis berkategori Ulangan.');
             }
 
+        // Cari kuis remedial untuk kuis ulangan ini
+        $remedial = Remedial::where('id_kuis_asal', $mengerjakan->id_kuis)->first();
+
+        // Jika belum ada kuis remedial untuk ulangan ini, buatkan otomatis
+        if (! $remedial) {
+            $newId = $this->idBerikutnya('kuis', 'id_kuis', 'K');
+
+            $kuisRemedial = Kuis::create([
+                'id_kuis' => $newId,
+                'judul' => 'Remedial - '.$mengerjakan->kuis->judul,
+                'deskripsi' => 'Kuis remedial untuk perbaikan nilai '.$mengerjakan->kuis->judul,
+                'kategori' => 'remedial',
+                'tingkat_kesulitan' => $mengerjakan->kuis->tingkat_kesulitan ?? 'sedang',
+                'id_mapel' => $mengerjakan->kuis->id_mapel,
+                'id_tahun_ajaran' => $mengerjakan->kuis->id_tahun_ajaran,
+                'alokasi_waktu' => $mengerjakan->kuis->alokasi_waktu ?? 20,
+                'kkm' => $mengerjakan->kuis->kkm ?? 75.00,
+                'id_user' => Auth::user()->id_user,
+                'status_publikasi' => 'terbit',
+                'id_publisher' => Auth::user()->id_user,
+                'is_aktif' => true,
+            ]);
             if ($mengerjakan->nilai === null || ($kuisAsal->kkm !== null && $mengerjakan->nilai >= $kuisAsal->kkm)) {
                 return back()->with('error', 'Siswa ini sudah mencapai KKM.');
             }

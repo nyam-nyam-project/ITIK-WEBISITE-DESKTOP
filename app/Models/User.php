@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
-    protected $table = 'user';
+    protected $table = 'tm_user';
 
     protected $primaryKey = 'id_user';
 
@@ -60,14 +61,14 @@ class User extends Authenticatable
 
     public function progressMateri()
     {
-        return $this->hasMany(Progress::class,'id_user','id_user');
+        return $this->hasMany(Progress::class, 'id_user', 'id_user');
     }
 
     public function kelasDiikuti()
     {
         return $this->belongsToMany(
             Kelas::class,
-            'anggota_kelas',
+            'tp_anggota_kelas',
             'id_user',
             'id_kelas',
             'id_user',

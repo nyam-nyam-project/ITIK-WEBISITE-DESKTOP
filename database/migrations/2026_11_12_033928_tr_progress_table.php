@@ -11,13 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('progress', function (Blueprint $table) {
+        Schema::create('tr_progress', function (Blueprint $table) {
             $table->string('id_progress', 50)->primary();
+
             $table->string('status', 50)
                 ->nullable()
                 ->comment('Contoh: belum mulai, sedang belajar, selesai');
+
             $table->date('tanggal')->nullable();
+
             $table->string('id_materi', 50)->index('fk_progress_materi');
+
             $table->string('id_user', 50)
                 ->index('fk_progress_user')
                 ->comment('Siswa pemilik progress ini');
@@ -26,16 +30,16 @@ return new class extends Migration
                 ['id_materi', 'id_user'],
                 'uq_progress_materi_user'
             );
-            
+
             $table->foreign('id_materi', 'fk_progress_materi')
                 ->references('id_materi')
-                ->on('materis')
+                ->on('tm_materi')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
 
             $table->foreign('id_user', 'fk_progress_user')
                 ->references('id_user')
-                ->on('users')
+                ->on('tm_user')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
         });
@@ -46,6 +50,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('progress');
+        //
     }
 };

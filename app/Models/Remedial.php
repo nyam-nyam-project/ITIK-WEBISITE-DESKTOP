@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Remedial extends Model
 {
-    protected $table = 'remedial';
+    protected $table = 'tr_remedial';
 
     protected $primaryKey = 'id_remedial';
 
@@ -26,7 +26,7 @@ class Remedial extends Model
      */
     public function kuisRemedial()
     {
-        return $this->belongsTo(Kuis::class,'id_kuis_remedial','id_kuis');
+        return $this->belongsTo(Kuis::class, 'id_kuis_remedial', 'id_kuis');
     }
 
     /*
@@ -34,7 +34,7 @@ class Remedial extends Model
      */
     public function kuisAsal()
     {
-        return $this->belongsTo(Kuis::class,'id_kuis_asal','id_kuis');
+        return $this->belongsTo(Kuis::class, 'id_kuis_asal', 'id_kuis');
     }
 
     /*
@@ -42,6 +42,6 @@ class Remedial extends Model
      */
     public function remedialSiswa()
     {
-        return $this->hasMany(RemedialSiswa::class,'id_kuis_remedial','id_kuis_remedial');
+        return $this->hasMany(RemedialSiswa::class, 'id_kuis_remedial', 'id_kuis_remedial');
     }
 }

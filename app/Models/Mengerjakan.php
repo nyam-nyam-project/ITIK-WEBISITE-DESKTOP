@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class Mengerjakan extends Model
 {
-    protected $table = 'mengerjakan';
+    protected $table = 'tr_mengerjakan';
 
     protected $primaryKey = 'id_mengerjakan';
 
@@ -35,22 +35,22 @@ class Mengerjakan extends Model
 
     public function kuis()
     {
-        return $this->belongsTo(Kuis::class,'id_kuis','id_kuis');
+        return $this->belongsTo(Kuis::class, 'id_kuis', 'id_kuis');
     }
 
     public function siswa()
     {
-        return $this->belongsTo(User::class,'id_user','id_user');
+        return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 
     public function validator()
     {
-        return $this->belongsTo(User::class,'id_validator','id_user');
+        return $this->belongsTo(User::class, 'id_validator', 'id_user');
     }
 
     public function remedialSiswa()
     {
-        return $this->hasMany(RemedialSiswa::class,'id_mengerjakan_asal','id_mengerjakan');
+        return $this->hasMany(RemedialSiswa::class, 'id_mengerjakan_asal', 'id_mengerjakan');
     }
 
 

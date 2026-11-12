@@ -102,6 +102,11 @@ class KuisSubmissionService
                 ->get()->keyBy('id_soal');
             $nilai = $this->penilaian->hitung($soal, $draft, collect());
 
+            $nilai = $totalBobot > 0
+                ? round(($bobotBenar / $totalBobot) * 100, 2)
+                : 0;
+            $lulusOtomatis = $kuis->kkm !== null && $nilai >= (float) $kuis->kkm;
+
             $hasil = Mengerjakan::create([
                 'id_kuis' => $sesi->id_kuis,
                 'id_user' => $sesi->id_user,

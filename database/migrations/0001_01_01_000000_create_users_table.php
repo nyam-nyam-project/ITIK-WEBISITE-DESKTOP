@@ -11,19 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('tm_user', function (Blueprint $table) {
             $table->string('id_user', 50)->primary();
-            $table->string('nomor_induk', 50)->nullable();
+            $table->string('nomor_induk', 50)->unique()->nullable();
             $table->string('nama_lengkap', 100);
-            $table->enum('role', ['guru', 'operator', 'siswa']);
-            $table->string('kelas', 50)
-                ->nullable()
-                ->comment('Hanya diisi jika role=siswa');
+            $table->enum('role', ['admin', 'guru', 'siswa']);
+            $table->string('status', 20)->default('aktif');
+            $table->string('kelas', 50)->nullable();
             $table->string('email', 100)->nullable();
-            $table->string('password', 255);
+            $table->string('password');
+            $table->boolean('wajib_ganti_password')->default(false);
+            $table->string('dibuat_oleh', 50)->nullable();
+            $table->timestamps();
 
-            $table->timestamp('created_at')->nullable()->useCurrent();
-            $table->timestamp('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
+            $table->foreign('dibuat_oleh', 'fk_user_dibuat_oleh')
+                ->references('id_user')
+                ->on('tm_user')
+                ->onDelete('set null')
+                ->onUpdate('cascade');
         });
     }
 
@@ -32,6 +37,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('tm_user');
     }
 };

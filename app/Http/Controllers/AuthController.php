@@ -24,6 +24,7 @@ class AuthController extends Controller
             if (Auth::user()->role === 'admin') {
                 return redirect()->route('admin.dashboard');
             }
+
             return redirect()->route('dashboard');
         }
 
@@ -33,15 +34,13 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $identifier = $request->input('nomor_induk')
-            ?? $request->input('login')
-            ?? $request->input('email');
+            ?? $request->input('login');
 
         if (! $identifier) {
             return back()
                 ->withErrors([
                     'nomor_induk' => 'NISN atau NIP wajib diisi.',
                     'login' => 'NISN atau NIP wajib diisi.',
-                    'email' => 'NISN atau NIP wajib diisi.',
                 ])
                 ->withInput();
         }
@@ -60,7 +59,6 @@ class AuthController extends Controller
                 ->withErrors([
                     'nomor_induk' => 'NISN, NIP, atau password salah.',
                     'login' => 'NISN, NIP, atau password salah.',
-                    'email' => 'NISN, NIP, atau password salah.',
                 ])
                 ->withInput();
         }
@@ -71,7 +69,6 @@ class AuthController extends Controller
                 ->withErrors([
                     'nomor_induk' => 'Akun Administrator silakan masuk melalui halaman login khusus Admin.',
                     'login' => 'Akun Administrator silakan masuk melalui halaman login khusus Admin.',
-                    'email' => 'Akun Administrator silakan masuk melalui halaman login khusus Admin.',
                 ])
                 ->withInput();
         }
@@ -88,9 +85,8 @@ class AuthController extends Controller
                 ->withErrors([
                     'nomor_induk' => 'Akun Anda sudah tidak aktif. Hubungi admin sekolah.',
                     'login' => 'Akun Anda sudah tidak aktif. Hubungi admin sekolah.',
-                    'email' => 'Akun Anda sudah tidak aktif. Hubungi admin sekolah.',
                 ])
-                ->onlyInput('nomor_induk', 'login', 'email');
+                ->onlyInput('nomor_induk', 'login');
         }
 
         if ($user->wajib_ganti_password) {

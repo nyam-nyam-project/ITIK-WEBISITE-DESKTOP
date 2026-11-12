@@ -2,123 +2,18 @@
 @section('title', 'Hasil Kuis - ' . $kuis->judul)
 
 @push('styles')
-<style>
-    .score-card {
-        text-align: center;
-        padding: 30px;
-    }
-    .score-number {
-        font-size: 58px;
-        font-weight: 800;
-        color: #166534;
-        line-height: 1.1;
-        margin: 10px 0;
-    }
-    .score-number.gagal {
-        color: #991b1b;
-    }
-    .eval-stats {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-top: 24px;
-        padding-top: 20px;
-        border-top: 1px solid var(--border);
-    }
-    .eval-stat-box {
-        background: #f8f7fc;
-        padding: 12px;
-        border-radius: 12px;
-    }
-    .eval-stat-num {
-        font-size: 24px;
-        font-weight: 700;
-    }
-    .eval-stat-label {
-        font-size: 11px;
-        color: var(--muted);
-    }
-    .soal-card {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 18px 20px;
-        margin-bottom: 16px;
-        border-left: 5px solid #d1d5db;
-    }
-    .soal-card.benar { border-left-color: #10b981; }
-    .soal-card.salah { border-left-color: #ef4444; }
-    .soal-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 10px;
-    }
-    .soal-card-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--ink);
-    }
-    .soal-pertanyaan {
-        font-size: 14px;
-        line-height: 1.6;
-        margin-bottom: 12px;
-    }
-    .opsi-review-list {
-        display: grid;
-        gap: 8px;
-    }
-    .opsi-review-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 12px;
-        border-radius: 8px;
-        background: #f9fafb;
-        border: 1px solid var(--border);
-        font-size: 13px;
-    }
-    .opsi-review-item.kunci {
-        background: #ecfdf5;
-        border-color: #a7f3d0;
-        font-weight: 600;
-    }
-    .opsi-review-item.jawaban-salah {
-        background: #fef2f2;
-        border-color: #fecaca;
-    }
-    .opsi-label {
-        font-weight: 700;
-        width: 20px;
-    }
-    .opsi-status-text {
-        margin-left: auto;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 10px;
-    }
-    .opsi-status-text.kunci {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    .opsi-status-text.jawaban-kamu {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/siswa/kuis/hasil.css') }}">
 @endpush
 
 @section('content')
 @php
     $lulus = $lulus ?? ($hasil->nilai !== null && $kuis->kkm !== null && (float) $hasil->nilai >= (float) $kuis->kkm);
+    $menungguPenilaian = $hasil->status_validasi === 'menunggu penilaian';
 @endphp
 
 <div class="page-heading">
     <div>
-        <a href="{{ route('siswa.kuis.index') }}" class="btn btn-secondary" style="display:inline-block; margin-bottom:10px;">
+        <a href="{{ route('siswa.kuis.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
             ← Kembali
         </a>
         <h1>Hasil Kuis</h1>
@@ -127,14 +22,19 @@
     <div class="actions">
         @php
             $katKuis = strtolower(trim($kuis->kategori ?? ''));
-            $bolehUlang = in_array($katKuis, ['kuis harian', 'pre-test', 'pass-test']);
+            $bolehUlang = in_array($katKuis, ['kuis harian', 'pre-test', 'post-test']);
         @endphp
 
-        @if(!$lulus && $bolehUlang)
+        @if($katKuis === 'pre-test' && isset($materiTerkait))
+            <a href="{{ route('siswa.materi.show', $materiTerkait->id_materi) }}" class="btn">
+                Buka Materi Pembelajaran →
+            </a>
+        @endif
+        @if(!$menungguPenilaian && !$lulus && $bolehUlang)
             <a href="{{ route('siswa.kuis.mulai', $kuis->id_kuis) }}" class="btn btn-warning">
                 ↻ Kerjakan Ulang Kuis
             </a>
-        @elseif(!$lulus && $katKuis === 'ulangan')
+        @elseif(!$menungguPenilaian && !$lulus && $katKuis === 'ulangan')
             <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning">
                 Lihat Tugas Remedial
             </a>
@@ -149,32 +49,37 @@
     <!-- KIRI: KARTU NILAI -->
     <section class="card score-card">
         <span class="muted small">Nilai Akhir Kamu</span>
-        <div class="score-number {{ $lulus ? '' : 'gagal' }}">
-            {{ $hasil->nilai }}
+        <div class="score-number {{ $menungguPenilaian ? 'pending' : ($lulus ? '' : 'gagal') }}">
+            {{ $menungguPenilaian ? '—' : $hasil->nilai }}
         </div>
 
         <div>
-            @if($lulus)
+            @if($menungguPenilaian)
+                <span class="badge">Menunggu penilaian</span>
+                <p class="essay-review-note">Nilai akhir tersedia setelah seluruh essay dinilai oleh guru.</p>
+            @elseif($lulus)
                 <span class="badge badge-success">✓ Lulus (≥ KKM {{ $kuis->kkm ?? '-' }})</span>
             @else
                 <span class="badge badge-warning">⚠️ Tidak Lulus (&lt; KKM {{ $kuis->kkm ?? '-' }})</span>
             @endif
         </div>
 
+        @if($tampilDetail ?? false)
         <div class="eval-stats">
             <div class="eval-stat-box">
-                <div class="eval-stat-num" style="color: #166534;">{{ $totalBenar ?? 0 }}</div>
+                <div class="eval-stat-num u-color-166534">{{ $totalBenar ?? 0 }}</div>
                 <div class="eval-stat-label">Jawaban Benar</div>
             </div>
             <div class="eval-stat-box">
-                <div class="eval-stat-num" style="color: #991b1b;">{{ $totalSalah ?? 0 }}</div>
+                <div class="eval-stat-num u-color-991b1b">{{ $totalSalah ?? 0 }}</div>
                 <div class="eval-stat-label">Jawaban Salah</div>
             </div>
             <div class="eval-stat-box">
-                <div class="eval-stat-num" style="color: var(--purple);">{{ count($soal ?? []) }}</div>
+                <div class="eval-stat-num u-color-var---purple">{{ count($soal ?? []) }}</div>
                 <div class="eval-stat-label">Total Butir Soal</div>
             </div>
         </div>
+        @endif
     </section>
 
     <!-- KANAN: DETAIL KUIS -->
@@ -206,16 +111,28 @@
 </div>
 
 <!-- EVALUASI SOAL BENAR & SALAH -->
-@if(isset($soal) && $soal->isNotEmpty())
+@if($tampilDetail ?? false)
+    @if(isset($soal) && $soal->isNotEmpty())
     <section class="card">
         <div class="card-header">
             <div>
-                <h2>📋 Evaluasi Soal (Benar &amp; Salah)</h2>
+                <h2>Evaluasi Soal</h2>
                 <p class="muted">Pelajari butir soal untuk mengevaluasi pemahaman materi Anda.</p>
             </div>
         </div>
 
         @foreach($soal as $itemSoal)
+            @if($itemSoal->tipe === 'essay')
+                <div class="soal-card essay-review" data-essay-review="{{ $itemSoal->id_soal }}">
+                    <div class="soal-card-header">
+                        <div class="soal-card-title">Soal #{{ $loop->iteration }}</div>
+                        <span class="badge">Essay</span>
+                    </div>
+                    <div class="soal-pertanyaan">{{ $itemSoal->pertanyaan }}</div>
+                    <p class="essay-review-note">Soal essay dinilai oleh guru berdasarkan bobot {{ $itemSoal->bobot }}.</p>
+                </div>
+                @continue
+            @endif
             @php
                 $jawabanDipilih = $draftJawaban->get($itemSoal->id_soal)?->jawaban_dipilih;
                 $kunciBenar = $itemSoal->jawaban ? strtoupper($itemSoal->jawaban) : null;
@@ -233,7 +150,7 @@
                 <div class="soal-card-header">
                     <div class="soal-card-title">
                         Soal #{{ $loop->iteration }}
-                        <span class="muted small" style="margin-left: 6px;">(Bobot: {{ $itemSoal->bobot ?? 0 }}%)</span>
+                        <span class="muted small u-margin-left-6px">(Bobot: {{ $itemSoal->bobot ?? 0 }}%)</span>
                     </div>
 
                     @if($isBenar)
@@ -265,7 +182,7 @@
 
                             <div class="opsi-review-item {{ $itemClass }}">
                                 <div class="opsi-label">{{ $huruf }}.</div>
-                                <div style="flex: 1;">{{ $teksOpsi }}</div>
+                                <div class="u-flex-1">{{ $teksOpsi }}</div>
 
                                 @if($isKunci && $isDipilihSiswa)
                                     <span class="opsi-status-text kunci">✓ Pilihan Kamu (Benar)</span>
@@ -280,6 +197,12 @@
                 </div>
             </div>
         @endforeach
+    </section>
+    @endif
+@else
+    {{-- Evaluasi tidak ditampilkan sesuai pengaturan kuis --}}
+    <section class="card">
+        <p class="muted">Evaluasi per soal tidak tersedia untuk kuis ini.</p>
     </section>
 @endif
 

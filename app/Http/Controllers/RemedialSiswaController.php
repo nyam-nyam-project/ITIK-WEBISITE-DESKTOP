@@ -3,10 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\RemedialSiswa;
+use App\Services\RemedialService;
 use Illuminate\Support\Facades\Auth;
 
 class RemedialSiswaController extends Controller
 {
+    public function __construct(
+        protected RemedialService $remedialService
+    ) {}
+
     /**
      * Daftar tugas remedial siswa
      */
@@ -14,15 +19,7 @@ class RemedialSiswaController extends Controller
     {
         $user = Auth::user();
 
-        $tugas = RemedialSiswa::with([
-            'kuisRemedial',
-            'mengerjakanAsal.kuis',
-        ])
-            ->whereHas('mengerjakanAsal', function ($query) use ($user) {
-                $query->where('id_user', $user->id_user);
-            })
-            ->orderByDesc('tanggal_ditugaskan')
-            ->get();
+        $tugas = $this->remedialService->untukSiswa($user->id_user);
 
         return view('siswa.remedial.index', compact('tugas'));
     }

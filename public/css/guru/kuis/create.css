@@ -1,0 +1,24 @@
+.special-card {
+    background: #fbfafd;
+    border: 1px dashed #d0c8ed;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+}
+
+.materi-locked-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    margin-top: 6px;
+}
+
+.materi-locked-box input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: not-allowed;
+}

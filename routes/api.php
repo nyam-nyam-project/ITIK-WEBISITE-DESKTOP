@@ -70,5 +70,15 @@ Route::middleware('auth:sanctum')->group(function (): void {
             ->name('guru.remedial.tugaskan');
         Route::get('/remedial/{remedial}', [GuruRemedialController::class, 'show'])
             ->name('guru.remedial.show');
+        Route::post('/kuis/{kuis}/publish', [GuruKuisController::class, 'publish']);
+        Route::get('/nilai', [GuruNilaiController::class, 'index']);
+        Route::get('/nilai/{mengerjakan}', [GuruNilaiController::class, 'show']);
+        Route::post('/nilai/{mengerjakan}/essay/{soal}', [GuruNilaiController::class, 'nilaiEssay']);
+        Route::patch('/nilai/{mengerjakan}/validasi', [GuruNilaiController::class, 'validasi']);
+        Route::get('/remedial', [GuruRemedialController::class, 'index']);
+        Route::post('/remedial', [GuruRemedialController::class, 'store']);
+        Route::get('/remedial/{remedial}/siswa', [GuruRemedialController::class, 'siswa']);
+        Route::get('/remedial/{remedial}', [GuruRemedialController::class, 'show']);
+        Route::post('/remedial/{remedial}/tugaskan', [GuruRemedialController::class, 'tugaskan']);
     });
 });

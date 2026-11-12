@@ -7,11 +7,37 @@
     <section class="card">
         <div class="card-header"><div><h2>Anggota kelas</h2><p class="muted small">Termasuk akun nonaktif untuk menjaga rekap historis.</p></div><span class="badge">{{ $anggota->count() }} siswa</span></div>
         @if($anggota->isNotEmpty())
-            <div class="table-wrap"><table><thead><tr><th scope="col">No.</th><th scope="col">NISN</th><th scope="col">Nama siswa</th><th scope="col">Status akun</th><th scope="col">Tindakan</th></tr></thead><tbody>
-                @foreach($anggota as $siswaAnggota)
-                    <tr><td>{{ $loop->iteration }}</td><td class="nowrap">{{ $siswaAnggota->nomor_induk ?? '—' }}</td><td class="text-break"><strong>{{ $siswaAnggota->nama_lengkap }}</strong><span class="muted small">{{ $siswaAnggota->email ?? 'Email belum diisi' }}</span></td><td><span class="badge {{ $siswaAnggota->status === 'aktif' ? 'badge-success' : 'badge-muted' }}">{{ $siswaAnggota->status === 'aktif' ? 'Aktif' : 'Nonaktif' }}</span></td><td><a class="btn btn-secondary btn-small" href="{{ route('admin.siswa.edit', $siswaAnggota) }}" aria-label="Ubah akun {{ $siswaAnggota->nama_lengkap }}">Ubah akun</a></td></tr>
-                @endforeach
-            </tbody></table></div>
+            <form action="{{ route('admin.kelas.pindah-anggota', $kelas) }}" method="POST" id="form-pindah-anggota">
+                @csrf
+                <div class="table-wrap"><table><thead><tr><th scope="col"><input type="checkbox" id="check-semua-anggota" title="Pilih semua siswa" aria-label="Pilih semua siswa"></th><th scope="col">No.</th><th scope="col">NISN</th><th scope="col">Nama siswa</th><th scope="col">Status akun</th><th scope="col">Tindakan</th></tr></thead><tbody>
+                    @foreach($anggota as $siswaAnggota)
+                        <tr><td><input type="checkbox" name="id_user[]" value="{{ $siswaAnggota->id_user }}" class="check-siswa" aria-label="Pilih {{ $siswaAnggota->nama_lengkap }}" @checked(in_array($siswaAnggota->id_user, (array) old('id_user', []), true))></td><td>{{ $loop->iteration }}</td><td class="nowrap">{{ $siswaAnggota->nomor_induk ?? '—' }}</td><td class="text-break"><strong>{{ $siswaAnggota->nama_lengkap }}</strong><span class="muted small">{{ $siswaAnggota->email ?? 'Email belum diisi' }}</span></td><td><span class="badge {{ $siswaAnggota->status === 'aktif' ? 'badge-success' : 'badge-muted' }}">{{ $siswaAnggota->status === 'aktif' ? 'Aktif' : 'Nonaktif' }}</span></td><td><a class="btn btn-secondary btn-small" href="{{ route('admin.siswa.edit', $siswaAnggota) }}" aria-label="Ubah akun {{ $siswaAnggota->nama_lengkap }}">Ubah akun</a></td></tr>
+                    @endforeach
+                </tbody></table></div>
+                @error('id_user')<p class="error">{{ $message }}</p>@enderror
+                @error('id_kelas_tujuan')<p class="error">{{ $message }}</p>@enderror
+                @if($daftarKelasTujuan->isNotEmpty())
+                    <div class="form-actions">
+                        <div class="field u-margin-bottom-0">
+                            <label for="id_kelas_tujuan">Pindahkan anggota terpilih ke kelas lain:</label>
+                            <select id="id_kelas_tujuan" name="id_kelas_tujuan" required>
+                                <option value="">-- Pilih Kelas Tujuan --</option>
+                                @foreach($daftarKelasTujuan as $kt)
+                                    <option value="{{ $kt->id_kelas }}" @selected(old('id_kelas_tujuan') === $kt->id_kelas)>
+                                        {{ $kt->nama_kelas }} (Tingkat {{ $kt->tingkat }}{{ $kt->is_aktif ? '' : ' - nonaktif' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary" type="submit" id="btn-submit-pindah">
+                            Pindahkan siswa terpilih
+                        </button>
+                        <p class="muted small" id="jumlah-siswa-pindah" aria-live="polite">0 siswa dipilih</p>
+                    </div>
+                @else
+                    <p class="muted small u-margin-top-14px">Tidak ada kelas tujuan lain di tahun ajaran ini untuk memindahkan siswa.</p>
+                @endif
+            </form>
         @else
             <div class="empty"><h3>Belum ada anggota kelas</h3><p>Pilih siswa tersedia pada formulir di bawah untuk menambah anggota pertama.</p></div>
         @endif
@@ -39,23 +65,5 @@
     </section>
 @endsection
 @push('scripts')
-<script>
-    const memberForm = document.getElementById('anggota-form');
-    if (memberForm) {
-        document.getElementById('pencarian-anggota').hidden = false;
-        const searchMember = document.getElementById('cari-anggota');
-        const memberLabels = Array.from(document.querySelectorAll('#daftar-anggota .check'));
-        const memberInputs = Array.from(memberForm.querySelectorAll('input[type="checkbox"]'));
-        const updateMemberCount = function () {
-            document.getElementById('jumlah-pilihan').textContent = memberInputs.filter(input => input.checked).length + ' siswa dipilih';
-        };
-        searchMember.addEventListener('input', function () {
-            const term = searchMember.value.trim().toLocaleLowerCase('id');
-            memberLabels.forEach(label => { label.hidden = !label.textContent.toLocaleLowerCase('id').includes(term); });
-            document.getElementById('anggota-tidak-ditemukan').hidden = memberLabels.some(label => !label.hidden);
-        });
-        memberForm.addEventListener('change', updateMemberCount);
-        updateMemberCount();
-    }
-</script>
+<script src="{{ asset('js/admin/kelas.js') }}" defer></script>
 @endpush

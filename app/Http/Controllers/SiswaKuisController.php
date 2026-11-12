@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\KuisPenilaianService;
 use App\Services\KuisSubmissionService;
+use App\Services\RemedialService;
 use App\Models\Kuis;
 use App\Models\Mapel;
 use App\Models\Materi;
@@ -10,14 +12,62 @@ use App\Models\Soal;
 use App\Models\SesiKuis;
 use App\Models\DraftJawaban;
 use App\Models\Mengerjakan;
+use App\Models\Progress;
 use App\Models\RemedialSiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SiswaKuisController extends Controller
 {
-    public function __construct(private KuisSubmissionService $submission)
+    public const BATAS_PELANGGARAN = 3;
+
+    public function __construct(
+        private KuisSubmissionService $submission,
+        private ?RemedialService $remedialService = null
+    ) {
+        $this->remedialService = $remedialService ?? app(RemedialService::class);
+    }
+
+    /**
+     * Ambil id_mapel yang boleh diakses siswa berdasarkan kelas di tahun aktif.
+     * Mengembalikan [Collection $mapelIds, ?string $idKelas, bool $tanpaKelas].
+     */
+    private function mapelSiswa(): array
     {
+        $user = Auth::user();
+
+        if (! Schema::hasTable('anggota_kelas') || ! Schema::hasTable('mapel_kelas')) {
+            return [Mapel::pluck('id_mapel'), 'DEFAULT', false];
+        }
+
+        $idKelas = \App\Models\Kelas::kelasAktifSiswa($user);
+
+        if (!$idKelas) {
+            return [collect(), null, true];
+        }
+
+        $mapelIds = \App\Models\Kelas::mapelUntukSiswa($user);
+
+        return [$mapelIds, $idKelas, false];
+    }
+
+    private function kuisRemedial(Kuis $kuis): bool
+    {
+        return strtolower(trim($kuis->kategori ?? '')) === 'remedial';
+    }
+
+    private function tugasRemedial(Kuis $kuis, string $idUser, bool $lock = false): ?RemedialSiswa
+    {
+        $query = RemedialSiswa::where('id_kuis_remedial', $kuis->id_kuis)
+            ->whereHas('mengerjakanAsal', fn ($query) => $query->where('id_user', $idUser));
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
     }
 
     public function index(Request $request)
@@ -31,7 +81,17 @@ class SiswaKuisController extends Controller
         $idMapel = $request->query('mapel');
         $idMateri = $request->query('materi');
 
+        [$mapelIds, $idKelas, $tanpaKelas] = $this->mapelSiswa();
+
+        if ($idMapel) {
+            if ($tanpaKelas || ! $mapelIds->contains($idMapel)) {
+                abort(403, 'Anda tidak berhak mengakses mata pelajaran di luar kelas Anda.');
+            }
+        }
+
         $mapelAktif = Mapel::aktif()
+            ->when(! $tanpaKelas, fn ($q) => $q->whereIn('id_mapel', $mapelIds))
+            ->when($tanpaKelas, fn ($q) => $q->whereRaw('1 = 0'))
             ->withCount(['kuis' => function ($q) {
                 $q->where('status_publikasi', 'terbit')
                   ->where('is_aktif', true);
@@ -71,6 +131,17 @@ class SiswaKuisController extends Controller
 
         $kuisQuery = Kuis::where('status_publikasi', 'terbit')
             ->where('is_aktif', true)
+            ->where(function ($q) use ($mapelIds, $user, $tanpaKelas) {
+                $q->when(! $tanpaKelas, fn ($subQ) => $subQ->whereIn('id_mapel', $mapelIds))
+                  ->when($tanpaKelas, fn ($subQ) => $subQ->whereRaw('1 = 0'))
+                  ->orWhere(function ($sub) use ($user) {
+                      $sub->whereRaw('LOWER(TRIM(kategori)) = ?', ['remedial'])
+                          ->whereHas('remedialSiswa', function ($r) use ($user) {
+                              $r->where('status', 'ditugaskan')
+                                ->whereHas('mengerjakanAsal', fn ($m) => $m->where('id_user', $user->id_user));
+                          });
+                  });
+            })
             ->with(['soal', 'mapel', 'materi'])
             ->orderBy('created_at', 'desc');
 
@@ -86,20 +157,14 @@ class SiswaKuisController extends Controller
 
         $kuis = $kuisQuery->get();
 
-        $kuis = $kuis->filter(function ($item) use ($user) {
+        $kuisRemedialDitugaskan = $remedial->pluck('id_kuis_remedial')->flip();
+
+        $kuis = $kuis->filter(function ($item) use ($kuisRemedialDitugaskan) {
             if (strtolower(trim($item->kategori)) !== 'remedial') {
                 return true;
             }
 
-            return RemedialSiswa::where(
-                'id_kuis_remedial',
-                $item->id_kuis
-            )
-                ->whereHas('mengerjakanAsal', function ($query) use ($user) {
-                    $query->where('id_user', $user->id_user);
-                })
-                ->where('status', 'ditugaskan')
-                ->exists();
+            return $kuisRemedialDitugaskan->has($item->id_kuis);
         })->values();
 
         $statusKuis = $this->hitungStatusDanProgresiKuis($kuis, $user->id_user);
@@ -111,7 +176,8 @@ class SiswaKuisController extends Controller
             'mapelTerpilih',
             'daftarMateri',
             'materiTerpilih',
-            'statusKuis'
+            'statusKuis',
+            'tanpaKelas'
         ));
     }
 
@@ -134,17 +200,17 @@ class SiswaKuisController extends Controller
             abort(404);
         }
 
-        // Jika kuis remedial, pastikan siswa memang mendapat tugas
-        if ($kuis->kategori === 'remedial') {
+        // Pastikan kuis termasuk mapel kelas siswa, kecuali remedial yang sesuai penugasan
+        if (strtolower(trim($kuis->kategori)) !== 'remedial') {
+            [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
+            if ($tanpaKelas || ! $mapelIds->contains($kuis->id_mapel)) {
+                abort(403, 'Kuis ini tidak termasuk dalam mata pelajaran kelas Anda.');
+            }
+        }
 
-            $tugasRemedial = RemedialSiswa::where(
-                'id_kuis_remedial',
-                $kuis->id_kuis
-            )
-                ->whereHas('mengerjakanAsal', function ($query) use ($user) {
-                    $query->where('id_user', $user->id_user);
-                })
-                ->first();
+        // Jika kuis remedial, pastikan siswa memang mendapat tugas
+        if ($this->kuisRemedial($kuis)) {
+            $tugasRemedial = $this->tugasRemedial($kuis, $user->id_user);
 
             // Siswa tidak mendapatkan tugas remedial ini
             if (!$tugasRemedial) {
@@ -171,6 +237,23 @@ class SiswaKuisController extends Controller
                 abort(
                     403,
                     'Tugas remedial tidak dapat dikerjakan.'
+                );
+            }
+        }
+
+        // Post-test: pastikan materi terkait sudah dipelajari dan diselesaikan siswa
+        if (strtolower(trim($kuis->kategori)) === 'post-test' && Schema::hasTable('progress') && Schema::hasTable('materi') && Schema::hasTable('materi_kuis')) {
+            $materiBelumSelesai = $kuis->materi()
+                ->whereDoesntHave('progress', function ($q) use ($user) {
+                    $q->where('id_user', $user->id_user)
+                        ->where('status', 'selesai');
+                })
+                ->first();
+
+            if ($materiBelumSelesai) {
+                return back()->with(
+                    'error',
+                    'Post-test ini terkunci. Pelajari dan selesaikan materi "' . $materiBelumSelesai->judul . '" terlebih dahulu.'
                 );
             }
         }
@@ -258,29 +341,42 @@ class SiswaKuisController extends Controller
         |--------------------------------------------------------------------------
         */
         if (!$sesi) {
+            DB::transaction(function () use ($kuis, $user) {
+                Kuis::whereKey($kuis->id_kuis)->lockForUpdate()->firstOrFail();
 
-            $percobaanSesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
-                ->where('id_user', $user->id_user)
-                ->max('percobaan_ke');
+                if (app(KuisPenilaianService::class)->adaPenilaianTertunda($kuis->id_kuis, $user->id_user)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'kuis' => 'Kuis tidak dapat diulang sebelum seluruh essay Anda selesai dinilai.',
+                    ]);
+                }
 
-            $percobaanNilai = Mengerjakan::where('id_kuis', $kuis->id_kuis)
-                ->where('id_user', $user->id_user)
-                ->max('percobaan_ke');
+                if ($this->submission->sesiAktif($kuis->id_kuis, $user->id_user)) {
+                    return;
+                }
 
-            $percobaanKe = max($percobaanSesi ?? 0, $percobaanNilai ?? 0) + 1;
+                $percobaanSesi = SesiKuis::where('id_kuis', $kuis->id_kuis)
+                    ->where('id_user', $user->id_user)
+                    ->max('percobaan_ke');
 
-            // Bersihkan draft jawaban lama untuk percobaan baru
-            DraftJawaban::where('id_kuis', $kuis->id_kuis)
-                ->where('id_user', $user->id_user)
-                ->delete();
+                $percobaanNilai = Mengerjakan::where('id_kuis', $kuis->id_kuis)
+                    ->where('id_user', $user->id_user)
+                    ->max('percobaan_ke');
 
-            $sesi = SesiKuis::create([
-                'id_kuis' => $kuis->id_kuis,
-                'id_user' => $user->id_user,
-                'percobaan_ke' => $percobaanKe,
-                'waktu_mulai' => now(),
-                'waktu_selesai' => null,
-            ]);
+                $percobaanKe = max($percobaanSesi ?? 0, $percobaanNilai ?? 0) + 1;
+
+                // Bersihkan draft jawaban lama untuk percobaan baru
+                DraftJawaban::where('id_kuis', $kuis->id_kuis)
+                    ->where('id_user', $user->id_user)
+                    ->delete();
+
+                SesiKuis::create([
+                    'id_kuis' => $kuis->id_kuis,
+                    'id_user' => $user->id_user,
+                    'percobaan_ke' => $percobaanKe,
+                    'waktu_mulai' => now(),
+                    'waktu_selesai' => null,
+                ]);
+            });
         }
 
         return redirect()->route(
@@ -298,22 +394,22 @@ class SiswaKuisController extends Controller
             abort(403);
         }
 
+        // Pastikan kuis termasuk mapel kelas siswa, kecuali remedial yang sesuai penugasan
+        if (strtolower(trim($kuis->kategori)) !== 'remedial') {
+            [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
+            if ($tanpaKelas || ! $mapelIds->contains($kuis->id_mapel)) {
+                abort(403, 'Kuis ini tidak termasuk dalam mata pelajaran kelas Anda.');
+            }
+        }
+
         /*
          * KHUSUS KUIS REMEDIAL
          *
          * Pastikan siswa memang mendapatkan
          * tugas remedial dari guru.
          */
-        if ($kuis->kategori === 'remedial') {
-
-            $tugasRemedial = RemedialSiswa::where(
-                'id_kuis_remedial',
-                $kuis->id_kuis
-            )
-                ->whereHas('mengerjakanAsal', function ($query) use ($user) {
-                    $query->where('id_user', $user->id_user);
-                })
-                ->first();
+        if ($this->kuisRemedial($kuis)) {
+            $tugasRemedial = $this->tugasRemedial($kuis, $user->id_user);
 
             // Siswa tidak mendapatkan tugas remedial ini
             if (!$tugasRemedial) {
@@ -341,6 +437,23 @@ class SiswaKuisController extends Controller
                 abort(
                     403,
                     'Tugas remedial tidak dapat dikerjakan.'
+                );
+            }
+        }
+
+        // Post-test: pastikan materi terkait sudah dipelajari dan diselesaikan siswa
+        if (strtolower(trim($kuis->kategori)) === 'post-test' && Schema::hasTable('progress') && Schema::hasTable('materi') && Schema::hasTable('materi_kuis')) {
+            $materiBelumSelesai = $kuis->materi()
+                ->whereDoesntHave('progress', function ($q) use ($user) {
+                    $q->where('id_user', $user->id_user)
+                        ->where('status', 'selesai');
+                })
+                ->first();
+
+            if ($materiBelumSelesai) {
+                return redirect()->route('siswa.kuis.index')->with(
+                    'error',
+                    'Post-test ini terkunci. Pelajari dan selesaikan materi "' . $materiBelumSelesai->judul . '" terlebih dahulu.'
                 );
             }
         }
@@ -402,6 +515,26 @@ class SiswaKuisController extends Controller
     public function simpanJawaban(Request $request, Kuis $kuis)
     {
         $user = Auth::user();
+
+        if ($this->kuisRemedial($kuis)) {
+            $tugas = $this->tugasRemedial($kuis, $user->id_user);
+            if (! $tugas || $tugas->status !== 'ditugaskan') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki tugas remedial aktif untuk kuis ini.',
+                ], 403);
+            }
+        }
+
+        if (strtolower(trim($kuis->kategori)) !== 'remedial') {
+            [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
+            if ($tanpaKelas || ! $mapelIds->contains($kuis->id_mapel)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kuis ini tidak termasuk dalam mata pelajaran kelas Anda.'
+                ], 403);
+            }
+        }
 
         /*
          * Pastikan kuis sudah terbit dan aktif.
@@ -479,6 +612,45 @@ class SiswaKuisController extends Controller
         ]);
     }
 
+    /**
+     * Catat pelanggaran CBT (keluar fullscreen / pindah tab / blur).
+     * Jika pelanggaran mencapai batas (3), kuis otomatis disubmit.
+     */
+    public function catatPelanggaran(Request $request, Kuis $kuis)
+    {
+        $user = Auth::user();
+
+        $sesi = $this->submission->sesiAktif($kuis->id_kuis, $user->id_user);
+
+        if (!$sesi) {
+            abort(404, 'Sesi kuis aktif tidak ditemukan.');
+        }
+
+        // Naikkan penghitung secara atomik di database
+        DB::update(
+            'UPDATE sesi_kuis SET jumlah_pelanggaran = jumlah_pelanggaran + 1 WHERE id_sesi = ? AND waktu_selesai IS NULL',
+            [$sesi->id_sesi]
+        );
+
+        $jumlah = (int) DB::table('sesi_kuis')
+            ->where('id_sesi', $sesi->id_sesi)
+            ->value('jumlah_pelanggaran');
+
+        $autoSubmitted = false;
+
+        if ($jumlah >= self::BATAS_PELANGGARAN) {
+            $sesi->refresh();
+            $this->submission->submit($sesi);
+            $autoSubmitted = true;
+        }
+
+        return response()->json([
+            'jumlah' => $jumlah,
+            'batas' => self::BATAS_PELANGGARAN,
+            'autoSubmitted' => $autoSubmitted,
+        ]);
+    }
+
     /*
      * Detail Hasil Satu Kuis
      */
@@ -488,6 +660,19 @@ class SiswaKuisController extends Controller
 
         if ($user->role !== 'siswa') {
             abort(403);
+        }
+
+        if ($this->kuisRemedial($kuis)) {
+            $tugas = $this->tugasRemedial($kuis, $user->id_user);
+            abort_unless($tugas && $tugas->status === 'ditugaskan', 403, 'Anda tidak memiliki tugas remedial aktif untuk kuis ini.');
+        }
+
+        // Pastikan kuis termasuk mapel kelas siswa, kecuali remedial yang sesuai penugasan
+        if (strtolower(trim($kuis->kategori)) !== 'remedial') {
+            [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
+            if ($tanpaKelas || ! $mapelIds->contains($kuis->id_mapel)) {
+                abort(403, 'Kuis ini tidak termasuk dalam mata pelajaran kelas Anda.');
+            }
         }
 
         // Cari sesi aktif siswa untuk kuis ini.
@@ -500,8 +685,57 @@ class SiswaKuisController extends Controller
                 ->with('error', 'Pengerjaan kuis ini sudah selesai.');
         }
 
-        // Delegasikan submit ke service (mencakup transaksi, nilai, tutup sesi, hapus draft).
-        $hasil = $this->submission->submit($sesi);
+        $hasil = DB::transaction(function () use ($request, $kuis, $sesi) {
+            $kuis = Kuis::whereKey($kuis->id_kuis)->lockForUpdate()->firstOrFail();
+            $sesi = SesiKuis::whereKey($sesi->id_sesi)->lockForUpdate()->firstOrFail();
+            $sesi->setRelation('kuis', $kuis);
+
+            if ($sesi->waktu_selesai) {
+                return null;
+            }
+
+            if ($this->kuisRemedial($kuis)) {
+                $tugas = $this->tugasRemedial($kuis, $sesi->id_user, true);
+                abort_unless($tugas && $tugas->status === 'ditugaskan', 403, 'Tugas remedial ini tidak lagi aktif.');
+            }
+
+            $sudahAda = Mengerjakan::where('id_kuis', $sesi->id_kuis)
+                ->where('id_user', $sesi->id_user)
+                ->where('percobaan_ke', $sesi->percobaan_ke)
+                ->exists();
+
+            if (! $sudahAda && now()->lt($this->submission->batasWaktu($sesi))) {
+                $validated = $request->validate([
+                    'jawaban_teks' => ['sometimes', 'array'],
+                    'jawaban_teks.*' => ['nullable', 'string', 'max:10000'],
+                ]);
+                $jawabanEssay = $validated['jawaban_teks'] ?? [];
+
+                if ($jawabanEssay !== []) {
+                    $idSoalEssay = $kuis->soal()->where('tipe', 'essay')->pluck('id_soal')->all();
+
+                    if (array_diff(array_keys($jawabanEssay), $idSoalEssay)) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'jawaban_teks' => 'Jawaban teks hanya boleh dikirim untuk soal essay dalam kuis ini.',
+                        ]);
+                    }
+
+                    foreach ($jawabanEssay as $idSoal => $teks) {
+                        DB::table('draft_jawaban')->updateOrInsert(
+                            [
+                                'id_kuis' => $kuis->id_kuis,
+                                'id_user' => $sesi->id_user,
+                                'id_soal' => $idSoal,
+                            ],
+                            ['jawaban_teks' => $teks, 'updated_at' => now()]
+                        );
+                    }
+                }
+            }
+
+            // Draft dipertahankan untuk evaluasi sampai siswa memulai percobaan baru.
+            return $this->submission->submit($sesi);
+        });
 
         if (!$hasil) {
             return redirect()
@@ -574,6 +808,10 @@ class SiswaKuisController extends Controller
         $totalBenar = 0;
         $totalSalah = 0;
         foreach ($soal as $s) {
+            if ($s->tipe === 'essay') {
+                continue;
+            }
+
             $jw = $draftJawaban->get($s->id_soal)?->jawaban_dipilih;
             if ($jw && $s->jawaban && strtoupper($jw) === strtoupper($s->jawaban)) {
                 $totalBenar++;
@@ -583,6 +821,27 @@ class SiswaKuisController extends Controller
         }
 
         $lulus = $hasil->nilai !== null && $kuis->kkm !== null && (float) $hasil->nilai >= (float) $kuis->kkm;
+
+        // Tentukan apakah detail evaluasi soal (benar/salah) boleh ditampilkan ke siswa.
+        // Keputusan dibuat di controller; Blade hanya menerima data yang sudah difilter.
+        $tampilJawaban = $kuis->tampil_jawaban ?? 'setelah_submit';
+        $tampilDetail  = match ($tampilJawaban) {
+            'tidak'       => false,
+            'setelah_kkm' => $lulus,
+            default       => true, // 'setelah_submit'
+        };
+
+        // Jika tidak boleh tampil, kosongkan data evaluasi agar tidak bocor ke view
+        if (! $tampilDetail) {
+            $soal         = collect();
+            $draftJawaban = collect();
+            $totalBenar   = null;
+            $totalSalah   = null;
+        }
+
+        $materiTerkait = (Schema::hasTable('materi') && Schema::hasTable('materi_kuis'))
+            ? $kuis->materi()->first()
+            : null;
 
         return view('siswa.kuis.hasil', compact(
             'kuis',
@@ -594,7 +853,9 @@ class SiswaKuisController extends Controller
             'soal',
             'draftJawaban',
             'totalBenar',
-            'totalSalah'
+            'totalSalah',
+            'tampilDetail',
+            'materiTerkait'
         ));
     }
 
@@ -699,6 +960,8 @@ class SiswaKuisController extends Controller
             });
         }
 
+        $tugas = $this->remedialService->untukSiswa($user->id_user);
+
         return view('siswa.nilai.index', compact(
             'mapelAktif',
             'mapelTerpilih',
@@ -707,7 +970,8 @@ class SiswaKuisController extends Controller
             'ringkasanBab',
             'hasil',
             'hasilUlanganUmum',
-            'semuaHasil'
+            'semuaHasil',
+            'tugas'
         ));
     }
     /**
@@ -724,6 +988,14 @@ class SiswaKuisController extends Controller
         $lulusSedangPerMateri = [];
         $lulusMudahPerMapel = [];
         $lulusSedangPerMapel = [];
+
+        $userProgressSelesai = collect();
+        if (Schema::hasTable('progress')) {
+            $userProgressSelesai = Progress::where('id_user', $idUser)
+                ->where('status', 'selesai')
+                ->pluck('id_materi')
+                ->flip();
+        }
 
         $statusKuis = [];
         foreach ($kuis as $item) {
@@ -758,8 +1030,21 @@ class SiswaKuisController extends Controller
         }
 
         foreach ($kuis as $item) {
-            $isKuisHarian = strtolower(trim($item->kategori)) === 'kuis harian';
+            $kat = strtolower(trim($item->kategori ?? ''));
+            $isKuisHarian = $kat === 'kuis harian';
+            $isPostTest = $kat === 'post-test';
             $tingkat = strtolower(trim($item->tingkat_kesulitan ?? 'mudah'));
+
+            if ($isPostTest && Schema::hasTable('progress') && Schema::hasTable('materi') && Schema::hasTable('materi_kuis') && $item->materi->isNotEmpty()) {
+                $materiBelumSelesai = $item->materi->first(function ($m) use ($userProgressSelesai) {
+                    return !isset($userProgressSelesai[$m->id_materi]);
+                });
+
+                if ($materiBelumSelesai) {
+                    $statusKuis[$item->id_kuis]['terkunci'] = true;
+                    $statusKuis[$item->id_kuis]['alasan_kunci'] = 'Pelajari dan selesaikan materi "' . $materiBelumSelesai->judul . '" terlebih dahulu sebelum mengerjakan Post-test.';
+                }
+            }
 
             if ($isKuisHarian) {
                 $idMat = $item->materi->first()?->id_materi;

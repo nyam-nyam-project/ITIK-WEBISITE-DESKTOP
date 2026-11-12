@@ -85,6 +85,7 @@ class KuisMateriMapelTest extends TestCase
             $table->string('nama_mapel', 100);
             $table->text('deskripsi')->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
         });
 
@@ -104,6 +105,7 @@ class KuisMateriMapelTest extends TestCase
             $table->string('status_publikasi', 20)->default('draft');
             $table->string('id_publisher', 50)->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->foreign('id_mapel')->references('id_mapel')->on('mapel')->restrictOnDelete();
             $table->foreign('id_tahun_ajaran')->references('id_tahun_ajaran')->on('tahun_ajaran')->restrictOnDelete();
@@ -147,6 +149,7 @@ class KuisMateriMapelTest extends TestCase
         Schema::create('soal', function (Blueprint $table) {
             $table->string('id_soal', 50)->primary();
             $table->string('id_kuis', 50);
+            $table->enum('tipe', ['pilihan_ganda', 'essay'])->default('pilihan_ganda');
             $table->text('pertanyaan');
             foreach (['a', 'b', 'c', 'd', 'e'] as $option) {
                 $table->string('opsi_'.$option)->nullable();
@@ -155,6 +158,29 @@ class KuisMateriMapelTest extends TestCase
             $table->decimal('bobot', 5, 2)->default(1);
             $table->string('tingkat_kesulitan', 50)->nullable();
             $table->foreign('id_kuis')->references('id_kuis')->on('kuis')->cascadeOnDelete();
+        });
+
+        Schema::create('pengajaran', function (Blueprint $table) {
+            $table->increments('id_pengajaran');
+            $table->string('id_user', 50);
+            $table->string('id_kelas', 50)->nullable();
+            $table->string('id_mapel', 50);
+            $table->timestamp('created_at')->nullable()->useCurrent();
+        });
+
+        Schema::create('mengerjakan', function (Blueprint $table) {
+            $table->increments('id_mengerjakan');
+            $table->string('id_kuis', 50);
+            $table->string('id_user', 50);
+            $table->decimal('nilai', 5, 2)->nullable();
+            $table->date('tanggal')->nullable();
+            $table->integer('percobaan_ke')->default(1);
+            $table->string('status_pengerjaan', 20)->default('final');
+            $table->string('status_validasi', 50)->nullable()->default('belum divalidasi');
+            $table->string('id_validator', 50)->nullable();
+            $table->unique(['id_kuis', 'id_user', 'percobaan_ke']);
+            $table->foreign('id_kuis')->references('id_kuis')->on('kuis')->restrictOnDelete();
+            $table->foreign('id_user')->references('id_user')->on('user')->cascadeOnDelete();
         });
     }
 
@@ -186,12 +212,17 @@ class KuisMateriMapelTest extends TestCase
             'opsi_a' => 'Langkah logis', 'opsi_b' => 'Monitor', 'opsi_c' => 'Mouse', 'opsi_d' => 'Keyboard',
             'jawaban' => 'A', 'bobot' => 100, 'tingkat_kesulitan' => 'mudah',
         ]);
+        DB::table('pengajaran')->insert([
+            ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001'],
+            ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP002'],
+            ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP003'],
+        ]);
     }
 
     private function makeKuis(string $id, array $attributes = []): Kuis
     {
         return Kuis::create(array_replace([
-            'id_kuis' => $id, 'judul' => 'Kuis '.$id, 'kategori' => 'pre-test',
+            'id_kuis' => $id, 'judul' => 'Kuis '.$id, 'kategori' => 'kuis harian',
             'tingkat_kesulitan' => 'mudah', 'id_mapel' => 'MP001', 'id_tahun_ajaran' => 'TA001',
             'id_user' => 'U002', 'alokasi_waktu' => 20, 'kkm' => 75, 'status_publikasi' => 'draft', 'is_aktif' => true,
         ], $attributes));
@@ -208,7 +239,7 @@ class KuisMateriMapelTest extends TestCase
     private function payload(string $resource, array $attributes = []): array
     {
         $defaults = $resource === 'kuis'
-            ? ['judul' => 'Kuis baru', 'deskripsi' => 'Latihan algoritma', 'kategori' => 'pre-test',
+            ? ['judul' => 'Kuis baru', 'deskripsi' => 'Latihan algoritma', 'kategori' => 'kuis harian',
                 'id_mapel' => 'MP001', 'tingkat_kesulitan' => 'sedang', 'alokasi_waktu' => 30, 'kkm' => 80]
             : ['judul' => 'Materi baru', 'bab' => 'Bab 2', 'kelas' => 'XI', 'id_mapel' => 'MP001',
                 'deskripsi' => 'Materi pemrograman', 'link_youtube' => 'https://www.youtube.com/watch?v=regression123'];
@@ -246,7 +277,7 @@ class KuisMateriMapelTest extends TestCase
         $this->assertSame(1, $nodes->length, 'Expected one select named '.$name);
         $select = $nodes->item(0);
         $this->assertInstanceOf(DOMElement::class, $select);
-
+        /** @var DOMElement $select */
         return $select;
     }
 
@@ -255,6 +286,7 @@ class KuisMateriMapelTest extends TestCase
         $values = [];
         $selectedValues = [];
         foreach ($this->select($html, $name)->getElementsByTagName('option') as $option) {
+            /** @var DOMElement $option */
             $value = $option->getAttribute('value');
             if ($value !== '') {
                 $values[] = $value;
@@ -278,7 +310,7 @@ class KuisMateriMapelTest extends TestCase
     public function test_create_forms_offer_only_active_subjects_and_restore_old_selection(string $resource): void
     {
         $this->actingAs($this->guru);
-        $response = $this->get(route($resource.'.create'))->assertOk()->assertViewIs($resource.'.create');
+        $response = $this->get(route($resource.'.create'))->assertOk()->assertViewIs('guru.'.$resource.'.create');
         $this->assertOptions($response->getContent(), 'id_mapel', ['MP001', 'MP002']);
         $this->assertTrue($this->select($response->getContent(), 'id_mapel')->hasAttribute('required'));
 
@@ -300,10 +332,10 @@ class KuisMateriMapelTest extends TestCase
         $content = $this->content($resource);
         $content->update(['id_mapel' => 'MP003']);
         $response = $this->actingAs($this->guru)->get(route($resource.'.edit', $content->getKey()))
-            ->assertOk()->assertViewIs($resource.'.edit');
+            ->assertOk()->assertViewIs('guru.'.$resource.'.edit');
         $this->assertOptions($response->getContent(), 'id_mapel', ['MP001', 'MP002', 'MP003'], 'MP003');
         if ($resource === 'kuis') {
-            $this->assertOptions($response->getContent(), 'kategori', ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'], 'pre-test');
+            $this->assertOptions($response->getContent(), 'kategori', ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'], 'kuis harian');
             $this->assertOptions($response->getContent(), 'tingkat_kesulitan', ['mudah', 'sedang', 'sulit'], 'mudah');
             $this->assertOptions($response->getContent(), 'materi[]', ['M001', 'M002'], 'M001');
         }
@@ -341,7 +373,7 @@ class KuisMateriMapelTest extends TestCase
         $response->assertRedirect(route('kuis.index', ['mapel' => 'MP002']))->assertSessionHasNoErrors();
         $id = $action === 'store' ? 'K002' : 'K001';
         $kuis = Kuis::findOrFail($id);
-        $this->assertSame('pre-test', $kuis->kategori);
+        $this->assertSame('kuis harian', $kuis->kategori);
         $this->assertSame($difficulty, $kuis->tingkat_kesulitan);
         $this->assertSame('MP002', $kuis->mapel->getKey());
         $this->assertSame('TA001', $kuis->tahunAjaran->getKey());
@@ -813,5 +845,111 @@ class KuisMateriMapelTest extends TestCase
             ->assertRedirect(route('materi.edit', 'M002'))->assertSessionHas('error');
         $this->assertSame($before, $this->snapshot());
         $this->assertSame(['materi/original.pdf'], Storage::disk('public')->allFiles());
+    }
+
+    public function test_kuis_create_preselects_materi_when_valid_materi_param_is_owned_by_guru(): void
+    {
+        $response = $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M001']))
+            ->assertOk()
+            ->assertViewIs('guru.kuis.create');
+
+        $response->assertViewHas('materiDipreselect', fn ($v) => $v?->id_materi === 'M001');
+        $response->assertViewHas('mapelTerpilih', 'MP001');
+        $response->assertSee('M001'); // id materi ada di hidden input
+        $response->assertSee('checked', false);
+        $response->assertSee('disabled', false);
+    }
+
+    public function test_kuis_create_redirects_with_error_when_materi_param_does_not_exist(): void
+    {
+        $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M999']))
+            ->assertRedirect(route('materi.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_kuis_create_redirects_with_error_when_materi_outside_guru_pengajaran(): void
+    {
+        // MP004 tidak diajarkan oleh U002
+        $materiLuar = Materi::create([
+            'id_materi' => 'M099',
+            'judul' => 'Materi Luar Pengajaran',
+            'bab' => 'Bab X',
+            'kelas' => 'X',
+            'id_mapel' => 'MP004',
+            'id_user' => 'U001',
+        ]);
+
+        $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => $materiLuar->getKey()]))
+            ->assertRedirect(route('materi.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_buat_post_test_dan_pre_test_button_links_in_materi_index_and_show(): void
+    {
+        $expectedLinkPost = e(route('kuis.create', ['mapel' => 'MP001', 'materi' => 'M001', 'kategori' => 'post-test']));
+        $expectedLinkPre = e(route('kuis.create', ['mapel' => 'MP001', 'materi' => 'M001', 'kategori' => 'pre-test']));
+
+        // Di materi.index (level 2 saat mapel terpilih)
+        $responseIndex = $this->actingAs($this->guru)
+            ->get(route('materi.index', ['mapel' => 'MP001']))
+            ->assertOk();
+
+        $responseIndex->assertSee($expectedLinkPost, false);
+        $responseIndex->assertSee('Buat Post-test');
+        $responseIndex->assertSee($expectedLinkPre, false);
+        $responseIndex->assertSee('Buat Pre-test');
+
+        // Di materi.show
+        $responseShow = $this->actingAs($this->guru)
+            ->get(route('materi.show', 'M001'))
+            ->assertOk();
+
+        $responseShow->assertSee($expectedLinkPost, false);
+        $responseShow->assertSee('Buat Post-test');
+        $responseShow->assertSee($expectedLinkPre, false);
+        $responseShow->assertSee('Buat Pre-test');
+    }
+
+    public function test_kuis_create_preselects_and_locks_kategori_from_query(): void
+    {
+        $response = $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M001', 'kategori' => 'post-test']))
+            ->assertOk()
+            ->assertViewIs('guru.kuis.create');
+
+        $response->assertViewHas('kategoriDipreselect', 'post-test');
+        $response->assertSee('Post-test');
+        $response->assertSee('disabled', false);
+
+        $responsePre = $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M001', 'kategori' => 'pre-test']))
+            ->assertOk()
+            ->assertViewIs('guru.kuis.create');
+
+        $responsePre->assertViewHas('kategoriDipreselect', 'pre-test');
+        $responsePre->assertSee('Pre-test');
+        $responsePre->assertSee('disabled', false);
+    }
+
+    public function test_kuis_create_rejects_invalid_kategori_query(): void
+    {
+        $response = $this->actingAs($this->guru)
+            ->get(route('kuis.create', ['materi' => 'M001', 'kategori' => 'kategori_palsu']));
+
+        $response->assertRedirect(route('materi.index'))
+            ->assertSessionHas('error', 'Kategori kuis tidak valid.');
+    }
+
+    public function test_kuis_create_without_materi_param_passes_null_materiDipreselect_to_view(): void
+    {
+        $response = $this->actingAs($this->guru)
+            ->get(route('kuis.create'))
+            ->assertOk()
+            ->assertViewIs('guru.kuis.create');
+
+        $response->assertViewHas('materiDipreselect', null);
     }
 }

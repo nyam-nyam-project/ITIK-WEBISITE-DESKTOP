@@ -17,6 +17,8 @@ class Kuis extends Model
 
     public $timestamps = false;
 
+    public const PILIHAN_TAMPIL_JAWABAN = ['tidak', 'setelah_submit', 'setelah_kkm'];
+
     protected $fillable = [
         'id_kuis',
         'judul',
@@ -33,6 +35,7 @@ class Kuis extends Model
         'status_publikasi',
         'id_publisher',
         'is_aktif',
+        'tampil_jawaban',
     ];
 
     protected $casts = [
@@ -65,6 +68,11 @@ class Kuis extends Model
     public function soal()
     {
         return $this->hasMany(Soal::class, 'id_kuis', 'id_kuis');
+    }
+
+    public function mengerjakan()
+    {
+        return $this->hasMany(Mengerjakan::class, 'id_kuis', 'id_kuis');
     }
 
     public function materi()

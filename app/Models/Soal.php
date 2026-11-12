@@ -19,6 +19,7 @@ class Soal extends Model
     protected $fillable = [
         'id_soal',
         'id_kuis',
+        'tipe',
         'pertanyaan',
         'opsi_a',
         'opsi_b',

@@ -16,9 +16,9 @@
     <section class="card">
         <div class="card-header"><h2>Daftar siswa</h2><span class="badge">{{ $siswa->total() }} siswa</span></div>
         @if($siswa->isNotEmpty())
-            <div class="table-wrap"><table><thead><tr><th scope="col">NISN</th><th scope="col">Nama dan email</th><th scope="col">Kelas tahun pilihan</th><th scope="col">Status</th><th scope="col">Tindakan</th></tr></thead><tbody>
+            <div class="table-wrap"><table><thead><tr><th scope="col">NISN</th><th scope="col">Nama lengkap</th><th scope="col">Kelas tahun pilihan</th><th scope="col">Status</th><th scope="col">Tindakan</th></tr></thead><tbody>
                 @foreach($siswa as $item)
-                    <tr><td class="nowrap">{{ $item->nomor_induk ?? '—' }}</td><td class="text-break"><strong>{{ $item->nama_lengkap }}</strong><span class="muted small">{{ $item->email ?? 'Email belum diisi' }}</span></td><td><div class="tags">@forelse($item->kelasDiikuti as $kelasSiswa)<a class="badge" href="{{ route('admin.kelas.show', $kelasSiswa) }}">{{ $kelasSiswa->nama_kelas }}</a>@empty<span class="muted small">Belum memiliki kelas</span>@endforelse</div></td><td><span class="badge {{ $item->status === 'aktif' ? 'badge-success' : 'badge-muted' }}">{{ $item->status === 'aktif' ? 'Aktif' : 'Nonaktif' }}</span></td>
+                    <tr><td class="nowrap">{{ $item->nomor_induk ?? '—' }}</td><td class="text-break"><strong>{{ $item->nama_lengkap }}</strong></td><td><div class="tags">@forelse($item->kelasDiikuti as $kelasSiswa)<a class="badge" href="{{ route('admin.kelas.show', $kelasSiswa) }}">{{ $kelasSiswa->nama_kelas }}</a>@empty<span class="muted small">Belum memiliki kelas</span>@endforelse</div></td><td><span class="badge {{ $item->status === 'aktif' ? 'badge-success' : 'badge-muted' }}">{{ $item->status === 'aktif' ? 'Aktif' : 'Nonaktif' }}</span></td>
                     <td><div class="actions"><a class="btn btn-secondary btn-small" href="{{ route('admin.siswa.edit', $item) }}" aria-label="Ubah siswa {{ $item->nama_lengkap }}">Ubah</a>
                         <form action="{{ route($item->status === 'aktif' ? 'admin.siswa.nonaktifkan' : 'admin.siswa.aktifkan', $item) }}" method="POST" data-confirm="{{ $item->status === 'aktif' ? 'Nonaktifkan akun '.$item->nama_lengkap.'? Nilai dan keanggotaan historis tetap disimpan.' : 'Aktifkan kembali akun '.$item->nama_lengkap.'?' }}">
                             @csrf @method('PATCH')
@@ -28,16 +28,11 @@
                 @endforeach
             </tbody></table></div>
         @else
-            <div class="empty"><h3>Tidak ada siswa yang ditampilkan</h3><p>Ubah filter atau kata pencarian. Jika belum ada akun siswa, tambahkan siswa pertama.</p><div class="actions" style="justify-content:center"><a class="btn btn-secondary" href="{{ route('admin.siswa.index') }}">Reset filter</a><a class="btn" href="{{ route('admin.siswa.create') }}">Tambah siswa</a></div></div>
+            <div class="empty"><h3>Tidak ada siswa yang ditampilkan</h3><p>Ubah filter atau kata pencarian. Jika belum ada akun siswa, tambahkan siswa pertama.</p><div class="actions u-justify-content-center"><a class="btn btn-secondary" href="{{ route('admin.siswa.index') }}">Reset filter</a><a class="btn" href="{{ route('admin.siswa.create') }}">Tambah siswa</a></div></div>
         @endif
         @include('admin.partials.pagination', ['paginator' => $siswa])
     </section>
 @endsection
 @push('scripts')
-<script>
-    document.getElementById('tahun_ajaran').addEventListener('change', function () {
-        document.getElementById('filter-kelas').value = '';
-        this.form.submit();
-    });
-</script>
+<script src="{{ asset('js/admin/siswa-index.js') }}" defer></script>
 @endpush

@@ -2,173 +2,7 @@
 @section('title', 'Materi Pembelajaran')
 
 @push('styles')
-<style>
-    /* === LEVEL 1: MAPEL CARDS SISWA === */
-    .mapel-grid-siswa {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 20px;
-    }
-    .mapel-card-s {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 26px 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        box-shadow: 0 4px 20px #29263d04;
-        transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
-        text-decoration: none;
-        color: inherit;
-    }
-    .mapel-card-s:hover {
-        transform: translateY(-3px);
-        border-color: var(--purple);
-        box-shadow: 0 8px 30px rgba(85,66,220,.12);
-        text-decoration: none;
-    }
-    .mapel-icon-s {
-        width: 50px;
-        height: 50px;
-        background: var(--purple-light);
-        color: var(--purple);
-        border-radius: 14px;
-        display: grid;
-        place-items: center;
-        font-size: 24px;
-    }
-    .mapel-title-s {
-        font-size: 17px;
-        font-weight: 700;
-        color: var(--ink);
-        margin: 0 0 4px;
-    }
-    .mapel-code-s {
-        font-size: 12px;
-        color: var(--muted);
-        font-weight: 600;
-    }
-    .mapel-count-s {
-        font-size: 13px;
-        color: var(--purple);
-        font-weight: 600;
-    }
-    .mapel-arrow-s {
-        font-size: 20px;
-        color: var(--muted);
-        margin-top: auto;
-        align-self: flex-end;
-    }
-
-    /* === LEVEL 2: MATERI ROWS (ALA FOTO 2) === */
-    .materi-list-foto2 {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-    }
-    .materi-card-link {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 18px 24px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 18px;
-        box-shadow: 0 4px 20px #29263d03;
-        transition: border-color .2s ease, box-shadow .2s ease, transform .15s ease;
-        text-decoration: none;
-        color: inherit;
-    }
-    .materi-card-link:hover {
-        border-color: var(--purple);
-        box-shadow: 0 6px 25px rgba(85,66,220,.08);
-        transform: translateY(-1px);
-        text-decoration: none;
-    }
-    .materi-main-info {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        flex: 1;
-        min-width: 0;
-    }
-    .materi-num-badge {
-        width: 48px;
-        height: 48px;
-        background: #181528;
-        color: white;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 15px;
-        font-weight: 800;
-        flex-shrink: 0;
-        letter-spacing: .5px;
-    }
-    .materi-text-wrap {
-        flex: 1;
-        min-width: 0;
-    }
-    .materi-row-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--ink);
-        margin: 0 0 4px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .materi-row-subtitle {
-        font-size: 13px;
-        color: var(--muted);
-        margin: 0;
-        line-height: 1.4;
-    }
-    .materi-side-info {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        flex-shrink: 0;
-    }
-    .arrow-icon {
-        font-size: 20px;
-        color: var(--muted);
-        transition: transform .15s ease, color .15s ease;
-    }
-    .materi-card-link:hover .arrow-icon {
-        transform: translateX(4px);
-        color: var(--purple);
-    }
-
-    /* BREADCRUMB */
-    .breadcrumb-siswa {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        color: var(--muted);
-        margin-bottom: 18px;
-        flex-wrap: wrap;
-    }
-    .breadcrumb-siswa a {
-        color: var(--purple);
-        text-decoration: none;
-        font-weight: 600;
-    }
-    .breadcrumb-siswa a:hover {
-        text-decoration: underline;
-    }
-    .breadcrumb-siswa .sep {
-        color: var(--muted);
-    }
-    .breadcrumb-siswa .current {
-        color: var(--ink);
-        font-weight: 700;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/siswa/materi/index.css') }}">
 @endpush
 
 @section('content')
@@ -188,10 +22,17 @@
     </div>
 
     @if($mapelAktif->isEmpty())
-        <div class="empty">
-            <h3>Belum Ada Mata Pelajaran Aktif</h3>
-            <p>Materi pembelajaran akan tersedia setelah ditambahkan oleh guru.</p>
-        </div>
+        @if($tanpaKelas ?? false)
+            <div class="empty">
+                <h3>Kamu Belum Terdaftar di Kelas</h3>
+                <p>Hubungi admin atau guru untuk didaftarkan ke kelas agar dapat mengakses materi pembelajaran.</p>
+            </div>
+        @else
+            <div class="empty">
+                <h3>Belum Ada Mata Pelajaran Aktif</h3>
+                <p>Materi pembelajaran akan tersedia setelah ditambahkan oleh guru.</p>
+            </div>
+        @endif
     @else
         <div class="mapel-grid-siswa">
             @foreach($mapelAktif as $mp)
@@ -220,7 +61,7 @@
 
     <div class="page-heading">
         <div>
-            <a href="{{ route('siswa.materi.index') }}" class="btn btn-secondary" style="display:inline-block; margin-bottom: 10px;">
+            <a href="{{ route('siswa.materi.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
                 ← Kembali
             </a>
             <h1>{{ $mapelTerpilih->nama_mapel }}</h1>
@@ -232,7 +73,7 @@
         <div class="empty">
             <h3>Belum Ada Materi untuk Mata Pelajaran Ini</h3>
             <p>Guru belum menambahkan materi pembelajaran untuk mata pelajaran ini.</p>
-            <a href="{{ route('siswa.materi.index') }}" class="btn btn-secondary" style="margin-top: 14px;">
+            <a href="{{ route('siswa.materi.index') }}" class="btn btn-secondary u-margin-top-14px">
                 ← Pilih Mata Pelajaran Lain
             </a>
         </div>
@@ -241,8 +82,21 @@
             @foreach($materi as $idx => $item)
                 @php
                     $prog = $item->relationLoaded('progress') ? $item->progress->first() : null;
+                    $preTest = $item->relationLoaded('kuis')
+                        ? $item->kuis->first(fn($k) => strtolower(trim($k->kategori ?? '')) === 'pre-test')
+                        : null;
+                    $postTest = $item->relationLoaded('kuis')
+                        ? $item->kuis->first(fn($k) => strtolower(trim($k->kategori ?? '')) === 'post-test')
+                        : null;
+
+                    $preTestSelesai = $preTest && isset($kuisSelesaiIds[$preTest->id_kuis]);
+                    $materiSelesai = $prog && $prog->status === 'selesai';
+                    $postTestSelesai = $postTest && isset($kuisSelesaiIds[$postTest->id_kuis]);
+
+                    $isMateriTerkunci = (bool) ($preTest && !$preTestSelesai);
+                    $isPostTestTerkunci = (bool) ($postTest && !$materiSelesai);
                 @endphp
-                <a href="{{ route('siswa.materi.show', $item->id_materi) }}" class="materi-card-link">
+                <div class="materi-card-link">
                     <div class="materi-main-info">
                         <div class="materi-num-badge">
                             {{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }}
@@ -258,22 +112,75 @@
                                     &bull; {{ Str::limit($item->deskripsi, 85) }}
                                 @endif
                             </p>
+                            <div class="materi-badge-group">
+                                @if($preTest)
+                                    @if($preTestSelesai)
+                                        <span class="badge badge-success">✓ Pre-test Selesai</span>
+                                    @else
+                                        <span class="badge badge-warning">Pre-test Wajib</span>
+                                    @endif
+                                @endif
+
+                                @if($isMateriTerkunci)
+                                    <span class="badge badge-muted">🔒 Materi Terkunci</span>
+                                @elseif(!$prog)
+                                    <span class="badge badge-muted">Belum Mulai</span>
+                                @elseif($prog->status === 'sedang belajar')
+                                    <span class="badge badge-warning">Sedang Belajar</span>
+                                @elseif($materiSelesai)
+                                    <span class="badge badge-success">✓ Materi Selesai</span>
+                                @else
+                                    <span class="badge">{{ $prog->status }}</span>
+                                @endif
+
+                                @if($postTest)
+                                    @if($postTestSelesai)
+                                        <span class="badge badge-success">✓ Post-test Selesai</span>
+                                    @elseif($isPostTestTerkunci)
+                                        <span class="badge badge-muted">🔒 Post-test Terkunci</span>
+                                    @else
+                                        <span class="badge badge-warning">Post-test Siap</span>
+                                    @endif
+                                @endif
+                            </div>
                         </div>
                     </div>
 
                     <div class="materi-side-info">
-                        @if(!$prog)
-                            <span class="badge badge-muted">Belum Mulai</span>
-                        @elseif($prog->status === 'sedang belajar')
-                            <span class="badge badge-warning">Sedang Belajar</span>
-                        @elseif($prog->status === 'selesai')
-                            <span class="badge badge-success">✓ Selesai</span>
+                        @if($isMateriTerkunci)
+                            <a href="{{ route('siswa.kuis.mulai', $preTest->id_kuis) }}" class="btn btn-small">
+                                Mulai Pre-test
+                            </a>
+                            <button type="button" class="btn btn-secondary btn-small" disabled title="Selesaikan Pre-test terlebih dahulu">
+                                🔒 Baca Materi
+                            </button>
                         @else
-                            <span class="badge">{{ $prog->status }}</span>
+                            <a href="{{ route('siswa.materi.show', $item->id_materi) }}" class="btn btn-secondary btn-small">
+                                Baca Materi
+                            </a>
+
+                            @if($postTest)
+                                @if($postTestSelesai)
+                                    <a href="{{ route('siswa.kuis.hasil', $postTest->id_kuis) }}" class="btn btn-secondary btn-small">
+                                        Hasil Post-test
+                                    </a>
+                                @elseif($isPostTestTerkunci)
+                                    <button type="button" class="btn btn-secondary btn-small" disabled title="Selesaikan materi terlebih dahulu">
+                                        🔒 Post-test
+                                    </button>
+                                @else
+                                    <a href="{{ route('siswa.kuis.mulai', $postTest->id_kuis) }}" class="btn btn-small">
+                                        Kerjakan Post-test
+                                    </a>
+                                @endif
+                            @endif
                         @endif
-                        <span class="arrow-icon">→</span>
+
+                        <a href="{{ route('siswa.kuis.index', ['mapel' => $item->id_mapel, 'materi' => $item->id_materi]) }}" class="btn btn-secondary btn-small">
+                            Kuis Materi
+                        </a>
                     </div>
-                </a>
+                </div>
             @endforeach
         </div>
     @endif

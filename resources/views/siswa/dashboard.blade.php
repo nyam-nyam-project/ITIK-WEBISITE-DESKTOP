@@ -14,7 +14,7 @@
 @if(isset($remedialAktif) && $remedialAktif->isNotEmpty())
     <div class="alert alert-warning" role="alert">
         <strong>Kamu memiliki {{ $remedialAktif->count() }} tugas remedial yang belum dikerjakan.</strong>
-        <p style="margin-bottom:10px">Selesaikan tugas remedial agar nilaimu dapat meningkat.</p>
+        <p class="u-margin-bottom-10px">Selesaikan tugas remedial agar nilaimu dapat meningkat.</p>
         <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning btn-small">Lihat Tugas Remedial</a>
     </div>
 @endif

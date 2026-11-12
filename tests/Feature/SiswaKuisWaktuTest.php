@@ -7,6 +7,7 @@ use App\Models\Kuis;
 use App\Models\Mapel;
 use App\Models\Mengerjakan;
 use App\Models\SesiKuis;
+use App\Models\Soal;
 use App\Models\TahunAjaran;
 use App\Models\User;
 use App\Services\KuisSubmissionService;
@@ -88,6 +89,7 @@ class SiswaKuisWaktuTest extends TestCase
             $table->string('nama_mapel', 100);
             $table->text('deskripsi')->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
         });
 
@@ -107,6 +109,7 @@ class SiswaKuisWaktuTest extends TestCase
             $table->string('status_publikasi', 20)->default('draft');
             $table->string('id_publisher', 50)->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->foreign('id_mapel')->references('id_mapel')->on('mapel')->restrictOnDelete();
             $table->foreign('id_tahun_ajaran')->references('id_tahun_ajaran')->on('tahun_ajaran')->restrictOnDelete();
@@ -117,6 +120,7 @@ class SiswaKuisWaktuTest extends TestCase
         Schema::create('soal', function (Blueprint $table) {
             $table->string('id_soal', 50)->primary();
             $table->string('id_kuis', 50);
+            $table->string('tipe', 20)->default('pilihan ganda');
             $table->text('pertanyaan');
             foreach (['a', 'b', 'c', 'd', 'e'] as $option) {
                 $table->string('opsi_'.$option)->nullable();
@@ -160,6 +164,7 @@ class SiswaKuisWaktuTest extends TestCase
             $table->string('id_user', 50);
             $table->string('id_soal', 50);
             $table->string('jawaban_dipilih', 5)->nullable();
+            $table->text('jawaban_teks')->nullable();
             $table->timestamps();
             $table->unique(['id_kuis', 'id_user', 'id_soal']);
             $table->foreign('id_kuis')->references('id_kuis')->on('kuis')->cascadeOnDelete();
@@ -612,5 +617,35 @@ class SiswaKuisWaktuTest extends TestCase
 
         $this->assertDatabaseMissing('sesi_kuis', ['waktu_selesai' => null]);
         $this->assertDatabaseCount('mengerjakan', 1);
+    }
+
+    public function test_submit_menolak_jawaban_essay_di_atas_batas(): void
+    {
+        $soalEssay = Soal::create([
+            'id_soal' => 'SE001',
+            'id_kuis' => $this->kuis->id_kuis,
+            'tipe' => 'essay',
+            'pertanyaan' => 'Jelaskan konsepnya.',
+            'bobot' => 100,
+        ]);
+        $sesi = $this->buatSesi(
+            $this->kuis->id_kuis,
+            $this->siswa->id_user,
+            1,
+            now()->toDateTimeString()
+        );
+
+        $this->actingAs($this->siswa)
+            ->postJson(route('siswa.kuis.submit', $this->kuis->id_kuis), [
+                'jawaban_teks' => [$soalEssay->id_soal => str_repeat('x', 10001)],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('jawaban_teks.'.$soalEssay->id_soal);
+
+        $this->assertDatabaseMissing('draft_jawaban', [
+            'id_kuis' => $this->kuis->id_kuis,
+            'id_user' => $this->siswa->id_user,
+        ]);
+        $this->assertNull($sesi->fresh()->waktu_selesai);
     }
 }

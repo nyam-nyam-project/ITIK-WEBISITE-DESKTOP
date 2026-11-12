@@ -21,12 +21,14 @@ class SesiKuis extends Model
         'percobaan_ke',
         'waktu_mulai',
         'waktu_selesai',
+        'jumlah_pelanggaran',
     ];
 
     protected $casts = [
         'percobaan_ke' => 'integer',
         'waktu_mulai' => 'datetime',
         'waktu_selesai' => 'datetime',
+        'jumlah_pelanggaran' => 'integer',
     ];
 
     public function kuis()

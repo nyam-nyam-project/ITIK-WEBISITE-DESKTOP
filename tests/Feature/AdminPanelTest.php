@@ -4,8 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Kelas;
 use App\Models\Mapel;
+use App\Models\Materi;
+use App\Models\Pengajaran;
 use App\Models\TahunAjaran;
 use App\Models\User;
+use App\Services\KelasMigrasiService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Collection;
@@ -66,6 +69,7 @@ class AdminPanelTest extends TestCase
             $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();
             $table->boolean('is_aktif')->default(false);
+            $table->tinyInteger('aktif_unik')->storedAs('CASE WHEN is_aktif = 1 THEN 1 ELSE NULL END')->unique();
             $table->timestamps();
         });
 
@@ -75,6 +79,7 @@ class AdminPanelTest extends TestCase
             $table->string('nama_mapel', 100);
             $table->text('deskripsi')->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
         });
 
@@ -84,6 +89,7 @@ class AdminPanelTest extends TestCase
             $table->string('tingkat', 10);
             $table->string('id_tahun_ajaran', 50);
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamps();
             $table->unique(['nama_kelas', 'id_tahun_ajaran']);
             $table->foreign('id_tahun_ajaran')->references('id_tahun_ajaran')->on('tahun_ajaran')->restrictOnDelete();
@@ -109,6 +115,18 @@ class AdminPanelTest extends TestCase
             $table->foreign('id_kelas')->references('id_kelas')->on('kelas')->restrictOnDelete();
         });
 
+        Schema::create('pengajaran', function (Blueprint $table) {
+            $table->increments('id_pengajaran');
+            $table->string('id_user', 50);
+            $table->string('id_kelas', 50);
+            $table->string('id_mapel', 50);
+            $table->timestamp('created_at')->nullable()->useCurrent();
+            $table->unique(['id_user', 'id_kelas', 'id_mapel']);
+            $table->foreign('id_user')->references('id_user')->on('user')->restrictOnDelete();
+            $table->foreign('id_kelas')->references('id_kelas')->on('kelas')->restrictOnDelete();
+            $table->foreign('id_mapel')->references('id_mapel')->on('mapel')->restrictOnDelete();
+        });
+
         Schema::create('kuis', function (Blueprint $table) {
             $table->string('id_kuis', 50)->primary();
             $table->string('judul', 150);
@@ -125,6 +143,7 @@ class AdminPanelTest extends TestCase
             $table->string('status_publikasi', 20)->default('draft');
             $table->string('id_publisher', 50)->nullable();
             $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->foreign('id_user')->references('id_user')->on('user')->restrictOnDelete();
             $table->foreign('id_publisher')->references('id_user')->on('user')->nullOnDelete();
@@ -393,6 +412,38 @@ class AdminPanelTest extends TestCase
         $this->assertDatabaseHas('mapel', ['id_mapel' => 'MP001', 'kode_mapel' => 'TIK', 'nama_mapel' => 'TIK Diperbarui', 'is_aktif' => 0]);
         $this->assertDatabaseCount('mapel_kelas', 2);
         $this->assertDatabaseCount('kuis', 2);
+    }
+
+    public function test_admin_can_toggle_mapel_status_from_index_action_and_redirects(): void
+    {
+        $mapel = Mapel::find('MP001');
+        $this->assertTrue($mapel->is_aktif);
+
+        $this->actingAs($this->admin)
+            ->patch(route('admin.mapel.update', 'MP001'), ['is_aktif' => 0])
+            ->assertRedirect(route('admin.mapel.index'))
+            ->assertSessionHas('success');
+
+        $mapel->refresh();
+        $this->assertFalse($mapel->is_aktif);
+        $this->assertSame('TIK', $mapel->kode_mapel);
+        $this->assertSame('Teknologi Informasi', $mapel->nama_mapel);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.mapel.index'));
+        $response->assertOk();
+        $response->assertSee('Aktifkan');
+
+        $this->actingAs($this->admin)
+            ->patch(route('admin.mapel.update', 'MP001'))
+            ->assertRedirect(route('admin.mapel.index'))
+            ->assertSessionHas('success');
+
+        $mapel->refresh();
+        $this->assertTrue($mapel->is_aktif);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.mapel.index'));
+        $response->assertOk();
+        $response->assertSee('Nonaktifkan');
     }
 
     public function test_mapel_update_rejects_another_normalized_code(): void
@@ -667,14 +718,14 @@ class AdminPanelTest extends TestCase
         $this->assertDatabaseHas('materi', ['id_materi' => 'M001', 'id_user' => 'U002']);
 
         $this->post(route('logout'))->assertRedirect(route('login'));
-        $this->from(route('login'))->post(route('login.process'), ['email' => strtolower($id).'@example.test', 'password' => 'secret123'])
-            ->assertRedirect(route('login'))->assertSessionHasErrors('email');
+        $this->from(route('login'))->post(route('login.process'), ['nomor_induk' => '000'.substr($id, 1), 'password' => 'secret123'])
+            ->assertRedirect(route('login'))->assertSessionHasErrors(['nomor_induk', 'email']);
         $this->assertGuest();
         $this->actingAs($this->admin)->patch(route('admin.'.$resource.'.aktifkan', $id))
             ->assertRedirect(route('admin.'.$resource.'.index'));
         $this->assertDatabaseHas('user', ['id_user' => $id, 'status' => 'aktif']);
         $this->post(route('logout'));
-        $this->post(route('login.process'), ['email' => strtolower($id).'@example.test', 'password' => 'secret123'])
+        $this->post(route('login.process'), ['nomor_induk' => '000'.substr($id, 1), 'password' => 'secret123'])
             ->assertRedirect(route($landing))->assertSessionHasNoErrors();
         $this->assertAuthenticatedAs(User::findOrFail($id));
         $this->assertSame($before, (array) DB::table('mengerjakan')->where('id_mengerjakan', $scoreId)->first());
@@ -683,7 +734,7 @@ class AdminPanelTest extends TestCase
     #[DataProvider('accountResources')]
     public function test_an_already_authenticated_session_is_denied_after_account_becomes_inactive(string $resource, string $id, string $landing): void
     {
-        $this->post(route('login.process'), ['email' => strtolower($id).'@example.test', 'password' => 'secret123'])
+        $this->post(route('login.process'), ['nomor_induk' => '000'.substr($id, 1), 'password' => 'secret123'])
             ->assertRedirect(route($landing));
         $this->assertAuthenticatedAs(User::findOrFail($id));
         $guardName = $this->app['auth']->guard()->getName();
@@ -881,5 +932,311 @@ class AdminPanelTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('kuis');
         $this->from(route('admin.rekap.index'))->get(route('admin.rekap.index', $parameters))
             ->assertRedirect(route('admin.rekap.index'))->assertSessionHasErrors('kuis');
+    }
+
+    public function test_admin_can_migrate_students_to_another_class_in_same_year(): void
+    {
+        // KLS001 is tingkat X, KLS002 update to tingkat XI
+        Kelas::whereKey('KLS002')->update(['tingkat' => 'XI']);
+        $this->makeUser('U004', 'siswa', 'Siswa Dua');
+        $this->joinKelas('U004', 'KLS001');
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.kelas.pindah-anggota', 'KLS001'), [
+                'id_user' => ['U003', 'U004'],
+                'id_kelas_tujuan' => 'KLS002',
+            ])
+            ->assertRedirect(route('admin.kelas.show', 'KLS001'))
+            ->assertSessionHas('success');
+
+        // U003 and U004 should now be in KLS002, not KLS001
+        $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
+        $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U004']);
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS002', 'id_user' => 'U003']);
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS002', 'id_user' => 'U004']);
+
+        // user.kelas should be updated to XI
+        $this->assertSame('XI', User::findOrFail('U003')->kelas);
+        $this->assertSame('XI', User::findOrFail('U004')->kelas);
+    }
+
+    public function test_migration_deletes_origin_row_if_student_already_in_destination_class(): void
+    {
+        // Student U003 is already in KLS001. Also add to KLS002.
+        $this->joinKelas('U003', 'KLS002');
+        $this->assertDatabaseCount('anggota_kelas', 2);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.kelas.pindah-anggota', 'KLS001'), [
+                'id_user' => ['U003'],
+                'id_kelas_tujuan' => 'KLS002',
+            ])
+            ->assertRedirect(route('admin.kelas.show', 'KLS001'))
+            ->assertSessionHas('success');
+
+        // U003 removed from KLS001, remains in KLS002
+        $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS002', 'id_user' => 'U003']);
+        $this->assertDatabaseCount('anggota_kelas', 1);
+    }
+
+    public function test_migration_rejects_different_academic_year(): void
+    {
+        TahunAjaran::create(['id_tahun_ajaran' => 'TA002', 'nama' => '2027/2028']);
+        $this->makeKelas('KLS003', 'X TKJ 3', 'TA002');
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.kelas.pindah-anggota', 'KLS001'), [
+                'id_user' => ['U003'],
+                'id_kelas_tujuan' => 'KLS003',
+            ])
+            ->assertSessionHasErrors('id_kelas_tujuan');
+
+        // U003 remains in KLS001
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
+        $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS003', 'id_user' => 'U003']);
+    }
+
+    public function test_migration_rejects_same_origin_and_destination_class(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('admin.kelas.pindah-anggota', 'KLS001'), [
+                'id_user' => ['U003'],
+                'id_kelas_tujuan' => 'KLS001',
+            ])
+            ->assertSessionHasErrors('id_kelas_tujuan');
+
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
+    }
+
+    public function test_service_pindah_massal_direct_invocation(): void
+    {
+        $hasil = KelasMigrasiService::pindahMassal(['U003'], 'KLS002');
+        $this->assertSame(1, $hasil['berhasil']);
+        $this->assertSame(0, $hasil['dilewati']);
+        $this->assertDatabaseHas('anggota_kelas', ['id_kelas' => 'KLS002', 'id_user' => 'U003']);
+        $this->assertDatabaseMissing('anggota_kelas', ['id_kelas' => 'KLS001', 'id_user' => 'U003']);
+    }
+
+    public function test_admin_can_view_pengajaran_index_and_filter_by_tahun_ajaran(): void
+    {
+        TahunAjaran::create(['id_tahun_ajaran' => 'TA002', 'nama' => '2027/2028']);
+        $this->makeKelas('KLS003', 'XI TKJ 1', 'TA002');
+        Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
+        DB::table('mapel_kelas')->insert(['id_mapel' => 'MP002', 'id_kelas' => 'KLS003']);
+
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS003', 'id_mapel' => 'MP002']);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.pengajaran.index', ['tahun_ajaran' => 'TA001']));
+        $response->assertOk()->assertViewIs('admin.pengajaran.index');
+        $response->assertViewHas('pengajaran', fn ($list) => $list->count() === 1 && $list->first()->id_kelas === 'KLS001');
+
+        $response2 = $this->actingAs($this->admin)->get(route('admin.pengajaran.index', ['tahun_ajaran' => 'TA002']));
+        $response2->assertOk();
+        $response2->assertViewHas('pengajaran', fn ($list) => $list->count() === 1 && $list->first()->id_kelas === 'KLS003');
+    }
+
+    public function test_admin_can_store_pengajaran_from_mapel_kelas(): void
+    {
+        $this->actingAs($this->admin)->post(route('admin.pengajaran.store'), [
+            'id_user' => 'U002',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP001',
+        ])->assertRedirect(route('admin.pengajaran.index'))->assertSessionHas('success');
+
+        $this->assertDatabaseHas('pengajaran', [
+            'id_user' => 'U002',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP001',
+        ]);
+    }
+
+    public function test_admin_cannot_store_pengajaran_with_invalid_mapel_kelas_combination(): void
+    {
+        Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
+        // MP002 is not attached to KLS001 in mapel_kelas
+        $this->actingAs($this->admin)->post(route('admin.pengajaran.store'), [
+            'id_user' => 'U002',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP002',
+        ])->assertSessionHasErrors('id_mapel');
+
+        $this->assertDatabaseMissing('pengajaran', [
+            'id_user' => 'U002',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP002',
+        ]);
+    }
+
+    public function test_admin_cannot_duplicate_pengajaran(): void
+    {
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        $this->actingAs($this->admin)->post(route('admin.pengajaran.store'), [
+            'id_user' => 'U002',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP001',
+        ])->assertRedirect(route('admin.pengajaran.index'))->assertSessionHas('success');
+
+        $this->assertDatabaseCount('pengajaran', 1);
+    }
+
+    public function test_tiga_pasangan_dibuat_dan_duplikat_dilewati(): void
+    {
+        // KLS001 dan KLS002 sudah ada di seedScenario dengan MP001 terdaftar di mapel_kelas
+        Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
+
+        // Daftarkan MP002 ke KLS001 dan KLS002 sehingga ada 4 kombinasi di kurikulum:
+        // (KLS001, MP001), (KLS001, MP002), (KLS002, MP001), (KLS002, MP002)
+        DB::table('mapel_kelas')->insert([
+            ['id_mapel' => 'MP002', 'id_kelas' => 'KLS001'],
+            ['id_mapel' => 'MP002', 'id_kelas' => 'KLS002'],
+        ]);
+
+        // Pasangan 1 sudah ada sebelumnya (duplikat): (U002, KLS001, MP001)
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        // Kirim 2 kelas dan 2 mapel (total kombinasi perkalian = 2 x 2 = 4 pasangan)
+        $response = $this->actingAs($this->admin)->post(route('admin.pengajaran.store'), [
+            'id_user' => 'U002',
+            'id_kelas' => ['KLS001', 'KLS002'],
+            'id_mapel' => ['MP001', 'MP002'],
+        ]);
+
+        $response->assertRedirect(route('admin.pengajaran.index'));
+        $response->assertSessionHas('success');
+
+        // Verifikasi flash message memuat info 3 dibuat dan 1 dilewati
+        $successMsg = session('success');
+        $this->assertStringContainsString('3 dibuat', $successMsg);
+        $this->assertStringContainsString('1 dilewati', $successMsg);
+
+        // Verifikasi di database: awalnya 1, tambah 3 baru = total 4 penugasan
+        $this->assertDatabaseCount('pengajaran', 4);
+
+        // 3 pasangan baru harus ada di database
+        $this->assertDatabaseHas('pengajaran', ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP002']);
+        $this->assertDatabaseHas('pengajaran', ['id_user' => 'U002', 'id_kelas' => 'KLS002', 'id_mapel' => 'MP001']);
+        $this->assertDatabaseHas('pengajaran', ['id_user' => 'U002', 'id_kelas' => 'KLS002', 'id_mapel' => 'MP002']);
+    }
+
+    public function test_admin_can_destroy_pengajaran_without_deleting_user_class_or_mapel(): void
+    {
+        $p = Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        $this->actingAs($this->admin)->delete(route('admin.pengajaran.destroy', $p->id_pengajaran))
+            ->assertRedirect(route('admin.pengajaran.index'))->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('pengajaran', ['id_pengajaran' => $p->id_pengajaran]);
+        // Data master tetap utuh
+        $this->assertDatabaseHas('user', ['id_user' => 'U002']);
+        $this->assertDatabaseHas('kelas', ['id_kelas' => 'KLS001']);
+        $this->assertDatabaseHas('mapel', ['id_mapel' => 'MP001']);
+    }
+
+    public function test_guru_materi_index_limited_to_pengajaran_mapel(): void
+    {
+        Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
+        $this->makeKelas('KLS003', 'XI TKJ 1', 'TA001');
+        DB::table('mapel_kelas')->insert(['id_mapel' => 'MP002', 'id_kelas' => 'KLS003']);
+
+        // U002 only teaches MP001
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        $response = $this->actingAs($this->guru)->get(route('materi.index'));
+        $response->assertOk();
+        $response->assertViewHas('mapelAktif', function ($mapelAktif) {
+            return $mapelAktif->count() === 1 && $mapelAktif->first()->id_mapel === 'MP001';
+        });
+
+        // Guru accessing materi on MP001 is allowed
+        $this->get(route('materi.index', ['mapel' => 'MP001']))->assertOk();
+
+        // Guru accessing materi on MP002 (not in pengajaran) yields 403
+        $this->get(route('materi.index', ['mapel' => 'MP002']))->assertForbidden();
+    }
+
+    public function test_guru_without_pengajaran_sees_empty_pengajaran_message(): void
+    {
+        // No pengajaran assigned to U002
+        $response = $this->actingAs($this->guru)->get(route('materi.index'));
+        $response->assertOk();
+        $response->assertViewHas('tanpaPengajaran', true);
+        $response->assertSee('Belum Ada Penugasan Pengajaran');
+    }
+
+    public function test_guru_forbidden_from_viewing_or_editing_materi_outside_pengajaran(): void
+    {
+        Mapel::create(['id_mapel' => 'MP002', 'kode_mapel' => 'IPA', 'nama_mapel' => 'Sains']);
+        Materi::create([
+            'id_materi' => 'M002', 'judul' => 'Materi Sains', 'bab' => 'Bab 1',
+            'kelas' => 'X', 'id_mapel' => 'MP002', 'id_user' => 'U002',
+        ]);
+
+        // Guru only assigned to MP001
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        $this->actingAs($this->guru)->get(route('materi.show', 'M002'))->assertForbidden();
+        $this->actingAs($this->guru)->get(route('materi.edit', 'M002'))->assertForbidden();
+
+        // Materi inside pengajaran is accessible
+        $this->actingAs($this->guru)->get(route('materi.show', 'M001'))->assertOk();
+        $this->actingAs($this->guru)->get(route('materi.edit', 'M001'))->assertOk();
+    }
+
+    public function test_salin_tahun_ajaran_menyalin_kelas_dan_mapel_tanpa_pengajaran_atau_anggota(): void
+    {
+        // Beri pengajaran ke KLS001
+        Pengajaran::create(['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001']);
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.tahun-ajaran.salin', 'TA001'));
+
+        $response->assertRedirect(route('admin.tahun-ajaran.index'));
+        $response->assertSessionHas('success');
+
+        // Tahun baru tercipta dengan is_aktif = 0
+        $tahunBaru = TahunAjaran::where('id_tahun_ajaran', '!=', 'TA001')->first();
+        $this->assertNotNull($tahunBaru);
+        $this->assertSame(0, (int) $tahunBaru->is_aktif);
+        $this->assertStringContainsString('2026/2027', $tahunBaru->nama);
+
+        // Kelas disalin ke tahun baru
+        $kelasBaru = Kelas::where('id_tahun_ajaran', $tahunBaru->id_tahun_ajaran)->get();
+        $this->assertCount(2, $kelasBaru);
+        $this->assertEqualsCanonicalizing(['X TKJ 1', 'X TKJ 2'], $kelasBaru->pluck('nama_kelas')->all());
+
+        // Mapel kelas ikut disalin
+        foreach ($kelasBaru as $kb) {
+            $this->assertDatabaseHas('mapel_kelas', [
+                'id_kelas' => $kb->id_kelas,
+                'id_mapel' => 'MP001',
+            ]);
+            // Anggota kelas tidak disalin
+            $this->assertDatabaseMissing('anggota_kelas', [
+                'id_kelas' => $kb->id_kelas,
+            ]);
+            // Pengajaran tidak disalin
+            $this->assertDatabaseMissing('pengajaran', [
+                'id_kelas' => $kb->id_kelas,
+            ]);
+        }
+    }
+
+    public function test_dua_tahun_tidak_bisa_aktif_bersamaan_di_database(): void
+    {
+        // TA001 saat ini aktif (is_aktif = 1)
+        $this->assertSame(1, (int) TahunAjaran::where('is_aktif', 1)->count());
+
+        // Mencoba update row kedua menjadi is_aktif = 1 tanpa menonaktifkan yang pertama harus gagal karena constraint
+        TahunAjaran::create([
+            'id_tahun_ajaran' => 'TA002',
+            'nama' => '2027/2028',
+            'is_aktif' => 0,
+        ]);
+
+        $this->expectException(\Illuminate\Database\QueryException::class);
+        DB::table('tahun_ajaran')->where('id_tahun_ajaran', 'TA002')->update(['is_aktif' => 1]);
     }
 }

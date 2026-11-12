@@ -7,6 +7,7 @@ use App\Models\Kelas;
 use App\Models\Mapel;
 use App\Models\TahunAjaran;
 use App\Models\User;
+use App\Services\KelasMigrasiService;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -75,7 +76,44 @@ class KelasController extends Controller
             ->orderBy('nama_lengkap')
             ->get();
 
-        return view('admin.kelas.show', compact('kelas', 'anggota', 'siswaTersedia'));
+        $daftarKelasTujuan = Kelas::where('id_tahun_ajaran', $kelas->id_tahun_ajaran)
+            ->where('id_kelas', '!=', $kelas->id_kelas)
+            ->orderBy('nama_kelas')
+            ->get();
+
+        return view('admin.kelas.show', compact('kelas', 'anggota', 'siswaTersedia', 'daftarKelasTujuan'));
+    }
+
+    public function pindahAnggota(Request $request, Kelas $kelas)
+    {
+        $validated = $request->validate([
+            'id_user' => ['required', 'array', 'min:1'],
+            'id_user.*' => ['required', 'string', 'distinct', Rule::exists('user', 'id_user')->where('role', 'siswa')],
+            'id_kelas_tujuan' => ['required', 'string', 'exists:kelas,id_kelas'],
+        ], [
+            'id_user.required' => 'Pilih minimal satu siswa untuk dipindahkan.',
+            'id_user.min' => 'Pilih minimal satu siswa untuk dipindahkan.',
+            'id_kelas_tujuan.required' => 'Kelas tujuan wajib dipilih.',
+            'id_kelas_tujuan.exists' => 'Kelas tujuan tidak ditemukan.',
+        ]);
+
+        $hasil = KelasMigrasiService::pindahMassal(
+            $validated['id_user'],
+            $validated['id_kelas_tujuan'],
+            $kelas->id_kelas
+        );
+
+        $kelasTujuan = Kelas::find($validated['id_kelas_tujuan']);
+        $namaTujuan = $kelasTujuan ? $kelasTujuan->nama_kelas : 'kelas tujuan';
+
+        $pesan = "{$hasil['berhasil']} siswa berhasil dipindahkan ke {$namaTujuan}.";
+        if ($hasil['dilewati'] > 0) {
+            $pesan .= " ({$hasil['dilewati']} siswa dilewati).";
+        }
+
+        return redirect()
+            ->route('admin.kelas.show', $kelas)
+            ->with('success', $pesan);
     }
 
     public function edit(Kelas $kelas)

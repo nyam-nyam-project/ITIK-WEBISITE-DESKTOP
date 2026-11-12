@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Mengerjakan;
-use App\Models\SesiKuis;
+use App\Models\Soal;
+use App\Services\KuisEssayGradingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -29,12 +30,8 @@ class GuruNilaiController extends Controller
             ]);
 
         $query = Mengerjakan::query()
-            ->with([
-                'kuis:id_kuis,judul,kategori,kkm',
-                'siswa:id_user,nama_lengkap,nomor_induk,kelas',
-                'validator:id_user,nama_lengkap',
-                'remedialSiswa.kuisRemedial:id_kuis,judul,deskripsi,alokasi_waktu,kkm,status_publikasi,is_aktif',
-            ])
+            ->dikelolaOlehGuru($request->user())
+            ->with(['kuis:id_kuis,judul,kategori,kkm', 'siswa:id_user,nama_lengkap,nomor_induk,kelas', 'validator:id_user,nama_lengkap'])
             ->where('status_pengerjaan', 'final')
             ->orderBy('status_validasi')
             ->orderByDesc('tanggal');
@@ -89,8 +86,10 @@ class GuruNilaiController extends Controller
         return response()->json($nilai);
     }
 
-    public function show(Mengerjakan $mengerjakan): JsonResponse
+    public function show(Request $request, Mengerjakan $mengerjakan): JsonResponse
     {
+        abort_unless($mengerjakan->dikelolaOleh($request->user()), 403);
+
         return response()->json([
             'data' => $mengerjakan->load([
                 'siswa:id_user,nama_lengkap,nomor_induk,kelas',
@@ -100,14 +99,30 @@ class GuruNilaiController extends Controller
         ]);
     }
 
+    public function nilaiEssay(
+        Request $request,
+        Mengerjakan $mengerjakan,
+        Soal $soal,
+        KuisEssayGradingService $penilaian
+    ): JsonResponse {
+        $hasil = $penilaian->nilaiEssay($mengerjakan, $soal, $request->user(), $request->all());
+
+        return response()->json([
+            'message' => 'Penilaian essay berhasil disimpan.',
+            'data' => $hasil->load('validator:id_user,nama_lengkap'),
+        ]);
+    }
+
     public function validasi(Request $request, Mengerjakan $mengerjakan): JsonResponse
     {
+        abort_unless($mengerjakan->dikelolaOleh($request->user()), 403);
+
         if ($mengerjakan->status_pengerjaan !== 'final') {
             abort(409, 'Pengerjaan ini belum final.');
         }
 
-        if ($mengerjakan->status_validasi === 'sudah divalidasi') {
-            abort(409, 'Nilai ini sudah divalidasi.');
+        if ($mengerjakan->status_validasi !== 'belum divalidasi') {
+            abort(409, 'Nilai ini tidak menunggu validasi.');
         }
 
         $mengerjakan->loadMissing('kuis:id_kuis,kkm');

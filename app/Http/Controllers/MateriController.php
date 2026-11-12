@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Mapel;
 use App\Models\Materi;
+use App\Models\Pengajaran;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -17,39 +19,99 @@ class MateriController extends Controller
     public function index(Request $request)
     {
         $idMapel = $request->query('mapel');
+        $user = Auth::user();
+        $tanpaPengajaran = false;
 
-        $mapelAktif = Mapel::aktif()
-            ->withCount('materi')
-            ->orderBy('nama_mapel')
-            ->get();
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
 
-        $mapelTerpilih = null;
-        $materi = collect();
+            if ($mapelPengajaranIds->isEmpty()) {
+                $tanpaPengajaran = true;
+                $mapelAktif = collect();
+                $mapelTerpilih = null;
+                $materi = collect();
 
-        if ($idMapel) {
-            $mapelTerpilih = Mapel::find($idMapel);
-            if ($mapelTerpilih) {
-                $materi = Materi::where('id_mapel', $idMapel)
-                    ->orderBy('bab')
-                    ->orderBy('judul')
-                    ->get();
+                return view('guru.materi.index', compact('materi', 'mapelAktif', 'mapelTerpilih', 'idMapel', 'tanpaPengajaran'));
+            }
+
+            if ($idMapel && ! $mapelPengajaranIds->contains($idMapel)) {
+                abort(403, 'Anda tidak berhak mengakses mata pelajaran di luar penugasan pengajaran Anda.');
+            }
+
+            $mapelAktif = Mapel::aktif()
+                ->whereIn('id_mapel', $mapelPengajaranIds)
+                ->withCount('materi')
+                ->orderBy('nama_mapel')
+                ->get();
+
+            $mapelTerpilih = null;
+            $materi = collect();
+
+            if ($idMapel) {
+                $mapelTerpilih = Mapel::find($idMapel);
+                if ($mapelTerpilih) {
+                    $materi = Materi::where('id_mapel', $idMapel)
+                        ->orderBy('bab')
+                        ->orderBy('judul')
+                        ->get();
+                }
+            }
+        } else {
+            // Admin tidak berubah
+            $mapelAktif = Mapel::aktif()
+                ->withCount('materi')
+                ->orderBy('nama_mapel')
+                ->get();
+
+            $mapelTerpilih = null;
+            $materi = collect();
+
+            if ($idMapel) {
+                $mapelTerpilih = Mapel::find($idMapel);
+                if ($mapelTerpilih) {
+                    $materi = Materi::where('id_mapel', $idMapel)
+                        ->orderBy('bab')
+                        ->orderBy('judul')
+                        ->get();
+                }
             }
         }
 
-        return view('materi.index', compact('materi', 'mapelAktif', 'mapelTerpilih', 'idMapel'));
+        return view('guru.materi.index', compact('materi', 'mapelAktif', 'mapelTerpilih', 'idMapel', 'tanpaPengajaran'));
     }
 
     public function create()
     {
-        $mapel = Mapel::aktif()->orderBy('nama_mapel')->get();
+        $user = Auth::user();
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
 
-        return view('materi.create', compact('mapel'));
+            $mapel = Mapel::aktif()
+                ->when($mapelPengajaranIds->isNotEmpty(), fn ($q) => $q->whereIn('id_mapel', $mapelPengajaranIds), fn ($q) => $q->whereRaw('1 = 0'))
+                ->orderBy('nama_mapel')
+                ->get();
+        } else {
+            $mapel = Mapel::aktif()->orderBy('nama_mapel')->get();
+        }
+
+        return view('guru.materi.create', compact('mapel'));
     }
 
     public function store(Request $request)
     {
+        $user = Auth::user();
+
         $validated = $request->validate([
-            'id_mapel' => ['required', 'string', Rule::exists('mapel', 'id_mapel')->where('is_aktif', 1)],
+            'id_mapel' => [
+                'required',
+                'string',
+                Rule::exists('mapel', 'id_mapel')->where(function ($q) use ($user) {
+                    $q->where('is_aktif', 1);
+                    if ($user && $user->role === 'guru') {
+                        $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
+                    }
+                }),
+            ],
             'judul' => 'required|string|max:150',
             'bab' => 'nullable|string|max:50',
             'kelas' => 'nullable|string|max:50',
@@ -97,30 +159,69 @@ class MateriController extends Controller
     public function show($id)
     {
         $materi = Materi::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
+
+            if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
+                abort(403, 'Anda tidak berhak mengakses materi di luar penugasan pengajaran Anda.');
+            }
+        }
 
         $pdfUrl = $materi->pdfUrl();
 
-        return view('materi.show', compact('materi', 'pdfUrl'));
+        return view('guru.materi.show', compact('materi', 'pdfUrl'));
     }
 
     public function edit($id)
     {
         $materi = Materi::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
+
+            if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
+                abort(403, 'Anda tidak berhak mengubah materi di luar penugasan pengajaran Anda.');
+            }
+        }
+
         $mapel = Mapel::where(fn ($q) => $q->where('is_aktif', 1)
                 ->orWhere('id_mapel', $materi->id_mapel))
+            ->when($user && $user->role === 'guru', function ($q) use ($user) {
+                $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
+            })
             ->orderBy('nama_mapel')
             ->get();
 
-        return view('materi.edit', compact('materi', 'mapel'));
+        return view('guru.materi.edit', compact('materi', 'mapel'));
     }
 
     public function update(Request $request, $id)
     {
         $materi = Materi::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
+
+            if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
+                abort(403, 'Anda tidak berhak mengubah materi di luar penugasan pengajaran Anda.');
+            }
+        }
 
         $validated = $request->validate([
-            'id_mapel' => ['required', 'string', Rule::exists('mapel', 'id_mapel')
-                ->where(fn ($q) => $q->where('is_aktif', 1)->orWhere('id_mapel', $materi->id_mapel))],
+            'id_mapel' => [
+                'required',
+                'string',
+                Rule::exists('mapel', 'id_mapel')->where(function ($q) use ($user, $materi) {
+                    if ($user && $user->role === 'guru') {
+                        $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
+                    }
+                    $q->where(fn ($sub) => $sub->where('is_aktif', 1)->orWhere('id_mapel', $materi->id_mapel));
+                }),
+            ],
             'judul' => 'required|string|max:150',
             'bab' => 'nullable|string|max:50',
             'kelas' => 'nullable|string|max:50',
@@ -166,6 +267,16 @@ class MateriController extends Controller
     public function destroy($id)
     {
         $materi = Materi::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru') {
+            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
+
+            if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
+                abort(403, 'Anda tidak berhak menghapus materi di luar penugasan pengajaran Anda.');
+            }
+        }
+
         $idMapel = $materi->id_mapel;
 
         if ($materi->isi_materi && Storage::disk('public')->exists($materi->isi_materi)) {

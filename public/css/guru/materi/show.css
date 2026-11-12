@@ -1,0 +1,44 @@
+.pdf-viewer-container {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #f8fafc;
+    overflow: hidden;
+    margin-top: 16px;
+}
+.pdf-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.pdf-page-indicator {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+.pdf-canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 10px;
+    max-height: 750px;
+    overflow: auto;
+    background: #475569;
+}
+#pdf-canvas {
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,.25);
+    border-radius: 4px;
+    background: white;
+}
+.pdf-loading {
+    padding: 40px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+}

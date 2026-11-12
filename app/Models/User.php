@@ -81,6 +81,11 @@ class User extends Authenticatable
         return $this->belongsTo(User::class, 'dibuat_oleh', 'id_user');
     }
 
+    public function pengajaran()
+    {
+        return $this->hasMany(Pengajaran::class, 'id_user', 'id_user');
+    }
+
     public function isAktif(): bool
     {
         return $this->status === 'aktif';
@@ -99,5 +104,10 @@ class User extends Authenticatable
     public function scopeGuru($query)
     {
         return $query->where('role', 'guru');
+    }
+
+    public static function mapelUntukSiswa(User $siswa): \Illuminate\Support\Collection
+    {
+        return Kelas::mapelUntukSiswa($siswa);
     }
 }

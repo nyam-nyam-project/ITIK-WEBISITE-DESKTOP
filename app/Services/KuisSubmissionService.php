@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\DraftJawaban;
+use App\Models\Kuis;
 use App\Models\Mengerjakan;
+use App\Models\NilaiEssay;
 use App\Models\RemedialSiswa;
 use App\Models\SesiKuis;
 use Carbon\Carbon;
@@ -11,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class KuisSubmissionService
 {
+    public function __construct(private KuisPenilaianService $penilaian)
+    {
+    }
+
     public function sesiAktif(string $idKuis, string $idUser): ?SesiKuis
     {
         return SesiKuis::with('kuis')
@@ -60,7 +66,9 @@ class KuisSubmissionService
     public function submit(SesiKuis $sesi, bool $hanyaKedaluwarsa = false): ?Mengerjakan
     {
         return DB::transaction(function () use ($sesi, $hanyaKedaluwarsa) {
+            $kuis = Kuis::whereKey($sesi->id_kuis)->lockForUpdate()->firstOrFail();
             $sesi = SesiKuis::whereKey($sesi->id_sesi)->lockForUpdate()->firstOrFail();
+            $sesi->setRelation('kuis', $kuis);
 
             if ($sesi->waktu_selesai) {
                 return null;
@@ -88,20 +96,11 @@ class KuisSubmissionService
                 return $sudahAda;
             }
 
-            $kuis = $sesi->kuis;
             $soal = $kuis->soal()->get();
             $draft = DraftJawaban::where('id_kuis', $sesi->id_kuis)
                 ->where('id_user', $sesi->id_user)
                 ->get()->keyBy('id_soal');
-            $totalBobot = $soal->sum(fn ($item) => (float) $item->bobot);
-            $bobotBenar = 0;
-
-            foreach ($soal as $item) {
-                $jawaban = $draft->get($item->id_soal)?->jawaban_dipilih;
-                if ($jawaban && $item->jawaban && strtoupper($jawaban) === strtoupper($item->jawaban)) {
-                    $bobotBenar += (float) $item->bobot;
-                }
-            }
+            $nilai = $this->penilaian->hitung($soal, $draft, collect());
 
             $nilai = $totalBobot > 0
                 ? round(($bobotBenar / $totalBobot) * 100, 2)
@@ -115,11 +114,18 @@ class KuisSubmissionService
                 'tanggal' => $waktuSelesai->toDateString(),
                 'percobaan_ke' => $sesi->percobaan_ke,
                 'status_pengerjaan' => 'final',
-                'status_validasi' => $lulusOtomatis
-                    ? 'sudah divalidasi'
-                    : 'belum divalidasi',
-                'id_validator' => null,
+                'status_validasi' => $nilai === null ? 'menunggu penilaian' : 'sudah divalidasi',
+                'id_validator' => $nilai === null ? null : ($kuis->id_user ?? null),
             ]);
+
+            foreach ($soal->where('tipe', 'essay') as $item) {
+                NilaiEssay::create([
+                    'id_mengerjakan' => $hasil->id_mengerjakan,
+                    'id_soal' => $item->id_soal,
+                    'jawaban_teks' => $draft->get($item->id_soal)?->jawaban_teks,
+                    'nilai' => null,
+                ]);
+            }
 
             if ($kuis->kategori === 'remedial') {
                 RemedialSiswa::where('id_kuis_remedial', $sesi->id_kuis)

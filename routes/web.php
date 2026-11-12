@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\MapelController;
 use App\Http\Controllers\Admin\KelasController;
 use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\GuruController;
+use App\Http\Controllers\Admin\PengajaranController;
 use App\Http\Controllers\Admin\RekapNilaiController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
@@ -40,7 +41,7 @@ Route::get('/profil', function () {
         return redirect()->route('admin.profil');
     }
 
-    return view('guru.profil');
+    return view('shared.profil');
 })->middleware('auth')->name('profil');
 
 Route::middleware('auth')->group(function () {
@@ -101,11 +102,17 @@ Route::middleware(['auth', 'role:guru'])
         Route::get('/nilai', [ValidasiNilaiController::class, 'index'])
             ->name('nilai.index');
 
+        Route::get('/nilai/unduh', [ValidasiNilaiController::class, 'unduh'])
+            ->name('nilai.unduh');
+
         Route::get('/nilai/{mengerjakan}', [ValidasiNilaiController::class, 'show'])
             ->name('nilai.show');
 
         Route::patch('/nilai/{mengerjakan}/validasi', [ValidasiNilaiController::class, 'validasi'])
             ->name('nilai.validasi');
+
+        Route::post('/nilai/{mengerjakan}/essay/{soal}', [ValidasiNilaiController::class, 'nilaiEssay'])
+            ->name('nilai.essay.store');
 
         Route::post('/nilai/{mengerjakan}/remedial', [ValidasiNilaiController::class, 'tugaskanRemedial'])
             ->name('nilai.remedial');
@@ -143,12 +150,16 @@ Route::middleware(['auth', 'role:admin'])
         Route::view('/profil', 'admin.profil')->name('profil');
         Route::patch('/tahun-ajaran/{tahunAjaran}/aktifkan', [TahunAjaranController::class, 'aktifkan'])
             ->name('tahun-ajaran.aktifkan');
+        Route::post('/tahun-ajaran/{sumber}/salin', [TahunAjaranController::class, 'salin'])
+            ->name('tahun-ajaran.salin');
         Route::resource('tahun-ajaran', TahunAjaranController::class)
             ->parameters(['tahun-ajaran' => 'tahunAjaran'])
             ->except(['show', 'destroy']);
         Route::resource('mapel', MapelController::class)->except(['show', 'destroy']);
         Route::post('/kelas/{kelas}/anggota', [KelasController::class, 'tambahAnggota'])
             ->name('kelas.anggota.store');
+        Route::post('/kelas/{kelas}/pindah-anggota', [KelasController::class, 'pindahAnggota'])
+            ->name('kelas.pindah-anggota');
         Route::resource('kelas', KelasController::class)
             ->parameters(['kelas' => 'kelas'])->except('destroy');
         Route::patch('/siswa/{siswa}/nonaktifkan', [SiswaController::class, 'nonaktifkan'])
@@ -161,6 +172,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/guru/{guru}/aktifkan', [GuruController::class, 'aktifkan'])
             ->name('guru.aktifkan');
         Route::resource('guru', GuruController::class)->except(['show', 'destroy']);
+        Route::resource('pengajaran', PengajaranController::class)->only(['index', 'store', 'destroy']);
         Route::get('/rekap', [RekapNilaiController::class, 'index'])->name('rekap.index');
     });
 
@@ -218,6 +230,9 @@ Route::middleware(['auth', 'role:siswa'])
 
         Route::post('/kuis/{kuis}/jawaban', [SiswaKuisController::class, 'simpanJawaban'])
             ->name('kuis.jawaban');
+
+        Route::post('/kuis/{kuis}/pelanggaran', [SiswaKuisController::class, 'catatPelanggaran'])
+            ->name('kuis.pelanggaran');
 
         Route::post('/kuis/{kuis}/submit', [SiswaKuisController::class, 'submit'])
             ->name('kuis.submit');

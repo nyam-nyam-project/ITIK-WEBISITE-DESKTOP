@@ -11,25 +11,29 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('remedials', function (Blueprint $table) {
+        Schema::create('tr_remedial', function (Blueprint $table) {
             $table->increments('id_remedial');
+            
             $table->string('id_kuis_remedial', 50)
                 ->comment('Kuis dengan kategori=remedial');
+                
             $table->string('id_kuis_asal', 50)
                 ->comment('Kuis asal (misal pass-test) yang jadi alasan remedial');
 
             $table->unique('id_kuis_remedial', 'uq_kuis_remedial');
             $table->index('id_kuis_asal', 'fk_remedial_kuisasal');
 
+            // Foreign Key merujuk ke tm_kuis (id_kuis_asal)
             $table->foreign('id_kuis_asal', 'fk_remedial_kuisasal')
                 ->references('id_kuis')
-                ->on('kuis')
+                ->on('tm_kuis')
                 ->restrictOnDelete()
                 ->cascadeOnUpdate();
 
+            // Foreign Key merujuk ke tm_kuis (id_kuis_remedial)
             $table->foreign('id_kuis_remedial', 'fk_remedial_kuisremedial')
                 ->references('id_kuis')
-                ->on('kuis')
+                ->on('tm_kuis')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
         });
@@ -40,6 +44,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('remedials');
+        Schema::dropIfExists('tr_remedial');
     }
 };

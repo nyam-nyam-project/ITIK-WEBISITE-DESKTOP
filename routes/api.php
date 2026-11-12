@@ -13,6 +13,11 @@ Route::post('/login', [AuthController::class, 'login'])
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/user', [AuthController::class, 'me']);
+    Route::patch('/me', [AuthController::class, 'updateProfile']);
+    Route::post('/me/photo', [AuthController::class, 'updatePhoto']);
+    Route::delete('/me/photo', [AuthController::class, 'deletePhoto']);
+    Route::put('/me/password', [AuthController::class, 'updatePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::middleware('role:siswa')->prefix('siswa')->group(function (): void {
@@ -21,31 +26,49 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/materi/{materi}/selesai', [SiswaController::class, 'selesaikanMateri']);
 
         Route::get('/kuis', [SiswaController::class, 'kuis']);
-        Route::post('/kuis/{kuis}/mulai', [SiswaController::class, 'mulaiKuis']);
-        Route::get('/kuis/{kuis}', [SiswaController::class, 'detailKuis']);
-        Route::put('/kuis/{kuis}/jawaban', [SiswaController::class, 'simpanJawaban']);
-        Route::post('/kuis/{kuis}/submit', [SiswaController::class, 'submitKuis']);
         Route::get('/nilai', [SiswaController::class, 'nilai']);
         Route::get('/remedial', [SiswaController::class, 'remedial']);
-    });
-
-    Route::middleware('role:guru,operator')->prefix('guru')->group(function (): void {
-        Route::apiResource('materi', GuruMateriController::class);
-        Route::apiResource('kuis', GuruKuisController::class);
-        Route::post('/kuis/{kuis}/soal', [GuruKuisController::class, 'storeSoal']);
-        Route::put('/kuis/{kuis}/soal/{soal}', [GuruKuisController::class, 'updateSoal']);
-        Route::delete('/kuis/{kuis}/soal/{soal}', [GuruKuisController::class, 'destroySoal']);
+        Route::get('/kuis/{kuis}', [SiswaController::class, 'detailKuis']);
+        Route::post('/kuis/{kuis}/mulai', [SiswaController::class, 'mulaiKuis']);
+        Route::put('/kuis/{kuis}/jawaban', [SiswaController::class, 'simpanJawaban']);
+        Route::post('/kuis/{kuis}/submit', [SiswaController::class, 'submitKuis']);
     });
 
     Route::middleware('role:guru')->prefix('guru')->group(function (): void {
-        Route::post('/kuis/{kuis}/publish', [GuruKuisController::class, 'publish']);
-        Route::get('/nilai', [GuruNilaiController::class, 'index']);
-        Route::get('/nilai/{mengerjakan}', [GuruNilaiController::class, 'show']);
-        Route::patch('/nilai/{mengerjakan}/validasi', [GuruNilaiController::class, 'validasi']);
-        Route::get('/remedial', [GuruRemedialController::class, 'index']);
-        Route::post('/remedial', [GuruRemedialController::class, 'store']);
-        Route::get('/remedial/{remedial}/siswa', [GuruRemedialController::class, 'siswa']);
-        Route::get('/remedial/{remedial}', [GuruRemedialController::class, 'show']);
-        Route::post('/remedial/{remedial}/tugaskan', [GuruRemedialController::class, 'tugaskan']);
+        Route::get('/mapel', [GuruMateriController::class, 'mapel'])
+            ->name('guru.mapel.index');
+        Route::apiResource('materi', GuruMateriController::class)
+            ->names('guru.materi');
+        Route::apiResource('kuis', GuruKuisController::class)
+            ->parameters(['kuis' => 'kuis'])
+            ->names('guru.kuis');
+
+        Route::post('/kuis/{kuis}/soal', [GuruKuisController::class, 'storeSoal'])
+            ->name('guru.kuis.soal.store');
+        Route::put('/kuis/{kuis}/soal/{soal}', [GuruKuisController::class, 'updateSoal'])
+            ->name('guru.kuis.soal.update');
+        Route::delete('/kuis/{kuis}/soal/{soal}', [GuruKuisController::class, 'destroySoal'])
+            ->name('guru.kuis.soal.destroy');
+
+        Route::post('/kuis/{kuis}/publish', [GuruKuisController::class, 'publish'])
+            ->name('guru.kuis.publish');
+
+        Route::get('/nilai', [GuruNilaiController::class, 'index'])
+            ->name('guru.nilai.index');
+        Route::get('/nilai/{mengerjakan}', [GuruNilaiController::class, 'show'])
+            ->name('guru.nilai.show');
+        Route::patch('/nilai/{mengerjakan}/validasi', [GuruNilaiController::class, 'validasi'])
+            ->name('guru.nilai.validasi');
+
+        Route::get('/remedial', [GuruRemedialController::class, 'index'])
+            ->name('guru.remedial.index');
+        Route::post('/remedial', [GuruRemedialController::class, 'store'])
+            ->name('guru.remedial.store');
+        Route::get('/remedial/{remedial}/siswa', [GuruRemedialController::class, 'siswa'])
+            ->name('guru.remedial.siswa');
+        Route::post('/remedial/{remedial}/tugaskan', [GuruRemedialController::class, 'tugaskan'])
+            ->name('guru.remedial.tugaskan');
+        Route::get('/remedial/{remedial}', [GuruRemedialController::class, 'show'])
+            ->name('guru.remedial.show');
     });
 });

@@ -103,15 +103,22 @@ class KuisSubmissionService
                 }
             }
 
+            $nilai = $totalBobot > 0
+                ? round(($bobotBenar / $totalBobot) * 100, 2)
+                : 0;
+            $lulusOtomatis = $kuis->kkm !== null && $nilai >= (float) $kuis->kkm;
+
             $hasil = Mengerjakan::create([
                 'id_kuis' => $sesi->id_kuis,
                 'id_user' => $sesi->id_user,
-                'nilai' => $totalBobot > 0 ? round(($bobotBenar / $totalBobot) * 100, 2) : 0,
+                'nilai' => $nilai,
                 'tanggal' => $waktuSelesai->toDateString(),
                 'percobaan_ke' => $sesi->percobaan_ke,
                 'status_pengerjaan' => 'final',
-                'status_validasi' => 'sudah divalidasi',
-                'id_validator' => $kuis->id_user ?? null,
+                'status_validasi' => $lulusOtomatis
+                    ? 'sudah divalidasi'
+                    : 'belum divalidasi',
+                'id_validator' => null,
             ]);
 
             if ($kuis->kategori === 'remedial') {

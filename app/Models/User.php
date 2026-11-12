@@ -11,7 +11,7 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $table = 'user';
+    protected $table = 'tm_user';
 
     protected $primaryKey = 'id_user';
 
@@ -68,7 +68,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(
             Kelas::class,
-            'anggota_kelas',
+            'tp_anggota_kelas',
             'id_user',
             'id_kelas',
             'id_user',

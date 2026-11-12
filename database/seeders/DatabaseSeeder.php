@@ -22,42 +22,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
-
-        User::firstOrCreate(
-            ['id_user' => 'U001'],
-            [
-                'nomor_induk' => '198001',
-                'nama_lengkap' => 'Budi Guru',
-                'role' => 'guru',
-                'kelas' => null,
-                'email' => 'budi@guru.sch.id',
-                'password' => 'password123',
-            ]
-        );
-
-        User::firstOrCreate(
-            ['id_user' => 'U002'],
-            [
-                'nomor_induk' => '202401',
-                'nama_lengkap' => 'Siti Siswa',
-                'role' => 'siswa',
-                'kelas' => 'X',
-                'email' => 'siti@siswa.sch.id',
-                'password' => 'password123',
-            ]
-        );
-
-        User::firstOrCreate(
-            ['id_user' => 'U003'],
-            [
-                'nomor_induk' => '199001',
-                'nama_lengkap' => 'Andi Operator',
-                'role' => 'admin',
-                'kelas' => null,
-                'email' => 'andi@sekolah.sch.id',
-                'password' => '123456',
-            ]
-        );
+        $this->call(UserRoleSeeder::class);
 
         $tahun = TahunAjaran::firstOrCreate(
             ['id_tahun_ajaran' => 'TA001'],
@@ -75,7 +40,9 @@ class DatabaseSeeder extends Seeder
             $kelas->mapel()->syncWithoutDetaching([$mapel->id_mapel]);
         }
         $siswa = User::find('U002');
-        if (! $siswa->kelasDiikuti()->where('id_tahun_ajaran', $tahun->id_tahun_ajaran)->exists()) {
+        if (! $siswa->kelasDiikuti()->whereHas('tahunAjaran', function ($query) use ($tahun): void {
+            $query->where('id_tahun_ajaran', $tahun->id_tahun_ajaran);
+        })->exists()) {
             $siswa->kelasDiikuti()->syncWithoutDetaching(['KLS001']);
         }
 
@@ -197,7 +164,6 @@ class DatabaseSeeder extends Seeder
                 'opsi_e' => null,
                 'jawaban' => 'A',
                 'bobot' => 50,
-                'tingkat_kesulitan' => 'mudah',
             ]
         );
 
@@ -213,7 +179,6 @@ class DatabaseSeeder extends Seeder
                 'opsi_e' => null,
                 'jawaban' => 'B',
                 'bobot' => 50,
-                'tingkat_kesulitan' => 'mudah',
             ]
         );
 
@@ -229,7 +194,6 @@ class DatabaseSeeder extends Seeder
                 'opsi_e' => null,
                 'jawaban' => 'C',
                 'bobot' => 50,
-                'tingkat_kesulitan' => 'mudah',
             ]
         );
 
@@ -245,7 +209,6 @@ class DatabaseSeeder extends Seeder
                 'opsi_e' => null,
                 'jawaban' => 'B',
                 'bobot' => 50,
-                'tingkat_kesulitan' => 'sedang',
             ]
         );
 
@@ -261,7 +224,6 @@ class DatabaseSeeder extends Seeder
                 'opsi_e' => null,
                 'jawaban' => 'C',
                 'bobot' => 50,
-                'tingkat_kesulitan' => 'mudah',
             ]
         );
 
@@ -277,7 +239,6 @@ class DatabaseSeeder extends Seeder
                 'opsi_e' => null,
                 'jawaban' => 'A',
                 'bobot' => 50,
-                'tingkat_kesulitan' => 'mudah',
             ]
         );
     }

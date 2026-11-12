@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Kuis extends Model
 {
-    protected $table = 'kuis';
+    protected $table = 'tm_kuis';
 
     protected $primaryKey = 'id_kuis';
 
@@ -69,7 +70,7 @@ class Kuis extends Model
     public function materi()
     {
         return $this->belongsToMany(Materi::class,
-            'materi_kuis',
+            'tp_materi_kuis',
             'id_kuis',
             'id_materi',
             'id_kuis',
@@ -79,22 +80,22 @@ class Kuis extends Model
 
     public function sesi()
     {
-        return $this->hasMany(SesiKuis::class,'id_kuis','id_kuis');
+        return $this->hasMany(SesiKuis::class, 'id_kuis', 'id_kuis');
     }
 
     public function remedial()
     {
-        return $this->hasOne(Remedial::class,'id_kuis_remedial','id_kuis');
+        return $this->hasOne(Remedial::class, 'id_kuis_remedial', 'id_kuis');
     }
 
     public function remedialSebagaiAsal()
     {
-        return $this->hasMany(Remedial::class,'id_kuis_asal','id_kuis');
+        return $this->hasMany(Remedial::class, 'id_kuis_asal', 'id_kuis');
     }
 
     public function remedialSiswa()
     {
-        return $this->hasMany(RemedialSiswa::class,'id_kuis_remedial','id_kuis');
+        return $this->hasMany(RemedialSiswa::class, 'id_kuis_remedial', 'id_kuis');
     }
 
     /**
@@ -102,9 +103,9 @@ class Kuis extends Model
      * - Terbit otomatis jika waktu_mulai sudah tiba (<= now)
      * - Kembali ke draft otomatis jika waktu_selesai sudah lewat (<= now)
      */
-    public static function sinkronisasiStatus(?\Carbon\Carbon $now = null): void
+    public static function sinkronisasiStatus(?Carbon $now = null): void
     {
-        $now = $now ?? \Carbon\Carbon::now();
+        $now = $now ?? Carbon::now();
 
         // 1. Auto terbit: draft, waktu_mulai <= now, dan (waktu_selesai is null atau waktu_selesai > now)
         static::where('status_publikasi', 'draft')
@@ -112,7 +113,7 @@ class Kuis extends Model
             ->where('waktu_mulai', '<=', $now)
             ->where(function ($q) use ($now) {
                 $q->whereNull('waktu_selesai')
-                  ->orWhere('waktu_selesai', '>', $now);
+                    ->orWhere('waktu_selesai', '>', $now);
             })
             ->where('is_aktif', true)
             ->update([
@@ -126,7 +127,7 @@ class Kuis extends Model
             ->where('is_aktif', true)
             ->update([
                 'status_publikasi' => 'draft',
-                'id_publisher'     => null,
+                'id_publisher' => null,
             ]);
     }
 }

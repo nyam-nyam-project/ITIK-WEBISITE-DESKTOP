@@ -11,30 +11,31 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('materis', function (Blueprint $table) {
+        Schema::create('tm_materi', function (Blueprint $table) {
             $table->string('id_materi', 50)->primary();
             $table->string('judul', 150);
             $table->string('bab', 50)->nullable();
             $table->string('kelas', 50)->nullable();
+            $table->string('id_mapel', 50);
             $table->text('deskripsi')->nullable();
-            $table->string('isi_materi', 255)
-                ->nullable()
-                ->comment('Path/nama file PDF materi');
+            $table->string('isi_materi', 255)->nullable();
             $table->string('link_youtube', 255)->nullable();
-            $table->string('id_user', 50)
-                ->index('fk_materi_user')
-                ->comment('Guru/operator yang mengelola materi ini');
-
-            $table->timestamp('created_at')->nullable()->useCurrent();
-            $table->timestamp('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
+            $table->string('id_user', 50);
+            $table->timestamps();
 
             $table->unique(['kelas', 'bab', 'judul'], 'uq_materi_judul');
 
+            $table->foreign('id_mapel', 'fk_materi_mapel')
+                ->references('id_mapel')
+                ->on('tm_mapel')
+                ->onDelete('restrict')
+                ->onUpdate('cascade');
+
             $table->foreign('id_user', 'fk_materi_user')
                 ->references('id_user')
-                ->on('users')
-                ->onDelete('RESTRICT')
-                ->onUpdate('CASCADE');
+                ->on('tm_user')
+                ->onDelete('restrict')
+                ->onUpdate('cascade');
         });
     }
 
@@ -43,6 +44,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('materis');
+        Schema::dropIfExists('tm_materi');
     }
 };

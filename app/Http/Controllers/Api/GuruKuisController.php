@@ -7,23 +7,27 @@ use App\Models\Kuis;
 use App\Models\Materi;
 use App\Models\Remedial;
 use App\Models\Soal;
+use App\Models\TahunAjaran;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class GuruKuisController extends Controller
 {
-    private const KATEGORI = ['post-test', 'pass-test', 'kuis harian', 'ulangan', 'remedial'];
+    private const KATEGORI = ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'];
 
     public function index(): JsonResponse
     {
         return response()->json(
             Kuis::query()
                 ->where('is_aktif', true)
-                ->with(['pembuat:id_user,nama_lengkap', 'materi:id_materi,judul'])
+                ->with(['pembuat:id_user,nama_lengkap', 'materi:id_materi,judul', 'remedial'])
+                ->withCount('soal')
                 ->latest('created_at')
+                ->orderByDesc('id_kuis')
                 ->paginate(20)
         );
     }
@@ -59,14 +63,14 @@ class GuruKuisController extends Controller
 
         return response()->json([
             'message' => 'Kuis berhasil dibuat sebagai draft.',
-            'data' => $kuis->load(['materi', 'soal']),
+            'data' => $kuis->load(['materi', 'soal', 'remedial']),
         ], 201);
     }
 
     public function show(Kuis $kuis): JsonResponse
     {
         return response()->json([
-            'data' => $kuis->load(['pembuat:id_user,nama_lengkap', 'materi', 'soal']),
+            'data' => $kuis->load(['pembuat:id_user,nama_lengkap', 'materi', 'soal', 'remedial']),
         ]);
     }
 
@@ -74,7 +78,7 @@ class GuruKuisController extends Controller
     {
         abort_if($kuis->status_publikasi !== 'draft', 409, 'Kuis yang sudah terbit tidak dapat diedit.');
 
-        $validated = $this->validatedKuis($request);
+        $validated = $this->validatedKuis($request, $kuis);
         $materi = $validated['materi'] ?? [];
         $idKuisAsal = $validated['id_kuis_asal'] ?? null;
         unset($validated['materi'], $validated['id_kuis_asal']);
@@ -95,7 +99,7 @@ class GuruKuisController extends Controller
 
         return response()->json([
             'message' => 'Kuis berhasil diperbarui.',
-            'data' => $kuis->fresh()->load(['materi', 'soal']),
+            'data' => $kuis->fresh()->load(['materi', 'soal', 'remedial']),
         ]);
     }
 
@@ -111,16 +115,16 @@ class GuruKuisController extends Controller
     public function publish(Request $request, Kuis $kuis): JsonResponse
     {
         abort_if($kuis->status_publikasi !== 'draft', 409, 'Kuis ini sudah terbit.');
-        abort_if(!$kuis->is_aktif, 409, 'Kuis yang sudah diarsipkan tidak dapat dipublikasikan.');
+        abort_if(! $kuis->is_aktif, 409, 'Kuis yang sudah diarsipkan tidak dapat dipublikasikan.');
 
         $soal = $kuis->soal()->orderBy('id_soal')->get();
         $errors = [];
 
-        if (!$kuis->judul || !$kuis->kategori) {
+        if (! $kuis->judul || ! $kuis->kategori) {
             $errors[] = 'Judul dan kategori kuis wajib diisi.';
         }
 
-        if (!$kuis->alokasi_waktu || $kuis->alokasi_waktu < 1) {
+        if (! $kuis->alokasi_waktu || $kuis->alokasi_waktu < 1) {
             $errors[] = 'Alokasi waktu harus lebih dari 0 menit.';
         }
 
@@ -129,8 +133,8 @@ class GuruKuisController extends Controller
         }
 
         if ($kuis->kategori === 'ulangan' && (
-            !$kuis->waktu_mulai ||
-            !$kuis->waktu_selesai ||
+            ! $kuis->waktu_mulai ||
+            ! $kuis->waktu_selesai ||
             $kuis->waktu_selesai->lessThanOrEqualTo($kuis->waktu_mulai)
         )) {
             $errors[] = 'Jadwal ulangan tidak valid.';
@@ -145,13 +149,13 @@ class GuruKuisController extends Controller
             $correctOption = 'opsi_'.strtolower($item->jawaban);
 
             if (
-                !$item->pertanyaan ||
-                !$item->opsi_a ||
-                !$item->opsi_b ||
-                !$item->opsi_c ||
-                !$item->opsi_d ||
-                !in_array($item->jawaban, ['A', 'B', 'C', 'D', 'E'], true) ||
-                !$item->$correctOption ||
+                ! $item->pertanyaan ||
+                ! $item->opsi_a ||
+                ! $item->opsi_b ||
+                ! $item->opsi_c ||
+                ! $item->opsi_d ||
+                ! in_array($item->jawaban, ['A', 'B', 'C', 'D', 'E'], true) ||
+                ! $item->$correctOption ||
                 $item->bobot === null ||
                 $item->bobot <= 0
             ) {
@@ -264,20 +268,54 @@ class GuruKuisController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function validatedKuis(Request $request): array
+    private function validatedKuis(Request $request, ?Kuis $kuis = null): array
     {
+        $supportsTahunAjaran = Schema::hasColumn('kuis', 'id_tahun_ajaran');
+        $idTahunAjaran = $supportsTahunAjaran ? $kuis?->id_tahun_ajaran : null;
+        if ($supportsTahunAjaran && $idTahunAjaran === null && Schema::hasTable('tahun_ajaran')) {
+            $idTahunAjaran = TahunAjaran::aktif()?->id_tahun_ajaran;
+        }
+
+        $mapelRules = ['nullable', 'string'];
+        if (Schema::hasTable('mapel')) {
+            $mapelRules[] = Rule::exists('mapel', 'id_mapel')
+                ->where(fn ($query) => $query
+                    ->where('is_aktif', true)
+                    ->when($kuis !== null, fn ($query) => $query->orWhere('id_mapel', $kuis->id_mapel)));
+        } else {
+            $mapelRules[] = 'prohibited';
+        }
+
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:150'],
             'deskripsi' => ['nullable', 'string'],
             'kategori' => ['required', Rule::in(self::KATEGORI)],
+            'id_mapel' => $mapelRules,
             'alokasi_waktu' => ['nullable', 'integer', 'min:1', 'max:300'],
             'kkm' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'waktu_mulai' => ['required_if:kategori,ulangan', 'nullable', 'date'],
             'waktu_selesai' => ['required_if:kategori,ulangan', 'nullable', 'date'],
             'materi' => ['nullable', 'array'],
-            'materi.*' => ['string', 'exists:materis,id_materi'],
+            'materi.*' => ['string', 'exists:tm_materi,id_materi'],
             'id_kuis_asal' => ['required_if:kategori,remedial', 'nullable', 'string', 'exists:kuis,id_kuis'],
         ]);
+
+        $materiIds = $validated['materi'] ?? [];
+        if ($materiIds !== [] &&
+            isset($validated['id_mapel']) &&
+            Schema::hasColumn('tm_materi', 'id_mapel') &&
+            Materi::query()
+                ->whereIn('id_materi', $materiIds)
+                ->where('id_mapel', $validated['id_mapel'])
+                ->count() !== count(array_unique($materiIds))) {
+            throw ValidationException::withMessages([
+                'materi' => ['Semua materi harus berasal dari mata pelajaran yang dipilih.'],
+            ]);
+        }
+
+        if ($supportsTahunAjaran) {
+            $validated['id_tahun_ajaran'] = $idTahunAjaran;
+        }
 
         if ($validated['kategori'] === 'ulangan') {
             if (
@@ -302,7 +340,7 @@ class GuruKuisController extends Controller
                 ->where('kategori', '!=', 'remedial')
                 ->first();
 
-            if (!$kuisAsal) {
+            if (! $kuisAsal) {
                 throw ValidationException::withMessages([
                     'id_kuis_asal' => ['Kuis asal tidak valid untuk remedial.'],
                 ]);
@@ -317,7 +355,7 @@ class GuruKuisController extends Controller
      */
     private function validatedSoal(Request $request): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'pertanyaan' => ['required', 'string'],
             'opsi_a' => ['required', 'string', 'max:255'],
             'opsi_b' => ['required', 'string', 'max:255'],
@@ -328,6 +366,10 @@ class GuruKuisController extends Controller
             'bobot' => ['required', 'numeric', 'min:0.01', 'max:100'],
             'tingkat_kesulitan' => ['nullable', Rule::in(['mudah', 'sedang', 'sulit'])],
         ]);
+
+        $validated['tingkat_kesulitan'] ??= 'mudah';
+
+        return $validated;
     }
 
     /**

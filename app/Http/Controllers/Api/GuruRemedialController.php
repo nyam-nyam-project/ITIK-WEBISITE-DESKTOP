@@ -43,7 +43,7 @@ class GuruRemedialController extends Controller
             ->whereNotNull('kkm')
             ->first();
 
-        if (!$kuisAsal) {
+        if (! $kuisAsal) {
             throw ValidationException::withMessages([
                 'id_kuis_asal' => ['Kuis asal tidak aktif, belum terbit, atau tidak memenuhi syarat remedial.'],
             ]);
@@ -97,13 +97,12 @@ class GuruRemedialController extends Controller
     {
         $kuisAsal = $remedial->kuisAsal;
 
-        abort_if(!$kuisAsal || $kuisAsal->kkm === null, 404);
+        abort_if(! $kuisAsal || $kuisAsal->kkm === null, 404);
 
         $hasilSiswa = Mengerjakan::query()
             ->with('siswa:id_user,nama_lengkap,nomor_induk,kelas')
             ->where('id_kuis', $kuisAsal->id_kuis)
             ->where('status_pengerjaan', 'final')
-            ->where('status_validasi', 'sudah divalidasi')
             ->whereNotNull('nilai')
             ->where('nilai', '<', $kuisAsal->kkm)
             ->whereDoesntHave('remedialSiswa', function (Builder $query) use ($remedial): void {
@@ -143,14 +142,18 @@ class GuruRemedialController extends Controller
                     abort(404);
                 }
 
+                if ($hasil->status_pengerjaan !== 'final') {
+                    abort(409, 'Pengerjaan siswa belum selesai.');
+                }
+
                 if (
-                    $hasil->status_pengerjaan !== 'final' ||
-                    $hasil->status_validasi !== 'sudah divalidasi' ||
                     $hasil->nilai === null ||
                     $hasil->kuis->kkm === null ||
                     $hasil->nilai >= $hasil->kuis->kkm
                 ) {
-                    continue;
+                    throw ValidationException::withMessages([
+                        'id_mengerjakan' => ['Remedial hanya dapat diberikan kepada siswa dengan nilai di bawah KKM.'],
+                    ]);
                 }
 
                 $assignment = RemedialSiswa::firstOrCreate(

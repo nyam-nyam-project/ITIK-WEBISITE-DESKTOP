@@ -7,15 +7,16 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class AuthController extends Controller
 {
     public function login(Request $request): JsonResponse
     {
-        $identifier = $request->input('nomor_induk')
-            ?? $request->input('login')
-            ?? $request->input('email');
+        $identifier = $request->input('nomor_induk');
 
         if (! is_string($identifier) || $identifier === '') {
             $this->throwLoginError('NISN atau NIP wajib diisi.');
@@ -29,10 +30,6 @@ class AuthController extends Controller
 
         $user = User::where('nomor_induk', $identifier)->first();
 
-        if (! $user && $request->filled('email')) {
-            $user = User::where('email', $identifier)->first();
-        }
-
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
             $this->throwLoginError('NISN, NIP, atau password salah.');
         }
@@ -41,9 +38,9 @@ class AuthController extends Controller
             $this->throwLoginError('Akun Administrator silakan masuk melalui halaman login khusus Admin.');
         }
 
-        if ($user->status !== 'aktif') {
-            $this->throwLoginError('Akun Anda sudah tidak aktif. Hubungi admin sekolah.');
-        }
+        // if ($user->status !== 'aktif') {
+        //     $this->throwLoginError('Akun Anda sudah tidak aktif. Hubungi admin sekolah.');
+        // }
 
         $token = $user->createToken('flutter-mobile');
 
@@ -62,6 +59,79 @@ class AuthController extends Controller
         ]);
     }
 
+    // public function updateProfile(Request $request): JsonResponse
+    // {
+    //     /** @var User $user */
+    //     $user = $request->user();
+
+    //     $validated = $request->validate([
+    //         'nama_lengkap' => ['sometimes', 'required', 'string', 'max:100'],
+    //         'email' => [
+    //             'sometimes',
+    //             'nullable',
+    //             'email',
+    //             'max:100',
+    //             Rule::unique('user', 'email')->ignore($user->id_user, 'id_user'),
+    //         ],
+    //     ], [
+    //         'nama_lengkap.required' => 'Nama lengkap wajib diisi.',
+    //         'email.email' => 'Format email tidak valid.',
+    //         'email.unique' => 'Email sudah digunakan akun lain.',
+    //     ]);
+
+    //     if ($validated === []) {
+    //         throw ValidationException::withMessages([
+    //             'profile' => ['Isi minimal satu data profil untuk diperbarui.'],
+    //         ]);
+    //     }
+
+    //     $user->update($validated);
+
+    //     return response()->json([
+    //         'message' => 'Profil berhasil diperbarui.',
+    //         'data' => $this->userPayload($user->fresh()),
+    //     ]);
+    // }
+
+
+    public function updatePassword(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'password_lama' => ['required', 'string'],
+            'password_baru' => [
+                'required',
+                'string',
+                'min:6',
+                'confirmed',
+                'different:password_lama',
+            ],
+        ], [
+            'password_lama.required' => 'Password saat ini wajib diisi.',
+            'password_baru.required' => 'Password baru wajib diisi.',
+            'password_baru.min' => 'Password baru minimal 6 karakter.',
+            'password_baru.confirmed' => 'Konfirmasi password baru tidak cocok.',
+            'password_baru.different' => 'Password baru harus berbeda dengan password saat ini.',
+        ]);
+
+        if (! Hash::check($validated['password_lama'], $user->password)) {
+            throw ValidationException::withMessages([
+                'password_lama' => ['Password saat ini tidak sesuai.'],
+            ]);
+        }
+
+        $user->update([
+            'password' => $validated['password_baru'],
+            'wajib_ganti_password' => false,
+        ]);
+
+        return response()->json([
+            'message' => 'Password berhasil diperbarui.',
+        ]);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $token = $request->user()->currentAccessToken();
@@ -75,7 +145,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @return array{id_user: string, nomor_induk: ?string, nama_lengkap: string, role: string, kelas: ?string, email: ?string, wajib_ganti_password: bool}
+     * @return array{id_user: string, nomor_induk: ?string, nama_lengkap: string, role: string, kelas: ?string, email: ?string, wajib_ganti_password: bool, foto_url: ?string}
      */
     private function userPayload(User $user): array
     {
@@ -90,12 +160,11 @@ class AuthController extends Controller
         ];
     }
 
+
     private function throwLoginError(string $message): never
     {
         throw ValidationException::withMessages([
             'nomor_induk' => [$message],
-            'login' => [$message],
-            'email' => [$message],
         ]);
     }
 }

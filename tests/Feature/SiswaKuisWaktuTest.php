@@ -6,10 +6,10 @@ use App\Models\DraftJawaban;
 use App\Models\Kuis;
 use App\Models\Mapel;
 use App\Models\Mengerjakan;
-use App\Models\RemedialSiswa;
 use App\Models\SesiKuis;
 use App\Models\TahunAjaran;
 use App\Models\User;
+use App\Services\KuisSubmissionService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -26,7 +26,9 @@ use Tests\TestCase;
 class SiswaKuisWaktuTest extends TestCase
 {
     private User $siswa;
+
     private User $guru;
+
     private Kuis $kuis;
 
     protected function setUp(): void
@@ -206,28 +208,28 @@ class SiswaKuisWaktuTest extends TestCase
         ]);
 
         $this->kuis = Kuis::create([
-            'id_kuis'          => 'K001',
-            'judul'            => 'Kuis Algoritma',
-            'kategori'         => 'pre-test',
-            'tingkat_kesulitan'=> 'mudah',
-            'id_mapel'         => 'MP001',
-            'id_tahun_ajaran'  => 'TA001',
-            'alokasi_waktu'    => 30, // 30 menit
-            'kkm'              => 75,
-            'id_user'          => 'U001',
+            'id_kuis' => 'K001',
+            'judul' => 'Kuis Algoritma',
+            'kategori' => 'pre-test',
+            'tingkat_kesulitan' => 'mudah',
+            'id_mapel' => 'MP001',
+            'id_tahun_ajaran' => 'TA001',
+            'alokasi_waktu' => 30, // 30 menit
+            'kkm' => 75,
+            'id_user' => 'U001',
             'status_publikasi' => 'terbit',
-            'is_aktif'         => true,
+            'is_aktif' => true,
         ]);
 
         // Satu soal bobot 100, jawaban benar = A
         DB::table('soal')->insert([
-            'id_soal'    => 'S001',
-            'id_kuis'    => 'K001',
+            'id_soal' => 'S001',
+            'id_kuis' => 'K001',
             'pertanyaan' => 'Apa itu algoritma?',
-            'opsi_a'     => 'Langkah logis',
-            'opsi_b'     => 'Monitor',
-            'jawaban'    => 'A',
-            'bobot'      => 100,
+            'opsi_a' => 'Langkah logis',
+            'opsi_b' => 'Monitor',
+            'jawaban' => 'A',
+            'bobot' => 100,
         ]);
     }
 
@@ -239,11 +241,11 @@ class SiswaKuisWaktuTest extends TestCase
     private function buatSesi(string $idKuis, string $idUser, int $percobaanKe, string $waktuMulai, ?string $waktuSelesai = null): SesiKuis
     {
         return SesiKuis::create([
-            'id_kuis'      => $idKuis,
-            'id_user'      => $idUser,
+            'id_kuis' => $idKuis,
+            'id_user' => $idUser,
             'percobaan_ke' => $percobaanKe,
-            'waktu_mulai'  => $waktuMulai,
-            'waktu_selesai'=> $waktuSelesai,
+            'waktu_mulai' => $waktuMulai,
+            'waktu_selesai' => $waktuSelesai,
         ]);
     }
 
@@ -320,7 +322,7 @@ class SiswaKuisWaktuTest extends TestCase
         // Tidak ada draft jawaban sama sekali
         $this->assertDatabaseCount('draft_jawaban', 0);
 
-        $service = app(\App\Services\KuisSubmissionService::class);
+        $service = app(KuisSubmissionService::class);
         $jumlah = $service->selesaikanKedaluwarsa();
 
         $this->assertSame(1, $jumlah);
@@ -334,6 +336,7 @@ class SiswaKuisWaktuTest extends TestCase
         $this->assertSame(0.0, (float) $mengerjakan->nilai);
         $this->assertSame(1, $mengerjakan->percobaan_ke);
         $this->assertSame('final', $mengerjakan->status_pengerjaan);
+        $this->assertSame('belum divalidasi', $mengerjakan->status_validasi);
     }
 
     /**
@@ -344,11 +347,12 @@ class SiswaKuisWaktuTest extends TestCase
         $this->buatSesi('K001', 'U002', 1, now()->subMinutes(31)->toDateTimeString());
         $this->simpanDraft('S001', 'A'); // jawaban benar
 
-        $service = app(\App\Services\KuisSubmissionService::class);
+        $service = app(KuisSubmissionService::class);
         $service->selesaikanKedaluwarsa();
 
         $mengerjakan = Mengerjakan::where('id_kuis', 'K001')->where('id_user', 'U002')->first();
         $this->assertSame(100.0, (float) $mengerjakan->nilai);
+        $this->assertSame('sudah divalidasi', $mengerjakan->status_validasi);
 
         // Draft tetap tersimpan untuk evaluasi benar/salah oleh siswa & guru
         $this->assertDatabaseCount('draft_jawaban', 1);
@@ -362,7 +366,7 @@ class SiswaKuisWaktuTest extends TestCase
     {
         $sesi = $this->buatSesi('K001', 'U002', 1, now()->subMinutes(5)->toDateTimeString());
 
-        $service = app(\App\Services\KuisSubmissionService::class);
+        $service = app(KuisSubmissionService::class);
 
         // Submit pertama (manual)
         $hasil1 = $service->submit($sesi);
@@ -392,7 +396,7 @@ class SiswaKuisWaktuTest extends TestCase
         // Sesi tertinggal dengan waktu_selesai = null untuk percobaan yang sama
         $sesi = $this->buatSesi('K001', 'U002', 1, now()->subMinutes(60)->toDateTimeString());
 
-        $service = app(\App\Services\KuisSubmissionService::class);
+        $service = app(KuisSubmissionService::class);
         $hasil = $service->submit($sesi, true);
 
         // Tidak crash, sesi tertutup, dan data mengerjakan tetap 1
@@ -443,19 +447,19 @@ class SiswaKuisWaktuTest extends TestCase
     {
         // Kuis ulangan dengan waktu_selesai 10 menit dari sekarang
         $kuisUlangan = Kuis::create([
-            'id_kuis'          => 'K002',
-            'judul'            => 'Ulangan',
-            'kategori'         => 'ulangan',
-            'tingkat_kesulitan'=> 'mudah',
-            'id_mapel'         => 'MP001',
-            'id_tahun_ajaran'  => 'TA001',
-            'alokasi_waktu'    => 60, // alokasi 60 menit
-            'kkm'              => 75,
-            'id_user'          => 'U001',
+            'id_kuis' => 'K002',
+            'judul' => 'Ulangan',
+            'kategori' => 'ulangan',
+            'tingkat_kesulitan' => 'mudah',
+            'id_mapel' => 'MP001',
+            'id_tahun_ajaran' => 'TA001',
+            'alokasi_waktu' => 60, // alokasi 60 menit
+            'kkm' => 75,
+            'id_user' => 'U001',
             'status_publikasi' => 'terbit',
-            'is_aktif'         => true,
-            'waktu_mulai'      => now()->subMinutes(5),
-            'waktu_selesai'    => now()->addMinutes(10), // habis 10 menit lagi
+            'is_aktif' => true,
+            'waktu_mulai' => now()->subMinutes(5),
+            'waktu_selesai' => now()->addMinutes(10), // habis 10 menit lagi
         ]);
 
         DB::table('soal')->insert([
@@ -467,7 +471,7 @@ class SiswaKuisWaktuTest extends TestCase
         // Tapi waktu_selesai kuis = +10 menit → seharusnya batasWaktu = waktu_selesai kuis
         $sesi = $this->buatSesi('K002', 'U002', 1, now()->subMinutes(5)->toDateTimeString());
 
-        $service = app(\App\Services\KuisSubmissionService::class);
+        $service = app(KuisSubmissionService::class);
         $batasWaktu = $service->batasWaktu($sesi);
 
         $selisihDetik = abs($batasWaktu->diffInSeconds($kuisUlangan->waktu_selesai));
@@ -486,7 +490,7 @@ class SiswaKuisWaktuTest extends TestCase
         // Buat sesi yang sudah expired
         $this->buatSesi('K001', 'U002', 1, now()->subMinutes(60)->toDateTimeString());
 
-        $service = app(\App\Services\KuisSubmissionService::class);
+        $service = app(KuisSubmissionService::class);
         $jumlah = $service->selesaikanKedaluwarsa();
 
         $this->assertSame(0, $jumlah);
@@ -505,7 +509,7 @@ class SiswaKuisWaktuTest extends TestCase
         // Sesi masih aktif (mulai 5 menit lalu, alokasi 30 menit)
         $sesi = $this->buatSesi('K001', 'U002', 1, now()->subMinutes(5)->toDateTimeString());
 
-        $service = app(\App\Services\KuisSubmissionService::class);
+        $service = app(KuisSubmissionService::class);
         $jumlah = $service->selesaikanMilikSiswa('U002');
 
         $this->assertSame(0, $jumlah);
@@ -518,7 +522,7 @@ class SiswaKuisWaktuTest extends TestCase
      */
     public function test_halaman_hasil_menampilkan_durasi_pengerjaan(): void
     {
-        $waktuMulai  = now()->subMinutes(15)->subSeconds(30); // 15 menit 30 detik lalu
+        $waktuMulai = now()->subMinutes(15)->subSeconds(30); // 15 menit 30 detik lalu
         $waktuSelesai = now();
 
         // Buat sesi yang sudah selesai

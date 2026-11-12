@@ -17,8 +17,8 @@ use App\Services\RekapNilaiGuruService;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ValidasiNilaiController extends Controller
 {
@@ -30,22 +30,22 @@ class ValidasiNilaiController extends Controller
      */
     public function unduh(Request $request, RekapNilaiGuruService $service)
     {
-        $idKelas  = $request->query('kelas');
-        $guru     = Auth::user();
+        $idKelas = $request->query('kelas');
+        $guru = Auth::user();
 
-        $rows     = $service->rekapUntukGuru($guru, $idKelas);
-        $filename = 'rekap-nilai-' . now()->format('Ymd-His') . '.csv';
+        $rows = $service->rekapUntukGuru($guru, $idKelas);
+        $filename = 'rekap-nilai-'.now()->format('Ymd-His').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($rows) {
             $handle = fopen('php://output', 'w');
 
             // BOM UTF-8 agar Excel mengenali encoding dengan benar
-            fputs($handle, "\xEF\xBB\xBF");
+            fwrite($handle, "\xEF\xBB\xBF");
 
             // Baris header
             fputcsv($handle, [
@@ -61,15 +61,15 @@ class ValidasiNilaiController extends Controller
             ]);
 
             foreach ($rows as $row) {
-                $nisn   = $row->siswa?->nomor_induk ?? '';
-                $nilai  = $row->nilai_terbaik;
-                $kkm    = $row->kuis?->kkm;
-                $lulus  = ($nilai !== null && $kkm !== null)
+                $nisn = $row->siswa?->nomor_induk ?? '';
+                $nilai = $row->nilai_terbaik;
+                $kkm = $row->kuis?->kkm;
+                $lulus = ($nilai !== null && $kkm !== null)
                     ? ($nilai >= $kkm ? 'Ya' : 'Tidak')
                     : '-';
 
                 fputcsv($handle, [
-                    '="' . $nisn . '"',                          // format Excel agar nol depan terjaga
+                    '="'.$nisn.'"',                          // format Excel agar nol depan terjaga
                     $row->siswa?->nama_lengkap ?? '-',
                     $row->kuis?->judul ?? '-',
                     $row->kuis?->kategori ?? '-',
@@ -101,7 +101,7 @@ class ValidasiNilaiController extends Controller
             ->whereNotNull('nilai')
             ->whereHas('kuis', function ($query) {
                 $query->whereNotNull('kkm')
-                    ->whereColumn('kuis.kkm', '<=', 'mengerjakans.nilai');
+                    ->whereColumn('tm_kuis.kkm', '<=', 'tr_mengerjakan.nilai');
             })
             ->update([
                 'status_validasi' => 'sudah divalidasi',
@@ -118,10 +118,8 @@ class ValidasiNilaiController extends Controller
         $kelasList = collect();
         $kelasTerpilih = null;
 
-        if (Schema::hasTable('kelas')) {
-            $daftarKelas = Kelas::aktif()
-        if (\Illuminate\Support\Facades\Schema::hasTable('kelas') && \Illuminate\Support\Facades\Schema::hasTable('pengajaran')) {
-            $kelasQuery = \App\Models\Kelas::aktif();
+        if (Schema::hasTable('tm_kelas') && Schema::hasTable('pengajaran')) {
+            $kelasQuery = Kelas::aktif();
             $penugasanGlobal = Pengajaran::where('id_user', $guru->id_user)
                 ->whereNull('id_kelas')
                 ->exists();
@@ -139,7 +137,7 @@ class ValidasiNilaiController extends Controller
 
             $semuaMapelIds = $daftarKelas->flatMap(fn ($kelas) => $kelas->mapel->pluck('id_mapel'))->unique()->values();
             $semuaSiswaIds = $daftarKelas->flatMap(fn ($kelas) => $kelas->siswa->pluck('id_user'))->unique()->values();
-            $materiPerMapel = \App\Models\Materi::query()
+            $materiPerMapel = Materi::query()
                 ->selectRaw('id_mapel, COUNT(*) AS total')
                 ->whereIn('id_mapel', $semuaMapelIds)
                 ->groupBy('id_mapel')
@@ -149,13 +147,13 @@ class ValidasiNilaiController extends Controller
                 ->filter()
                 ->unique()
                 ->values();
-            $materiPerKelas = \App\Models\Materi::query()
+            $materiPerKelas = Materi::query()
                 ->selectRaw('kelas, COUNT(*) AS total')
                 ->whereIn('kelas', $namaKelasMateri)
                 ->groupBy('kelas')
                 ->get()
                 ->keyBy('kelas');
-            $kuisPerMapel = \App\Models\Kuis::query()
+            $kuisPerMapel = Kuis::query()
                 ->selectRaw('id_mapel, COUNT(*) AS total')
                 ->where('is_aktif', true)
                 ->where('status_publikasi', 'terbit')
@@ -164,7 +162,7 @@ class ValidasiNilaiController extends Controller
                 ->get()
                 ->keyBy('id_mapel');
             $kuisAktifTanpaMapel = $daftarKelas->contains(fn ($kelas) => $kelas->mapel->isEmpty())
-                ? \App\Models\Kuis::where('is_aktif', true)->where('status_publikasi', 'terbit')->count()
+                ? Kuis::where('is_aktif', true)->where('status_publikasi', 'terbit')->count()
                 : 0;
             $nilaiPerSiswa = Mengerjakan::query()
                 ->dikelolaOlehGuru($guru)
@@ -440,28 +438,6 @@ class ValidasiNilaiController extends Controller
                 return back()->with('error', 'Tugas remedial hanya dapat diberikan untuk kuis berkategori Ulangan.');
             }
 
-        // Cari kuis remedial untuk kuis ulangan ini
-        $remedial = Remedial::where('id_kuis_asal', $mengerjakan->id_kuis)->first();
-
-        // Jika belum ada kuis remedial untuk ulangan ini, buatkan otomatis
-        if (! $remedial) {
-            $newId = $this->idBerikutnya('kuis', 'id_kuis', 'K');
-
-            $kuisRemedial = Kuis::create([
-                'id_kuis' => $newId,
-                'judul' => 'Remedial - '.$mengerjakan->kuis->judul,
-                'deskripsi' => 'Kuis remedial untuk perbaikan nilai '.$mengerjakan->kuis->judul,
-                'kategori' => 'remedial',
-                'tingkat_kesulitan' => $mengerjakan->kuis->tingkat_kesulitan ?? 'sedang',
-                'id_mapel' => $mengerjakan->kuis->id_mapel,
-                'id_tahun_ajaran' => $mengerjakan->kuis->id_tahun_ajaran,
-                'alokasi_waktu' => $mengerjakan->kuis->alokasi_waktu ?? 20,
-                'kkm' => $mengerjakan->kuis->kkm ?? 75.00,
-                'id_user' => Auth::user()->id_user,
-                'status_publikasi' => 'terbit',
-                'id_publisher' => Auth::user()->id_user,
-                'is_aktif' => true,
-            ]);
             if ($mengerjakan->nilai === null || ($kuisAsal->kkm !== null && $mengerjakan->nilai >= $kuisAsal->kkm)) {
                 return back()->with('error', 'Siswa ini sudah mencapai KKM.');
             }
@@ -471,12 +447,12 @@ class ValidasiNilaiController extends Controller
                 ->first();
 
             if (! $remedial) {
-                $newId = $this->idBerikutnya('kuis', 'id_kuis', 'K');
+                $newId = $this->idBerikutnya('tm_kuis', 'id_kuis', 'K');
 
                 $kuisRemedial = Kuis::create([
                     'id_kuis' => $newId,
-                    'judul' => 'Remedial - ' . $kuisAsal->judul,
-                    'deskripsi' => 'Kuis remedial untuk perbaikan nilai ' . $kuisAsal->judul,
+                    'judul' => 'Remedial - '.$kuisAsal->judul,
+                    'deskripsi' => 'Kuis remedial untuk perbaikan nilai '.$kuisAsal->judul,
                     'kategori' => 'remedial',
                     'tingkat_kesulitan' => $kuisAsal->tingkat_kesulitan ?? 'sedang',
                     'id_mapel' => $kuisAsal->id_mapel,

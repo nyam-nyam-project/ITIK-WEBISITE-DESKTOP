@@ -79,7 +79,7 @@
         <section class="card">
             <div class="card-header">
                 <h2>Informasi Materi</h2>
-                @if($progress->status === 'selesai')
+                @if($materiSelesai)
                     <span class="badge badge-success">✓ Selesai</span>
                 @else
                     <span class="badge badge-warning">Sedang Belajar</span>
@@ -111,30 +111,38 @@
                 <h2>Tandai Pembelajaran</h2>
             </div>
 
-            @if($progress->status !== 'selesai')
-                <p class="muted small u-margin-bottom-16px">
-                    Sudah selesai membaca dan memahami materi ini? Tandai agar progres belajarmu tercatat.
-                </p>
+            @if(!$materiSelesai)
+                @if($postTest)
+                    <p class="muted small u-margin-bottom-16px">
+                        Selesaikan Post-test untuk menandai materi ini selesai.
+                    </p>
+                    <a href="{{ route('siswa.kuis.mulai', $postTest->id_kuis) }}" class="btn">
+                        → Kerjakan Post-test
+                    </a>
+                @else
+                    <p class="muted small u-margin-bottom-16px">
+                        Sudah selesai membaca dan memahami materi ini? Tandai agar progres belajarmu tercatat.
+                    </p>
 
-                <form action="{{ route('siswa.materi.selesai', $materi->id_materi) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn">
-                        ✓ Tandai Sudah Selesai Membaca
-                    </button>
-                </form>
+                    <form action="{{ route('siswa.materi.selesai', $materi->id_materi) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn">
+                            ✓ Tandai Sudah Selesai Membaca
+                        </button>
+                    </form>
+                @endif
             @else
                 <div class="alert alert-success u-margin-bottom-0">
-                    ✓ Materi ini sudah kamu tandai selesai dipelajari!
+                    @if($postTest)
+                        ✓ Materi selesai setelah Post-test dikerjakan!
+                    @else
+                        ✓ Materi ini sudah kamu tandai selesai dipelajari!
+                    @endif
                 </div>
-                @php
-                    $postTestMateri = isset($kuisTerkait)
-                        ? $kuisTerkait->first(fn($k) => strtolower(trim($k->kategori ?? '')) === 'post-test')
-                        : null;
-                @endphp
-                @if($postTestMateri)
+                @if($postTest)
                     <div class="u-margin-top-12px">
-                        <a href="{{ route('siswa.kuis.mulai', $postTestMateri->id_kuis) }}" class="btn u-width-100pct u-text-align-center">
-                            → Lanjutkan ke Post-test
+                        <a href="{{ route('siswa.kuis.hasil', $postTest->id_kuis) }}" class="btn u-width-100pct u-text-align-center">
+                            → Lihat Hasil Post-test
                         </a>
                     </div>
                 @endif
@@ -157,7 +165,7 @@
                     @foreach($kuisTerkait as $itemKuis)
                         @php
                             $isPostTest = strtolower(trim($itemKuis->kategori ?? '')) === 'post-test';
-                            $postTestTerkunci = $isPostTest && $progress->status !== 'selesai';
+                            $postTestTerkunci = $isPostTest && !$materiProgressDibuka;
                         @endphp
                         <div class="kuis-materi-item">
                             <div>
@@ -168,8 +176,8 @@
                                 @endif
                             </div>
                             @if($postTestTerkunci)
-                                <button type="button" class="btn btn-secondary btn-small" disabled title="Tandai materi selesai terlebih dahulu">
-                                    🔒 Materi Belum Selesai
+                                <button type="button" class="btn btn-secondary btn-small" disabled title="Buka materi terlebih dahulu">
+                                    🔒 Materi Belum Dibuka
                                 </button>
                             @else
                                 <a href="{{ route('siswa.kuis.mulai', $itemKuis->id_kuis) }}" class="btn btn-small">

@@ -21,8 +21,11 @@ use Tests\TestCase;
 class SiswaMateriPrePostTest extends TestCase
 {
     private User $siswa;
+
     private User $guru;
+
     private Mapel $mapel;
+
     private TahunAjaran $ta;
 
     protected function setUp(): void
@@ -41,7 +44,7 @@ class SiswaMateriPrePostTest extends TestCase
 
     private function createSchema(): void
     {
-        Schema::create('user', function (Blueprint $table) {
+        Schema::create('tm_user', function (Blueprint $table) {
             $table->string('id_user', 50)->primary();
             $table->string('nomor_induk', 50)->nullable();
             $table->string('nama_lengkap', 100);
@@ -55,7 +58,7 @@ class SiswaMateriPrePostTest extends TestCase
             $table->timestamps();
         });
 
-        Schema::create('tahun_ajaran', function (Blueprint $table) {
+        Schema::create('tm_tahun_ajaran', function (Blueprint $table) {
             $table->string('id_tahun_ajaran', 50)->primary();
             $table->string('nama', 50);
             $table->date('tanggal_mulai')->nullable();
@@ -65,7 +68,7 @@ class SiswaMateriPrePostTest extends TestCase
             $table->timestamps();
         });
 
-        Schema::create('mapel', function (Blueprint $table) {
+        Schema::create('tm_mapel', function (Blueprint $table) {
             $table->string('id_mapel', 50)->primary();
             $table->string('nama_mapel', 100);
             $table->string('kode_mapel', 20)->nullable();
@@ -75,7 +78,7 @@ class SiswaMateriPrePostTest extends TestCase
             $table->timestamps();
         });
 
-        Schema::create('materi', function (Blueprint $table) {
+        Schema::create('tm_materi', function (Blueprint $table) {
             $table->string('id_materi', 50)->primary();
             $table->string('judul', 150);
             $table->string('bab', 50)->nullable();
@@ -88,7 +91,7 @@ class SiswaMateriPrePostTest extends TestCase
             $table->timestamps();
         });
 
-        Schema::create('kelas', function (Blueprint $table) {
+        Schema::create('tm_kelas', function (Blueprint $table) {
             $table->string('id_kelas', 50)->primary();
             $table->string('nama_kelas', 100);
             $table->string('tingkat', 20)->nullable();
@@ -112,7 +115,7 @@ class SiswaMateriPrePostTest extends TestCase
             $table->timestamp('created_at')->nullable()->useCurrent();
         });
 
-        Schema::create('progress', function (Blueprint $table) {
+        Schema::create('tr_progress', function (Blueprint $table) {
             $table->string('id_progress', 50)->primary();
             $table->string('status', 50)->nullable();
             $table->date('tanggal')->nullable();
@@ -120,7 +123,7 @@ class SiswaMateriPrePostTest extends TestCase
             $table->string('id_user', 50);
         });
 
-        Schema::create('kuis', function (Blueprint $table) {
+        Schema::create('tm_kuis', function (Blueprint $table) {
             $table->string('id_kuis', 50)->primary();
             $table->string('judul', 150);
             $table->text('deskripsi')->nullable();
@@ -140,14 +143,15 @@ class SiswaMateriPrePostTest extends TestCase
             $table->timestamp('created_at')->nullable()->useCurrent();
         });
 
-        Schema::create('materi_kuis', function (Blueprint $table) {
+        Schema::create('tp_materi_kuis', function (Blueprint $table) {
             $table->increments('id_materi_kuis');
             $table->string('id_materi', 50);
             $table->string('id_kuis', 50);
         });
 
-        Schema::create('soal', function (Blueprint $table) {
+        Schema::create('tm_soal', function (Blueprint $table) {
             $table->string('id_soal', 50)->primary();
+            $table->string('tipe', 20)->default('pilihan_ganda');
             $table->string('id_kuis', 50);
             $table->text('pertanyaan');
             $table->string('opsi_a')->nullable();
@@ -160,7 +164,7 @@ class SiswaMateriPrePostTest extends TestCase
             $table->string('tingkat_kesulitan', 50)->nullable();
         });
 
-        Schema::create('sesi_kuis', function (Blueprint $table) {
+        Schema::create('tr_sesi_kuis', function (Blueprint $table) {
             $table->increments('id_sesi');
             $table->string('id_kuis', 50);
             $table->string('id_user', 50);
@@ -170,7 +174,7 @@ class SiswaMateriPrePostTest extends TestCase
             $table->timestamps();
         });
 
-        Schema::create('draft_jawaban', function (Blueprint $table) {
+        Schema::create('tr_draft_jawaban', function (Blueprint $table) {
             $table->increments('id_draft');
             $table->string('id_kuis', 50);
             $table->string('id_user', 50);
@@ -179,7 +183,7 @@ class SiswaMateriPrePostTest extends TestCase
             $table->timestamps();
         });
 
-        Schema::create('mengerjakan', function (Blueprint $table) {
+        Schema::create('tr_mengerjakan', function (Blueprint $table) {
             $table->increments('id_mengerjakan');
             $table->string('id_user', 50);
             $table->string('id_kuis', 50);
@@ -191,7 +195,7 @@ class SiswaMateriPrePostTest extends TestCase
             $table->string('id_validator', 50)->nullable();
         });
 
-        Schema::create('remedial_siswa', function (Blueprint $table) {
+        Schema::create('tr_remedial_siswa', function (Blueprint $table) {
             $table->increments('id_remedial_siswa');
             $table->string('id_kuis_remedial', 50);
             $table->unsignedInteger('id_mengerjakan_asal');
@@ -234,7 +238,7 @@ class SiswaMateriPrePostTest extends TestCase
         ]);
 
         // Daftarkan siswa ke kelas dan mapel
-        DB::table('kelas')->insert([
+        DB::table('tm_kelas')->insert([
             'id_kelas' => 'KLS01',
             'nama_kelas' => 'X-A',
             'id_tahun_ajaran' => 'TA01',
@@ -267,7 +271,7 @@ class SiswaMateriPrePostTest extends TestCase
         ]);
 
         if ($idMateri) {
-            DB::table('materi_kuis')->insert([
+            DB::table('tp_materi_kuis')->insert([
                 'id_materi' => $idMateri,
                 'id_kuis' => $idKuis,
             ]);
@@ -276,13 +280,37 @@ class SiswaMateriPrePostTest extends TestCase
         return $kuis;
     }
 
+    private function selesaikanPostTest(Kuis $kuis, string $idSoal): void
+    {
+        $this->get(route('siswa.kuis.mulai', $kuis->id_kuis))
+            ->assertRedirect(route('siswa.kuis.kerjakan', $kuis->id_kuis));
+
+        DB::table('tm_soal')->insert([
+            'id_soal' => $idSoal,
+            'id_kuis' => $kuis->id_kuis,
+            'pertanyaan' => 'Pertanyaan post-test',
+            'jawaban' => 'A',
+            'bobot' => 1,
+        ]);
+
+        DB::table('tr_draft_jawaban')->insert([
+            'id_kuis' => $kuis->id_kuis,
+            'id_user' => $this->siswa->id_user,
+            'id_soal' => $idSoal,
+            'jawaban_dipilih' => 'A',
+        ]);
+
+        $this->post(route('siswa.kuis.submit', $kuis->id_kuis))
+            ->assertRedirect(route('siswa.kuis.hasil', $kuis->id_kuis));
+    }
+
     /**
      * Skenario 1: Pre-test & Post-test ada di Materi
      * - Materi terkunci sebelum Pre-test diselesaikan
      * - Selesai materi tidak bisa diproses sebelum Pre-test selesai
-     * - Post-test terkunci sebelum materi ditandai selesai
+     * - Post-test terkunci sampai siswa membuka materi
      * - Setelah Pre-test selesai -> Materi terbuka
-     * - Setelah Materi ditandai selesai -> Post-test terbuka
+     * - Setelah Post-test selesai -> Materi dianggap selesai
      */
     public function test_skenario_1_pre_dan_post_test_lengkap(): void
     {
@@ -327,24 +355,28 @@ class SiswaMateriPrePostTest extends TestCase
         $responseShowUnlocked->assertOk();
         $responseShowUnlocked->assertSee('Materi Skenario 1');
 
-        // 6. Post-test MASIH terkunci karena materi belum ditandai selesai
-        $responsePostTest2 = $this->get(route('siswa.kuis.mulai', $postTest->id_kuis));
-        $responsePostTest2->assertSessionHas('error');
+        $this->assertDatabaseHas('tr_progress', [
+            'id_materi' => $materi->id_materi,
+            'id_user' => $this->siswa->id_user,
+            'status' => 'sedang belajar',
+        ]);
 
-        // 7. Tandai materi selesai
+        // Materi dengan post-test belum bisa ditandai selesai secara manual.
         $responseTandai = $this->post(route('siswa.materi.selesai', $materi->id_materi));
-        $responseTandai->assertRedirect(route('siswa.materi.show', $materi->id_materi));
-        $responseTandai->assertSessionHas('success');
+        $responseTandai->assertSessionHas('error');
+        $this->assertDatabaseHas('tr_progress', [
+            'id_materi' => $materi->id_materi,
+            'id_user' => $this->siswa->id_user,
+            'status' => 'sedang belajar',
+        ]);
 
-        $this->assertDatabaseHas('progress', [
+        $this->selesaikanPostTest($postTest, 'SOAL_POST_1');
+
+        $this->assertDatabaseHas('tr_progress', [
             'id_materi' => $materi->id_materi,
             'id_user' => $this->siswa->id_user,
             'status' => 'selesai',
         ]);
-
-        // 8. Post-test sekarang TERBUKA
-        $responsePostTestUnlocked = $this->get(route('siswa.kuis.mulai', $postTest->id_kuis));
-        $responsePostTestUnlocked->assertRedirect(route('siswa.kuis.kerjakan', $postTest->id_kuis));
     }
 
     /**
@@ -384,13 +416,22 @@ class SiswaMateriPrePostTest extends TestCase
         $response2 = $this->get(route('siswa.materi.show', $materi->id_materi));
         $response2->assertOk();
         $response2->assertSee('Materi Skenario 2');
+
+        $this->post(route('siswa.materi.selesai', $materi->id_materi))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('tr_progress', [
+            'id_materi' => $materi->id_materi,
+            'id_user' => $this->siswa->id_user,
+            'status' => 'selesai',
+        ]);
     }
 
     /**
      * Skenario 3: Hanya Post-test (tanpa Pre-test)
      * - Materi bebas diakses dari awal (tidak ada pre-test)
-     * - Post-test terkunci sampai materi ditandai selesai
-     * - Setelah materi selesai -> Post-test terbuka
+     * - Post-test terkunci sampai materi dibuka
+     * - Materi baru selesai setelah Post-test dikerjakan
      */
     public function test_skenario_3_hanya_post_test(): void
     {
@@ -411,16 +452,54 @@ class SiswaMateriPrePostTest extends TestCase
         $response->assertOk();
         $response->assertSee('Materi Skenario 3');
 
-        // Post-test belum bisa diakses
+        // Post-test belum bisa diakses sebelum materi dibuka.
         $responsePost = $this->get(route('siswa.kuis.mulai', $postTest->id_kuis));
         $responsePost->assertSessionHas('error');
 
-        // Tandai materi selesai
-        $this->post(route('siswa.materi.selesai', $materi->id_materi));
+        $this->post(route('siswa.materi.selesai', $materi->id_materi))
+            ->assertSessionHas('error');
 
-        // Post-test sekarang terbuka
-        $responsePost2 = $this->get(route('siswa.kuis.mulai', $postTest->id_kuis));
-        $responsePost2->assertRedirect(route('siswa.kuis.kerjakan', $postTest->id_kuis));
+        $this->get(route('siswa.materi.show', $materi->id_materi))
+            ->assertOk();
+
+        $this->selesaikanPostTest($postTest, 'SOAL_POST_3');
+
+        $this->assertDatabaseHas('tr_progress', [
+            'id_materi' => $materi->id_materi,
+            'id_user' => $this->siswa->id_user,
+            'status' => 'selesai',
+        ]);
+    }
+
+    public function test_materi_baru_selesai_setelah_semua_post_test_dikumpulkan(): void
+    {
+        $materi = Materi::create([
+            'id_materi' => 'MAT_MULTI_POST',
+            'judul' => 'Materi Multi Post-test',
+            'id_mapel' => $this->mapel->id_mapel,
+            'id_user' => $this->guru->id_user,
+        ]);
+        $postTestPertama = $this->buatKuis('KUIS_MULTI_POST_1', 'Post-test 1', 'post-test', $materi->id_materi);
+        $postTestKedua = $this->buatKuis('KUIS_MULTI_POST_2', 'Post-test 2', 'post-test', $materi->id_materi);
+
+        $this->actingAs($this->siswa);
+        $this->get(route('siswa.materi.show', $materi->id_materi))->assertOk();
+
+        $this->selesaikanPostTest($postTestPertama, 'SOAL_MULTI_POST_1');
+
+        $this->assertDatabaseHas('tr_progress', [
+            'id_materi' => $materi->id_materi,
+            'id_user' => $this->siswa->id_user,
+            'status' => 'sedang belajar',
+        ]);
+
+        $this->selesaikanPostTest($postTestKedua, 'SOAL_MULTI_POST_2');
+
+        $this->assertDatabaseHas('tr_progress', [
+            'id_materi' => $materi->id_materi,
+            'id_user' => $this->siswa->id_user,
+            'status' => 'selesai',
+        ]);
     }
 
     /**
@@ -491,12 +570,12 @@ class SiswaMateriPrePostTest extends TestCase
         $resp2->assertSee('Baca Materi');
         $resp2->assertSee('Post-test Terkunci');
 
-        // Setelah materi selesai:
+        // Setelah materi dibuka, Post-test siap tetapi materi belum selesai.
         Progress::create([
             'id_progress' => 'PROG05',
             'id_materi' => $materi->id_materi,
             'id_user' => $this->siswa->id_user,
-            'status' => 'selesai',
+            'status' => 'sedang belajar',
             'tanggal' => now()->toDateString(),
         ]);
 
@@ -504,13 +583,26 @@ class SiswaMateriPrePostTest extends TestCase
         $resp3->assertOk();
         $resp3->assertSee('Post-test Siap');
         $resp3->assertSee('Kerjakan Post-test');
+        $resp3->assertDontSee('✓ Materi Selesai');
+
+        Mengerjakan::create([
+            'id_user' => $this->siswa->id_user,
+            'id_kuis' => $postTest->id_kuis,
+            'nilai' => 80,
+            'status_pengerjaan' => 'final',
+            'tanggal' => now(),
+        ]);
+
+        $resp4 = $this->get(route('siswa.materi.index', ['mapel' => $this->mapel->id_mapel]));
+        $resp4->assertOk();
+        $resp4->assertSee('✓ Post-test Selesai');
+        $resp4->assertSee('✓ Materi Selesai');
     }
 
     /**
-     * Memastikan Post-test terkunci di halaman kuis index jika materi belum selesai,
-     * dan terbuka setelah materi selesai.
+     * Memastikan Post-test terkunci di halaman kuis index sampai materi dibuka.
      */
-    public function test_post_test_terkunci_di_kuis_index_jika_materi_belum_selesai(): void
+    public function test_post_test_terkunci_di_kuis_index_jika_materi_belum_dibuka(): void
     {
         $materi = Materi::create([
             'id_materi' => 'MAT06',
@@ -530,12 +622,12 @@ class SiswaMateriPrePostTest extends TestCase
         $resp->assertSee('Materi Tes Kuis Index');
         $resp->assertSee('terlebih dahulu sebelum mengerjakan Post-test');
 
-        // Selesaikan materi
+        // Membuka materi sudah cukup untuk membuka Post-test, tetapi tidak menyelesaikan materi.
         Progress::create([
             'id_progress' => 'PROG06',
             'id_materi' => $materi->id_materi,
             'id_user' => $this->siswa->id_user,
-            'status' => 'selesai',
+            'status' => 'sedang belajar',
             'tanggal' => now()->toDateString(),
         ]);
 
@@ -545,9 +637,9 @@ class SiswaMateriPrePostTest extends TestCase
     }
 
     /**
-     * Memastikan route kerjakan langsung menolak pengerjaan Post-test jika materi belum selesai.
+     * Memastikan route kerjakan langsung menolak Post-test jika materi belum dibuka.
      */
-    public function test_post_test_pada_endpoint_kerjakan_ditolak_jika_materi_belum_selesai(): void
+    public function test_post_test_pada_endpoint_kerjakan_ditolak_jika_materi_belum_dibuka(): void
     {
         $materi = Materi::create([
             'id_materi' => 'MAT07',
@@ -563,6 +655,59 @@ class SiswaMateriPrePostTest extends TestCase
         $resp = $this->get(route('siswa.kuis.kerjakan', $postTest->id_kuis));
         $resp->assertRedirect(route('siswa.kuis.index'));
         $resp->assertSessionHas('error');
+    }
+
+    public function test_api_hanya_menyelesaikan_materi_setelah_post_test_dikumpulkan(): void
+    {
+        $materi = Materi::create([
+            'id_materi' => 'MAT_API_POST',
+            'judul' => 'Materi API Post-test',
+            'id_mapel' => $this->mapel->id_mapel,
+            'id_user' => $this->guru->id_user,
+        ]);
+        $postTest = $this->buatKuis('KUIS_API_POST', 'Post-test API', 'post-test', $materi->id_materi);
+
+        $this->actingAs($this->siswa, 'sanctum');
+
+        $this->postJson('/api/siswa/kuis/'.$postTest->id_kuis.'/mulai')
+            ->assertUnprocessable();
+
+        $this->getJson('/api/siswa/materi/'.$materi->id_materi)
+            ->assertOk();
+
+        $this->postJson('/api/siswa/materi/'.$materi->id_materi.'/selesai')
+            ->assertUnprocessable();
+        $this->assertDatabaseHas('tr_progress', [
+            'id_materi' => $materi->id_materi,
+            'id_user' => $this->siswa->id_user,
+            'status' => 'sedang belajar',
+        ]);
+
+        $this->postJson('/api/siswa/kuis/'.$postTest->id_kuis.'/mulai')
+            ->assertOk();
+
+        DB::table('tm_soal')->insert([
+            'id_soal' => 'SOAL_API_POST',
+            'id_kuis' => $postTest->id_kuis,
+            'pertanyaan' => 'Pertanyaan post-test',
+            'jawaban' => 'A',
+            'bobot' => 1,
+        ]);
+        DB::table('tr_draft_jawaban')->insert([
+            'id_kuis' => $postTest->id_kuis,
+            'id_user' => $this->siswa->id_user,
+            'id_soal' => 'SOAL_API_POST',
+            'jawaban_dipilih' => 'A',
+        ]);
+
+        $this->postJson('/api/siswa/kuis/'.$postTest->id_kuis.'/submit')
+            ->assertCreated();
+
+        $this->assertDatabaseHas('tr_progress', [
+            'id_materi' => $materi->id_materi,
+            'id_user' => $this->siswa->id_user,
+            'status' => 'selesai',
+        ]);
     }
 
     /**

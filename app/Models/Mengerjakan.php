@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class Mengerjakan extends Model
 {
@@ -53,7 +53,6 @@ class Mengerjakan extends Model
         return $this->hasMany(RemedialSiswa::class, 'id_mengerjakan_asal', 'id_mengerjakan');
     }
 
-
     public function dikelolaOleh(User $guru): bool
     {
         return static::query()
@@ -69,16 +68,16 @@ class Mengerjakan extends Model
                 ->orWhereExists(function ($subQuery) use ($guru) {
                     $subQuery->selectRaw('1')
                         ->from('pengajaran')
-                        ->join('kuis as kuis_dikelola', 'kuis_dikelola.id_mapel', '=', 'pengajaran.id_mapel')
-                        ->whereColumn('kuis_dikelola.id_kuis', 'mengerjakan.id_kuis')
+                        ->join('tm_kuis as kuis_dikelola', 'kuis_dikelola.id_mapel', '=', 'pengajaran.id_mapel')
+                        ->whereColumn('kuis_dikelola.id_kuis', 'tr_mengerjakan.id_kuis')
                         ->where('pengajaran.id_user', $guru->id_user)
                         ->where(function ($assignment) {
                             $assignment->whereNull('pengajaran.id_kelas')
                                 ->orWhereExists(function ($classMembership) {
                                     $classMembership->selectRaw('1')
-                                        ->from('anggota_kelas')
-                                        ->whereColumn('anggota_kelas.id_kelas', 'pengajaran.id_kelas')
-                                        ->whereColumn('anggota_kelas.id_user', 'mengerjakan.id_user');
+                                        ->from('tp_anggota_kelas')
+                                        ->whereColumn('tp_anggota_kelas.id_kelas', 'pengajaran.id_kelas')
+                                        ->whereColumn('tp_anggota_kelas.id_user', 'tr_mengerjakan.id_user');
                                 });
                         });
                 });

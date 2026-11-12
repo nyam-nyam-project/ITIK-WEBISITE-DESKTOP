@@ -32,7 +32,7 @@ class TahunAjaranController extends Controller
     {
         $validated = $this->validasi($request);
 
-        $validated['id_tahun_ajaran'] = $this->idBerikutnya('tahun_ajaran', 'id_tahun_ajaran', 'TA');
+        $validated['id_tahun_ajaran'] = $this->idBerikutnya('tm_tahun_ajaran', 'id_tahun_ajaran', 'TA');
         $validated['is_aktif'] = 0;
 
         TahunAjaran::create($validated);
@@ -74,39 +74,39 @@ class TahunAjaranController extends Controller
     public function salin(TahunAjaran $sumber)
     {
         DB::transaction(function () use ($sumber) {
-            $idBaru = $this->idBerikutnya('tahun_ajaran', 'id_tahun_ajaran', 'TA');
+            $idBaru = $this->idBerikutnya('tm_tahun_ajaran', 'id_tahun_ajaran', 'TA');
             $suffix = ' (Salinan)';
-            $namaBaru = mb_substr($sumber->nama, 0, 20 - mb_strlen($suffix)) . $suffix;
+            $namaBaru = mb_substr($sumber->nama, 0, 20 - mb_strlen($suffix)).$suffix;
 
             $counter = 1;
             while (TahunAjaran::where('nama', $namaBaru)->exists()) {
                 $suffix = " (Sal.{$counter})";
-                $namaBaru = mb_substr($sumber->nama, 0, 20 - mb_strlen($suffix)) . $suffix;
+                $namaBaru = mb_substr($sumber->nama, 0, 20 - mb_strlen($suffix)).$suffix;
                 $counter++;
             }
 
             $tahunBaru = TahunAjaran::create([
                 'id_tahun_ajaran' => $idBaru,
-                'nama'            => $namaBaru,
-                'tanggal_mulai'   => $sumber->tanggal_mulai,
+                'nama' => $namaBaru,
+                'tanggal_mulai' => $sumber->tanggal_mulai,
                 'tanggal_selesai' => $sumber->tanggal_selesai,
-                'is_aktif'        => 0,
+                'is_aktif' => 0,
             ]);
 
             $kelasSumber = $sumber->kelas()->get();
 
             foreach ($kelasSumber as $kelas) {
-                $idKelasBaru = $this->idBerikutnya('kelas', 'id_kelas', 'KLS');
+                $idKelasBaru = $this->idBerikutnya('tm_kelas', 'id_kelas', 'KLS');
 
                 $kelasBaru = Kelas::create([
-                    'id_kelas'        => $idKelasBaru,
-                    'nama_kelas'      => $kelas->nama_kelas,
-                    'tingkat'         => $kelas->tingkat,
+                    'id_kelas' => $idKelasBaru,
+                    'nama_kelas' => $kelas->nama_kelas,
+                    'tingkat' => $kelas->tingkat,
                     'id_tahun_ajaran' => $tahunBaru->id_tahun_ajaran,
-                    'is_aktif'        => true,
+                    'is_aktif' => true,
                 ]);
 
-                $mapelIds = $kelas->mapel()->pluck('mapel.id_mapel')->toArray();
+                $mapelIds = $kelas->mapel()->pluck('tm_mapel.id_mapel')->toArray();
                 if (! empty($mapelIds)) {
                     $kelasBaru->mapel()->attach($mapelIds);
                 }
@@ -126,7 +126,7 @@ class TahunAjaranController extends Controller
                 'string',
                 'max:20',
                 'regex:/^\d{4}\/\d{4}$/',
-                Rule::unique('tahun_ajaran', 'nama')->ignore($kecuali, 'id_tahun_ajaran'),
+                Rule::unique('tm_tahun_ajaran', 'nama')->ignore($kecuali, 'id_tahun_ajaran'),
             ],
             'tanggal_mulai' => ['nullable', 'date'],
             'tanggal_selesai' => ['nullable', 'date', 'after:tanggal_mulai'],

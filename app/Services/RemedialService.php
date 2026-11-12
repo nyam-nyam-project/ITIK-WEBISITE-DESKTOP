@@ -13,7 +13,7 @@ class RemedialService
      */
     public function untukSiswa(string $idUser): Collection|\Illuminate\Support\Collection
     {
-        if (! Schema::hasTable('remedial_siswa')) {
+        if (! Schema::hasTable('tr_remedial_siswa')) {
             return collect();
         }
 

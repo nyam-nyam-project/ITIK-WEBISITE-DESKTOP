@@ -51,17 +51,16 @@ class Pengajaran extends Model
 
         $tahunAktif = TahunAjaran::aktif();
 
-        if (! $tahunAktif || Schema::hasTable('kelas') === false) {
+        if (! $tahunAktif || Schema::hasTable('tm_kelas') === false) {
             return static::where('id_user', $guru->id_user)
                 ->distinct()
                 ->pluck('id_mapel');
         }
 
-        return static::join('kelas', 'pengajaran.id_kelas', '=', 'kelas.id_kelas')
+        return static::join('tm_kelas', 'pengajaran.id_kelas', '=', 'tm_kelas.id_kelas')
             ->where('pengajaran.id_user', $guru->id_user)
-            ->where('kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran)
+            ->where('tm_kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran)
             ->distinct()
             ->pluck('pengajaran.id_mapel');
     }
 }
-

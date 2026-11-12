@@ -45,7 +45,7 @@ class GuruController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nomor_induk' => ['required', 'string', 'max:50', 'regex:/^\d+$/', 'unique:user,nomor_induk'],
+            'nomor_induk' => ['required', 'string', 'max:50', 'regex:/^\d+$/', 'unique:tm_user,nomor_induk'],
             'nama_lengkap' => ['required', 'string', 'max:100'],
             'email' => ['nullable', 'email', 'max:100'],
             'password' => ['required', 'string', 'min:6'],
@@ -55,7 +55,7 @@ class GuruController extends Controller
         ]);
 
         $guru = User::create([
-            'id_user' => $this->idBerikutnya('user', 'id_user', 'U'),
+            'id_user' => $this->idBerikutnya('tm_user', 'id_user', 'U'),
             'nomor_induk' => $validated['nomor_induk'],
             'nama_lengkap' => $validated['nama_lengkap'],
             'role' => 'guru',
@@ -85,7 +85,7 @@ class GuruController extends Controller
         $validated = $request->validate([
             'nomor_induk' => [
                 'required', 'string', 'max:50', 'regex:/^\d+$/',
-                Rule::unique('user', 'nomor_induk')->ignore($guru->id_user, 'id_user'),
+                Rule::unique('tm_user', 'nomor_induk')->ignore($guru->id_user, 'id_user'),
             ],
             'nama_lengkap' => ['required', 'string', 'max:100'],
             'email' => ['nullable', 'email', 'max:100'],

@@ -12,24 +12,20 @@ class KelasMigrasiService
     /**
      * Pindahkan sejumlah siswa ke kelas tujuan dalam tahun ajaran yang sama secara massal.
      *
-     * @param array<int, string> $idSiswa
-     * @param string $idKelasTujuan
-     * @param string|null $idKelasAsal
+     * @param  array<int, string>  $idSiswa
      * @return array{berhasil: int, dilewati: int}
      *
      * @throws ValidationException
      */
     public static function pindahMassal(array $idSiswa, string $idKelasTujuan, ?string $idKelasAsal = null): array
     {
-        return (new static())->pindah($idSiswa, $idKelasTujuan, $idKelasAsal);
+        return (new static)->pindah($idSiswa, $idKelasTujuan, $idKelasAsal);
     }
 
     /**
      * Eksekusi pemindahan siswa dengan transaksi database dan row locking.
      *
-     * @param array<int, string> $idSiswa
-     * @param string $idKelasTujuan
-     * @param string|null $idKelasAsal
+     * @param  array<int, string>  $idSiswa
      * @return array{berhasil: int, dilewati: int}
      *
      * @throws ValidationException
@@ -50,12 +46,12 @@ class KelasMigrasiService
             }
 
             if ($idKelasAsal === null) {
-                $idKelasAsal = DB::table('anggota_kelas')
-                    ->join('kelas', 'anggota_kelas.id_kelas', '=', 'kelas.id_kelas')
-                    ->where('kelas.id_tahun_ajaran', $kelasTujuan->id_tahun_ajaran)
-                    ->whereIn('anggota_kelas.id_user', $idSiswa)
-                    ->where('anggota_kelas.id_kelas', '!=', $idKelasTujuan)
-                    ->value('anggota_kelas.id_kelas');
+                $idKelasAsal = DB::table('tp_anggota_kelas')
+                    ->join('tm_kelas', 'tp_anggota_kelas.id_kelas', '=', 'tm_kelas.id_kelas')
+                    ->where('tm_kelas.id_tahun_ajaran', $kelasTujuan->id_tahun_ajaran)
+                    ->whereIn('tp_anggota_kelas.id_user', $idSiswa)
+                    ->where('tp_anggota_kelas.id_kelas', '!=', $idKelasTujuan)
+                    ->value('tp_anggota_kelas.id_kelas');
             }
 
             if (! $idKelasAsal) {
@@ -89,7 +85,7 @@ class KelasMigrasiService
             User::whereIn('id_user', $idSiswa)->lockForUpdate()->get();
 
             // Identifikasi siswa yang terdaftar di kelas asal
-            $anggotaAsal = DB::table('anggota_kelas')
+            $anggotaAsal = DB::table('tp_anggota_kelas')
                 ->where('id_kelas', $idKelasAsal)
                 ->whereIn('id_user', $idSiswa)
                 ->lockForUpdate()
@@ -99,7 +95,7 @@ class KelasMigrasiService
             $bukanAnggotaAsal = array_diff($idSiswa, $anggotaAsal);
 
             // Identifikasi siswa yang sudah terdaftar di kelas tujuan
-            $sudahDiTujuan = DB::table('anggota_kelas')
+            $sudahDiTujuan = DB::table('tp_anggota_kelas')
                 ->where('id_kelas', $idKelasTujuan)
                 ->whereIn('id_user', $anggotaAsal)
                 ->lockForUpdate()
@@ -110,16 +106,16 @@ class KelasMigrasiService
 
             // Untuk siswa yang sudah ada di tujuan, hapus baris di kelas asal
             if (! empty($sudahDiTujuan)) {
-                DB::table('anggota_kelas')
+                DB::table('tp_anggota_kelas')
                     ->where('id_kelas', $idKelasAsal)
                     ->whereIn('id_user', $sudahDiTujuan)
                     ->delete();
             }
 
-            // Untuk sisanya, UPDATE anggota_kelas SET id_kelas = ? WHERE id_kelas = ? AND id_user IN (...)
+            // Untuk sisanya, UPDATE tp_anggota_kelas SET id_kelas = ? WHERE id_kelas = ? AND id_user IN (...)
             $jumlahDiupdate = 0;
             if (! empty($sisanya)) {
-                $jumlahDiupdate = DB::table('anggota_kelas')
+                $jumlahDiupdate = DB::table('tp_anggota_kelas')
                     ->where('id_kelas', $idKelasAsal)
                     ->whereIn('id_user', $sisanya)
                     ->update(['id_kelas' => $idKelasTujuan]);
@@ -131,7 +127,7 @@ class KelasMigrasiService
                 User::whereIn('id_user', $siswaTerkait)
                     ->where(function ($q) use ($kelasTujuan) {
                         $q->whereNull('kelas')
-                          ->orWhere('kelas', '!=', $kelasTujuan->tingkat);
+                            ->orWhere('kelas', '!=', $kelasTujuan->tingkat);
                     })
                     ->update(['kelas' => $kelasTujuan->tingkat]);
             }

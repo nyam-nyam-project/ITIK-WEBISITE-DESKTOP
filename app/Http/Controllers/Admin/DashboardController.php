@@ -33,10 +33,10 @@ class DashboardController extends Controller
                 ->aktif()
                 ->whereNotExists(function ($query) use ($tahunAktif) {
                     $query->select(DB::raw(1))
-                        ->from('anggota_kelas')
-                        ->join('kelas', 'kelas.id_kelas', '=', 'anggota_kelas.id_kelas')
-                        ->whereColumn('anggota_kelas.id_user', 'user.id_user')
-                        ->where('kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran);
+                        ->from('tp_anggota_kelas')
+                        ->join('tm_kelas', 'tm_kelas.id_kelas', '=', 'tp_anggota_kelas.id_kelas')
+                        ->whereColumn('tp_anggota_kelas.id_user', 'tm_user.id_user')
+                        ->where('tm_kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran);
                 })
                 ->count()
             : 0;

@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\Mengerjakan;
 use App\Models\Pengajaran;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -21,9 +21,7 @@ class RekapNilaiGuruService
      *   - percobaan  : int (jumlah percobaan final)
      *   - tanggal    : string|null (tanggal percobaan terbaik)
      *
-     * @param  User         $guru
      * @param  string|null  $idKelas  ID kelas untuk filter; null = semua kelas
-     * @return Collection
      */
     public function rekapUntukGuru(User $guru, ?string $idKelas): Collection
     {
@@ -46,7 +44,7 @@ class RekapNilaiGuruService
                 return collect();
             }
 
-            $siswaIds = DB::table('anggota_kelas')
+            $siswaIds = DB::table('tp_anggota_kelas')
                 ->where('id_kelas', $idKelas)
                 ->pluck('id_user');
 
@@ -69,25 +67,25 @@ class RekapNilaiGuruService
 
         // 3. Kelompokkan per siswa + kuis, ambil percobaan dengan nilai tertinggi
         return $semua
-            ->groupBy(fn($m) => $m->id_user . '___' . $m->id_kuis)
+            ->groupBy(fn ($m) => $m->id_user.'___'.$m->id_kuis)
             ->map(function (Collection $rows) {
                 $terbaik = $rows->sortByDesc('nilai')->first();
 
                 return (object) [
-                    'siswa'         => $terbaik->siswa,
-                    'kuis'          => $terbaik->kuis,
+                    'siswa' => $terbaik->siswa,
+                    'kuis' => $terbaik->kuis,
                     'nilai_terbaik' => $terbaik->nilai,
-                    'percobaan'     => $rows->count(),
-                    'tanggal'       => $terbaik->tanggal,
+                    'percobaan' => $rows->count(),
+                    'tanggal' => $terbaik->tanggal,
                 ];
             })
             ->values()
             ->sortBy([
-                fn($a, $b) => strcmp(
+                fn ($a, $b) => strcmp(
                     $a->siswa?->nama_lengkap ?? '',
                     $b->siswa?->nama_lengkap ?? ''
                 ),
-                fn($a, $b) => strcmp(
+                fn ($a, $b) => strcmp(
                     $a->kuis?->judul ?? '',
                     $b->kuis?->judul ?? ''
                 ),

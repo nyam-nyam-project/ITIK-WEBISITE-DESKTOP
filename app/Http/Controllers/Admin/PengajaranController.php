@@ -18,7 +18,7 @@ class PengajaranController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'tahun_ajaran' => ['nullable', 'string', 'exists:tahun_ajaran,id_tahun_ajaran'],
+            'tahun_ajaran' => ['nullable', 'string', 'exists:tm_tahun_ajaran,id_tahun_ajaran'],
         ]);
 
         $daftarTahun = TahunAjaran::orderByDesc('nama')->get();
@@ -36,21 +36,21 @@ class PengajaranController extends Controller
         $daftarGuru = User::guru()->aktif()->orderBy('nama_lengkap')->get();
 
         // Pilihan kelas dan mapel diambil dari mapel_kelas sesuai tahun ajaran
-        $mapelKelas = DB::table('mapel_kelas')
-            ->join('kelas', 'mapel_kelas.id_kelas', '=', 'kelas.id_kelas')
-            ->join('mapel', 'mapel_kelas.id_mapel', '=', 'mapel.id_mapel')
-            ->when($idTahun, fn ($q) => $q->where('kelas.id_tahun_ajaran', $idTahun))
-            ->where('kelas.is_aktif', true)
-            ->where('mapel.is_aktif', true)
+        $mapelKelas = DB::table('tp_mapel_kelas')
+            ->join('tm_kelas', 'tp_mapel_kelas.id_kelas', '=', 'tm_kelas.id_kelas')
+            ->join('tm_mapel', 'tp_mapel_kelas.id_mapel', '=', 'tm_mapel.id_mapel')
+            ->when($idTahun, fn ($q) => $q->where('tm_kelas.id_tahun_ajaran', $idTahun))
+            ->where('tm_kelas.is_aktif', true)
+            ->where('tm_mapel.is_aktif', true)
             ->select(
-                'mapel_kelas.id_kelas',
-                'mapel_kelas.id_mapel',
-                'kelas.nama_kelas',
-                'mapel.nama_mapel',
-                'mapel.kode_mapel'
+                'tp_mapel_kelas.id_kelas',
+                'tp_mapel_kelas.id_mapel',
+                'tm_kelas.nama_kelas',
+                'tm_mapel.nama_mapel',
+                'tm_mapel.kode_mapel'
             )
-            ->orderBy('kelas.nama_kelas')
-            ->orderBy('mapel.nama_mapel')
+            ->orderBy('tm_kelas.nama_kelas')
+            ->orderBy('tm_mapel.nama_mapel')
             ->get();
 
         // Daftar kelas aktif pada tahun ajaran ini
@@ -79,7 +79,7 @@ class PengajaranController extends Controller
     {
         // 1. Validasi guru
         $request->validate([
-            'id_user' => ['required', 'string', Rule::exists('user', 'id_user')->where('role', 'guru')->where('status', 'aktif')],
+            'id_user' => ['required', 'string', Rule::exists('tm_user', 'id_user')->where('role', 'guru')->where('status', 'aktif')],
         ], [
             'id_user.required' => 'Guru wajib dipilih.',
             'id_user.exists' => 'Guru yang dipilih tidak valid atau tidak aktif.',
@@ -115,7 +115,7 @@ class PengajaranController extends Controller
         $mapelList = array_values(array_filter($mapelList));
 
         // Kombinasi dibuat dengan perkalian (Cartesian product)
-        if (!empty($kelasList) && !empty($mapelList)) {
+        if (! empty($kelasList) && ! empty($mapelList)) {
             foreach ($kelasList as $k) {
                 foreach ($mapelList as $m) {
                     $pasangan[] = [
@@ -139,16 +139,16 @@ class PengajaranController extends Controller
         }
 
         // Hilangkan duplikat dari pasangan yang dikirim
-        $pasanganUnik = collect($pasangan)->unique(fn ($p) => $p['id_kelas'] . ':' . $p['id_mapel'])->values();
+        $pasanganUnik = collect($pasangan)->unique(fn ($p) => $p['id_kelas'].':'.$p['id_mapel'])->values();
 
         // 3. Pastikan kelas & mapel yang dipilih valid (terdaftar di database)
         foreach ($pasanganUnik as $p) {
-            if (! DB::table('kelas')->where('id_kelas', $p['id_kelas'])->exists()) {
+            if (! DB::table('tm_kelas')->where('id_kelas', $p['id_kelas'])->exists()) {
                 throw ValidationException::withMessages([
                     'id_kelas' => 'Kelas yang dipilih tidak valid.',
                 ]);
             }
-            if (! DB::table('mapel')->where('id_mapel', $p['id_mapel'])->exists()) {
+            if (! DB::table('tm_mapel')->where('id_mapel', $p['id_mapel'])->exists()) {
                 throw ValidationException::withMessages([
                     'id_mapel' => 'Mata pelajaran yang dipilih tidak valid.',
                 ]);
@@ -157,7 +157,7 @@ class PengajaranController extends Controller
 
         // 4. Cek setiap pasangan terhadap mapel_kelas (kurikulum kelas)
         $pasanganValid = $pasanganUnik->filter(function ($p) {
-            return DB::table('mapel_kelas')
+            return DB::table('tp_mapel_kelas')
                 ->where('id_kelas', $p['id_kelas'])
                 ->where('id_mapel', $p['id_mapel'])
                 ->exists();
@@ -181,6 +181,7 @@ class PengajaranController extends Controller
 
             if ($sudahAda) {
                 $dilewati++;
+
                 continue;
             }
 

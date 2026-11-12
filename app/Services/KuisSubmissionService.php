@@ -13,9 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class KuisSubmissionService
 {
-    public function __construct(private KuisPenilaianService $penilaian)
-    {
-    }
+    public function __construct(
+        private KuisPenilaianService $penilaian,
+        private MateriProgressService $materiProgressService
+    ) {}
 
     public function sesiAktif(string $idKuis, string $idUser): ?SesiKuis
     {
@@ -92,6 +93,7 @@ class KuisSubmissionService
 
             if ($sudahAda) {
                 $sesi->update(['waktu_selesai' => $waktuSelesai]);
+                $this->materiProgressService->tandaiSelesaiSetelahPostTest($kuis, $sesi->id_user);
 
                 return $sudahAda;
             }
@@ -101,11 +103,6 @@ class KuisSubmissionService
                 ->where('id_user', $sesi->id_user)
                 ->get()->keyBy('id_soal');
             $nilai = $this->penilaian->hitung($soal, $draft, collect());
-
-            $nilai = $totalBobot > 0
-                ? round(($bobotBenar / $totalBobot) * 100, 2)
-                : 0;
-            $lulusOtomatis = $kuis->kkm !== null && $nilai >= (float) $kuis->kkm;
 
             $hasil = Mengerjakan::create([
                 'id_kuis' => $sesi->id_kuis,
@@ -117,6 +114,8 @@ class KuisSubmissionService
                 'status_validasi' => $nilai === null ? 'menunggu penilaian' : 'sudah divalidasi',
                 'id_validator' => $nilai === null ? null : ($kuis->id_user ?? null),
             ]);
+
+            $this->materiProgressService->tandaiSelesaiSetelahPostTest($kuis, $sesi->id_user);
 
             foreach ($soal->where('tipe', 'essay') as $item) {
                 NilaiEssay::create([

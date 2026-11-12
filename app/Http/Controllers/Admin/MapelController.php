@@ -30,7 +30,7 @@ class MapelController extends Controller
     {
         $validated = $this->validasi($request);
 
-        $validated['id_mapel'] = $this->idBerikutnya('mapel', 'id_mapel', 'MP');
+        $validated['id_mapel'] = $this->idBerikutnya('tm_mapel', 'id_mapel', 'MP');
 
         Mapel::create($validated);
 
@@ -80,7 +80,7 @@ class MapelController extends Controller
                 'string',
                 'max:20',
                 'alpha_dash',
-                Rule::unique('mapel', 'kode_mapel')->ignore($kecuali, 'id_mapel'),
+                Rule::unique('tm_mapel', 'kode_mapel')->ignore($kecuali, 'id_mapel'),
             ],
             'nama_mapel' => ['required', 'string', 'max:100'],
             'deskripsi' => ['nullable', 'string'],

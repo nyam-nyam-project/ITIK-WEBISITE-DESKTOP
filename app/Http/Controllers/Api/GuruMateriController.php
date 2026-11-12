@@ -146,8 +146,8 @@ class GuruMateriController extends Controller
     private function rules(?Materi $materi = null): array
     {
         $mapelRules = ['sometimes', 'nullable', 'string'];
-        if (Schema::hasColumn('materis', 'id_mapel') && Schema::hasTable('mapel')) {
-            $mapelRules[] = Rule::exists('mapel', 'id_mapel')
+        if (Schema::hasColumn('tm_materi', 'id_mapel') && Schema::hasTable('tm_mapel')) {
+            $mapelRules[] = Rule::exists('tm_mapel', 'id_mapel')
                 ->where(fn (QueryBuilder $query) => $query
                     ->where('is_aktif', true)
                     ->when($materi !== null, fn (QueryBuilder $query) => $query

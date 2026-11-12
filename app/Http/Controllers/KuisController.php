@@ -7,14 +7,13 @@ use App\Models\Mapel;
 use App\Models\Materi;
 use App\Models\Pengajaran;
 use App\Models\Remedial;
-use App\Models\Soal;
 use App\Models\TahunAjaran;
 use App\Services\KuisPenilaianService;
 use App\Support\MenghasilkanId;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -41,7 +40,7 @@ class KuisController extends Controller
         }
 
         return Mapel::where(fn ($q) => $q->where('is_aktif', 1)
-                ->when($idMapelSaatIni, fn ($q) => $q->orWhere('id_mapel', $idMapelSaatIni)))
+            ->when($idMapelSaatIni, fn ($q) => $q->orWhere('id_mapel', $idMapelSaatIni)))
             ->orderBy('nama_mapel')
             ->get();
     }
@@ -53,7 +52,7 @@ class KuisController extends Controller
         return [
             'required',
             'string',
-            Rule::exists('mapel', 'id_mapel')->where(function ($q) use ($idMapelSaatIni, $user) {
+            Rule::exists('tm_mapel', 'id_mapel')->where(function ($q) use ($idMapelSaatIni, $user) {
                 if ($user && $user->role === 'guru') {
                     $mapelIds = Pengajaran::mapelUntukGuru($user);
                     $q->whereIn('id_mapel', $mapelIds);
@@ -181,9 +180,9 @@ class KuisController extends Controller
         $materi = $materiQuery->get();
 
         $kuisAsal = Kuis::where('is_aktif', true)
-        ->whereRaw('LOWER(TRIM(kategori)) = ?', ['ulangan'])
-        ->orderBy('judul')
-        ->get();
+            ->whereRaw('LOWER(TRIM(kategori)) = ?', ['ulangan'])
+            ->orderBy('judul')
+            ->get();
 
         // Cek duplikat: satu materi hanya boleh punya 1 pre-test & 1 post-test aktif
         if ($materiDipreselect && $kategoriDipreselect && in_array($kategoriDipreselect, ['pre-test', 'post-test'], true)) {
@@ -193,6 +192,7 @@ class KuisController extends Controller
                 ->exists();
             if ($sudahAda) {
                 $labelKategori = ucfirst($kategoriDipreselect);
+
                 return redirect()
                     ->route('materi.show', $materiDipreselect->id_materi)
                     ->with('error', "Materi ini sudah memiliki {$labelKategori} aktif. Setiap materi hanya boleh memiliki satu {$kategoriDipreselect}.");
@@ -243,9 +243,9 @@ class KuisController extends Controller
             'waktu_selesai' => 'nullable|date',
 
             'materi' => 'nullable|array',
-            'materi.*' => 'exists:materi,id_materi',
+            'materi.*' => 'exists:tm_materi,id_materi',
 
-            'id_kuis_asal' => 'nullable|exists:kuis,id_kuis',
+            'id_kuis_asal' => 'nullable|exists:tm_kuis,id_kuis',
             'soal' => 'prohibited',
 
             'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
@@ -264,8 +264,7 @@ class KuisController extends Controller
             if (empty($validated['id_kuis_asal'])) {
                 return back()
                     ->withErrors([
-                        'id_kuis_asal' =>
-                            'Kuis remedial wajib memiliki kuis asal.',
+                        'id_kuis_asal' => 'Kuis remedial wajib memiliki kuis asal.',
                     ])
                     ->withInput();
             }
@@ -286,14 +285,14 @@ class KuisController extends Controller
         */
         if ($validated['kategori'] === 'ulangan') {
 
-            if (!$request->waktu_mulai || !$request->waktu_selesai) {
+            if (! $request->waktu_mulai || ! $request->waktu_selesai) {
                 throw ValidationException::withMessages([
                     'waktu_mulai' => 'Waktu mulai dan waktu selesai wajib diisi untuk ulangan.',
                 ]);
             }
 
-            $waktuMulai = \Carbon\Carbon::parse($request->waktu_mulai);
-            $waktuSelesai = \Carbon\Carbon::parse($request->waktu_selesai);
+            $waktuMulai = Carbon::parse($request->waktu_mulai);
+            $waktuSelesai = Carbon::parse($request->waktu_selesai);
 
             if ($waktuMulai->lt(now())) {
                 throw ValidationException::withMessages([
@@ -310,10 +309,10 @@ class KuisController extends Controller
             $validated['waktu_mulai'] = $request->waktu_mulai;
             $validated['waktu_selesai'] = $request->waktu_selesai;
 
-        } elseif (!empty($request->waktu_mulai) || !empty($request->waktu_selesai)) {
-            if (!empty($request->waktu_mulai) && !empty($request->waktu_selesai)) {
-                $waktuMulai = \Carbon\Carbon::parse($request->waktu_mulai);
-                $waktuSelesai = \Carbon\Carbon::parse($request->waktu_selesai);
+        } elseif (! empty($request->waktu_mulai) || ! empty($request->waktu_selesai)) {
+            if (! empty($request->waktu_mulai) && ! empty($request->waktu_selesai)) {
+                $waktuMulai = Carbon::parse($request->waktu_mulai);
+                $waktuSelesai = Carbon::parse($request->waktu_selesai);
 
                 if ($waktuSelesai->lte($waktuMulai)) {
                     throw ValidationException::withMessages([
@@ -330,7 +329,7 @@ class KuisController extends Controller
             $validated['waktu_selesai'] = null;
         }
 
-        $validated['id_kuis'] = $this->idBerikutnya('kuis', 'id_kuis', 'K');
+        $validated['id_kuis'] = $this->idBerikutnya('tm_kuis', 'id_kuis', 'K');
         $validated['id_tahun_ajaran'] = $tahunAjaran->id_tahun_ajaran;
 
         /*
@@ -377,7 +376,7 @@ class KuisController extends Controller
             $labelKategori = ucfirst($kuis->kategori);
             foreach ($request->materi as $idMateri) {
                 $materiObj = Materi::find($idMateri);
-                if (!$materiObj) {
+                if (! $materiObj) {
                     continue;
                 }
                 $konflik = $materiObj->kuis()
@@ -388,7 +387,7 @@ class KuisController extends Controller
                     // Hapus kuis yang baru dibuat sebelum lempar error
                     $kuis->delete();
                     throw ValidationException::withMessages([
-                        'materi' => 'Materi "' . $materiObj->judul . '" sudah memiliki ' . $labelKategori . ' aktif. Setiap materi hanya boleh memiliki satu ' . $kuis->kategori . '.',
+                        'materi' => 'Materi "'.$materiObj->judul.'" sudah memiliki '.$labelKategori.' aktif. Setiap materi hanya boleh memiliki satu '.$kuis->kategori.'.',
                     ]);
                 }
             }
@@ -500,7 +499,7 @@ class KuisController extends Controller
                 'waktu_mulai' => 'nullable|date',
                 'waktu_selesai' => 'nullable|date',
                 'materi' => 'nullable|array',
-                'materi.*' => 'exists:materi,id_materi',
+                'materi.*' => 'exists:tm_materi,id_materi',
                 'soal' => 'prohibited',
                 'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
             ], [
@@ -518,14 +517,14 @@ class KuisController extends Controller
             }
 
             if ($validated['kategori'] === 'ulangan') {
-                if (!$request->waktu_mulai || !$request->waktu_selesai) {
+                if (! $request->waktu_mulai || ! $request->waktu_selesai) {
                     throw ValidationException::withMessages([
                         'waktu_mulai' => 'Waktu mulai dan waktu selesai wajib diisi untuk ulangan.',
                     ]);
                 }
 
-                $waktuMulai = \Carbon\Carbon::parse($request->waktu_mulai);
-                $waktuSelesai = \Carbon\Carbon::parse($request->waktu_selesai);
+                $waktuMulai = Carbon::parse($request->waktu_mulai);
+                $waktuSelesai = Carbon::parse($request->waktu_selesai);
 
                 if ($waktuMulai->lt(now())) {
                     throw ValidationException::withMessages([
@@ -541,10 +540,10 @@ class KuisController extends Controller
 
                 $validated['waktu_mulai'] = $request->waktu_mulai;
                 $validated['waktu_selesai'] = $request->waktu_selesai;
-            } elseif (!empty($request->waktu_mulai) || !empty($request->waktu_selesai)) {
-                if (!empty($request->waktu_mulai) && !empty($request->waktu_selesai)) {
-                    $waktuMulai = \Carbon\Carbon::parse($request->waktu_mulai);
-                    $waktuSelesai = \Carbon\Carbon::parse($request->waktu_selesai);
+            } elseif (! empty($request->waktu_mulai) || ! empty($request->waktu_selesai)) {
+                if (! empty($request->waktu_mulai) && ! empty($request->waktu_selesai)) {
+                    $waktuMulai = Carbon::parse($request->waktu_mulai);
+                    $waktuSelesai = Carbon::parse($request->waktu_selesai);
 
                     if ($waktuSelesai->lte($waktuMulai)) {
                         throw ValidationException::withMessages([
@@ -564,7 +563,7 @@ class KuisController extends Controller
             $kuis->update($validated);
 
             // Pre-test dan Post-test: materi dikunci, tidak boleh diubah saat edit
-            if (!in_array($kuis->kategori, ['pre-test', 'post-test', 'remedial'], true)) {
+            if (! in_array($kuis->kategori, ['pre-test', 'post-test', 'remedial'], true)) {
                 $kuis->materi()->sync($request->materi ?? []);
             }
 
@@ -618,7 +617,7 @@ class KuisController extends Controller
                 ]);
             }
 
-            if (!$kuis->is_aktif) {
+            if (! $kuis->is_aktif) {
                 return back()->withErrors([
                     'kuis' => 'Kuis yang sudah diarsipkan tidak dapat dipublikasikan.',
                 ]);
@@ -686,10 +685,10 @@ class KuisController extends Controller
                     } else {
                         $jawaban = strtoupper($soal->jawaban);
 
-                        if (!in_array($jawaban, ['A', 'B', 'C', 'D', 'E'])) {
+                        if (! in_array($jawaban, ['A', 'B', 'C', 'D', 'E'])) {
                             $errors[] = "Soal nomor {$nomor}: jawaban harus A, B, C, D, atau E.";
                         } else {
-                            $opsi = 'opsi_' . strtolower($jawaban);
+                            $opsi = 'opsi_'.strtolower($jawaban);
 
                             if (empty(trim($soal->$opsi ?? ''))) {
                                 $errors[] = "Soal nomor {$nomor}: jawaban {$jawaban} dipilih tetapi opsi {$jawaban} kosong.";
@@ -712,10 +711,10 @@ class KuisController extends Controller
 
             if ($kuis->soal->count() > 0 && round($totalBobot, 2) != 100) {
                 $errors[] = 'Total bobot semua soal harus tepat 100. Total saat ini: '
-                    . number_format($totalBobot, 2) . '.';
+                    .number_format($totalBobot, 2).'.';
             }
 
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 return back()->withErrors(['publish' => $errors])->withInput();
             }
 

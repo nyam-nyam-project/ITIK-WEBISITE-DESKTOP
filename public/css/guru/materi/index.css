@@ -151,3 +151,51 @@
     color: var(--ink);
     font-weight: 700;
 }
+
+@media (max-width: 1100px) {
+    .materi-row-foto2 {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+        padding: 16px;
+    }
+
+    .materi-main-info {
+        align-items: flex-start;
+    }
+
+    .materi-row-title {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .materi-row-subtitle {
+        overflow-wrap: anywhere;
+    }
+
+    .materi-actions {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .materi-actions > a,
+    .materi-actions > form {
+        flex: 1 1 150px;
+        min-width: 0;
+    }
+
+    .materi-actions > form .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 760px) {
+    .page-heading > div {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .page-heading > .btn {
+        width: 100%;
+    }
+}

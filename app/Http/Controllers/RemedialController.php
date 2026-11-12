@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kuis;
+use App\Models\Mengerjakan;
 use App\Models\Remedial;
 use App\Models\RemedialSiswa;
-use App\Models\Mengerjakan;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 class RemedialController extends Controller
 {
     use MenghasilkanId;
+
     /**
      * Menampilkan daftar kuis remedial.
      */
@@ -71,7 +72,7 @@ class RemedialController extends Controller
             'id_kuis_asal' => [
                 'required',
                 'string',
-                'exists:kuis,id_kuis',
+                'exists:tm_kuis,id_kuis',
             ],
 
             'alokasi_waktu' => [
@@ -97,12 +98,11 @@ class RemedialController extends Controller
             ->where('is_aktif', true)
             ->first();
 
-        if (!$kuisAsal) {
+        if (! $kuisAsal) {
             return back()
                 ->withInput()
                 ->withErrors([
-                    'id_kuis_asal' =>
-                        'Kuis asal tidak ditemukan atau sudah tidak aktif.',
+                    'id_kuis_asal' => 'Kuis asal tidak ditemukan atau sudah tidak aktif.',
                 ]);
         }
 
@@ -110,8 +110,7 @@ class RemedialController extends Controller
             return back()
                 ->withInput()
                 ->withErrors([
-                    'id_kuis_asal' =>
-                        'Tugas remedial hanya dapat dibuat untuk kuis dengan kategori Ulangan.',
+                    'id_kuis_asal' => 'Tugas remedial hanya dapat dibuat untuk kuis dengan kategori Ulangan.',
                 ]);
         }
 
@@ -123,7 +122,7 @@ class RemedialController extends Controller
         /*
          * Buat ID kuis.
          */
-        $idKuis = $this->idBerikutnya('kuis', 'id_kuis', 'K');
+        $idKuis = $this->idBerikutnya('tm_kuis', 'id_kuis', 'K');
 
         DB::transaction(function () use (
             $validated,
@@ -143,11 +142,9 @@ class RemedialController extends Controller
 
                 'kategori' => 'remedial',
 
-                'alokasi_waktu' =>
-                    $validated['alokasi_waktu'] ?? null,
+                'alokasi_waktu' => $validated['alokasi_waktu'] ?? null,
 
-                'kkm' =>
-                    $validated['kkm'] ?? null,
+                'kkm' => $validated['kkm'] ?? null,
 
                 /*
                  * Remedial tidak menggunakan
@@ -176,8 +173,7 @@ class RemedialController extends Controller
             Remedial::create([
                 'id_kuis_remedial' => $kuis->id_kuis,
 
-                'id_kuis_asal' =>
-                    $validated['id_kuis_asal'],
+                'id_kuis_asal' => $validated['id_kuis_asal'],
             ]);
         });
 
@@ -204,8 +200,9 @@ class RemedialController extends Controller
 
             $siswa = $item->mengerjakanAsal?->id_user;
 
-            if (!$siswa) {
+            if (! $siswa) {
                 $item->hasilRemedial = null;
+
                 return;
             }
 
@@ -234,7 +231,7 @@ class RemedialController extends Controller
 
         $kuisAsal = $remedial->kuisAsal;
 
-        if (!$kuisAsal) {
+        if (! $kuisAsal) {
             return back()->with('error', 'Kuis asal tidak ditemukan.');
         }
 
@@ -278,7 +275,7 @@ class RemedialController extends Controller
 
         $request->validate([
             'id_mengerjakan' => 'required|array|min:1',
-            'id_mengerjakan.*' => 'required|integer|exists:mengerjakan,id_mengerjakan',
+            'id_mengerjakan.*' => 'required|integer|exists:tr_mengerjakan,id_mengerjakan',
         ]);
 
         DB::transaction(function () use ($request, $remedial) {

@@ -20,7 +20,7 @@ class KelasController extends Controller
 
     public function index(Request $request)
     {
-        $request->validate(['tahun_ajaran' => ['nullable', 'string', 'exists:tahun_ajaran,id_tahun_ajaran']]);
+        $request->validate(['tahun_ajaran' => ['nullable', 'string', 'exists:tm_tahun_ajaran,id_tahun_ajaran']]);
         $daftarTahun = TahunAjaran::orderByDesc('nama')->get();
 
         $idTahun = $request->input('tahun_ajaran')
@@ -49,7 +49,7 @@ class KelasController extends Controller
         $idMapel = $validated['mapel'] ?? [];
         unset($validated['mapel']);
 
-        $validated['id_kelas'] = $this->idBerikutnya('kelas', 'id_kelas', 'KLS');
+        $validated['id_kelas'] = $this->idBerikutnya('tm_kelas', 'id_kelas', 'KLS');
         $validated['is_aktif'] = $request->boolean('is_aktif');
 
         $kelas = DB::transaction(function () use ($validated, $idMapel) {
@@ -88,8 +88,8 @@ class KelasController extends Controller
     {
         $validated = $request->validate([
             'id_user' => ['required', 'array', 'min:1'],
-            'id_user.*' => ['required', 'string', 'distinct', Rule::exists('user', 'id_user')->where('role', 'siswa')],
-            'id_kelas_tujuan' => ['required', 'string', 'exists:kelas,id_kelas'],
+            'id_user.*' => ['required', 'string', 'distinct', Rule::exists('tm_user', 'id_user')->where('role', 'siswa')],
+            'id_kelas_tujuan' => ['required', 'string', 'exists:tm_kelas,id_kelas'],
         ], [
             'id_user.required' => 'Pilih minimal satu siswa untuk dipindahkan.',
             'id_user.min' => 'Pilih minimal satu siswa untuk dipindahkan.',
@@ -150,7 +150,7 @@ class KelasController extends Controller
 
         $validated = $request->validate([
             'id_user' => ['required', 'array', 'min:1'],
-            'id_user.*' => ['required', 'string', 'distinct', Rule::exists('user', 'id_user')->where('role', 'siswa')->where('status', 'aktif')],
+            'id_user.*' => ['required', 'string', 'distinct', Rule::exists('tm_user', 'id_user')->where('role', 'siswa')->where('status', 'aktif')],
         ]);
 
         $jumlahBaru = DB::transaction(function () use ($validated, $kelas) {
@@ -159,7 +159,7 @@ class KelasController extends Controller
             foreach ($siswa as $u) {
                 if ($u->kelasDiikuti()
                     ->where('id_tahun_ajaran', $kelas->id_tahun_ajaran)
-                    ->where('kelas.id_kelas', '!=', $kelas->id_kelas)->exists()) {
+                    ->where('tm_kelas.id_kelas', '!=', $kelas->id_kelas)->exists()) {
                     $bentrok = $u;
                     break;
                 }
@@ -190,18 +190,18 @@ class KelasController extends Controller
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('kelas', 'nama_kelas')
+                Rule::unique('tm_kelas', 'nama_kelas')
                     ->where(fn ($query) => $query->where('id_tahun_ajaran', $idTahun))
                     ->ignore($kelas?->id_kelas, 'id_kelas'),
             ],
             'tingkat' => ['required', Rule::in(['X', 'XI', 'XII'])],
             'id_tahun_ajaran' => [
-                'required', 'string', 'exists:tahun_ajaran,id_tahun_ajaran',
+                'required', 'string', 'exists:tm_tahun_ajaran,id_tahun_ajaran',
                 ...($kelas ? [Rule::in([$kelas->id_tahun_ajaran])] : []),
             ],
             'is_aktif' => ['nullable', 'boolean'],
             'mapel' => ['nullable', 'array'],
-            'mapel.*' => ['required', 'string', 'distinct', 'exists:mapel,id_mapel'],
+            'mapel.*' => ['required', 'string', 'distinct', 'exists:tm_mapel,id_mapel'],
         ], [
             'nama_kelas.unique' => 'Nama kelas itu sudah ada di tahun ajaran yang sama.',
         ]);

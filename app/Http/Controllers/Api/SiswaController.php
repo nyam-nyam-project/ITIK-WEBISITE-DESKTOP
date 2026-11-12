@@ -12,6 +12,7 @@ use App\Models\RemedialSiswa;
 use App\Models\SesiKuis;
 use App\Models\Soal;
 use App\Models\User;
+use App\Services\MateriProgressService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,8 @@ use Illuminate\Validation\ValidationException;
 
 class SiswaController extends Controller
 {
+    public function __construct(private MateriProgressService $materiProgressService) {}
+
     public function materi(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -67,6 +70,12 @@ class SiswaController extends Controller
 
     public function selesaikanMateri(Request $request, Materi $materi): JsonResponse
     {
+        if ($this->materiProgressService->hasPostTestBelumDikerjakan($materi, $request->user()->id_user)) {
+            throw ValidationException::withMessages([
+                'materi' => ['Selesaikan Post-test terlebih dahulu sebelum menandai materi selesai.'],
+            ]);
+        }
+
         $progress = Progress::firstOrCreate(
             [
                 'id_materi' => $materi->id_materi,
@@ -360,6 +369,8 @@ class SiswaController extends Controller
                 'id_validator' => null,
             ]);
 
+            $this->materiProgressService->tandaiSelesaiSetelahPostTest($kuis, $user->id_user);
+
             if ($kuis->kategori === 'remedial') {
                 RemedialSiswa::query()
                     ->where('id_kuis_remedial', $kuis->id_kuis)
@@ -444,6 +455,19 @@ class SiswaController extends Controller
     private function ensureKuisIsAvailable(Kuis $kuis, User $user): void
     {
         abort_unless($kuis->status_publikasi === 'terbit' && $kuis->is_aktif, 404);
+
+        if (strtolower(trim($kuis->kategori ?? '')) === 'post-test') {
+            $materiBelumDibaca = $this->materiProgressService->findMateriBelumDibacaUntukPostTest(
+                $kuis,
+                $user->id_user
+            );
+
+            if ($materiBelumDibaca) {
+                throw ValidationException::withMessages([
+                    'kuis' => ['Buka materi "'.$materiBelumDibaca->judul.'" terlebih dahulu.'],
+                ]);
+            }
+        }
 
         if ($kuis->kategori !== 'remedial') {
             return;

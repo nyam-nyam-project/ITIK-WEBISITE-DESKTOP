@@ -85,16 +85,20 @@
                     $preTest = $item->relationLoaded('kuis')
                         ? $item->kuis->first(fn($k) => strtolower(trim($k->kategori ?? '')) === 'pre-test')
                         : null;
-                    $postTest = $item->relationLoaded('kuis')
-                        ? $item->kuis->first(fn($k) => strtolower(trim($k->kategori ?? '')) === 'post-test')
+                    $postTests = $item->relationLoaded('kuis')
+                        ? $item->kuis->filter(fn($k) => strtolower(trim($k->kategori ?? '')) === 'post-test')
                         : null;
+                    $postTest = $postTests?->first();
 
                     $preTestSelesai = $preTest && isset($kuisSelesaiIds[$preTest->id_kuis]);
-                    $materiSelesai = $prog && $prog->status === 'selesai';
-                    $postTestSelesai = $postTest && isset($kuisSelesaiIds[$postTest->id_kuis]);
+                    $postTestSelesai = $postTests && $postTests->isNotEmpty()
+                        && $postTests->every(fn($kuis) => isset($kuisSelesaiIds[$kuis->id_kuis]));
+                    $materiSelesai = $postTests && $postTests->isNotEmpty()
+                        ? $postTestSelesai
+                        : ($prog && $prog->status === 'selesai');
 
                     $isMateriTerkunci = (bool) ($preTest && !$preTestSelesai);
-                    $isPostTestTerkunci = (bool) ($postTest && !$materiSelesai);
+                    $isPostTestTerkunci = (bool) ($postTest && !$prog);
                 @endphp
                 <div class="materi-card-link">
                     <div class="materi-main-info">
@@ -123,12 +127,14 @@
 
                                 @if($isMateriTerkunci)
                                     <span class="badge badge-muted">🔒 Materi Terkunci</span>
-                                @elseif(!$prog)
-                                    <span class="badge badge-muted">Belum Mulai</span>
-                                @elseif($prog->status === 'sedang belajar')
-                                    <span class="badge badge-warning">Sedang Belajar</span>
                                 @elseif($materiSelesai)
                                     <span class="badge badge-success">✓ Materi Selesai</span>
+                                @elseif(!$prog)
+                                    <span class="badge badge-muted">Belum Mulai</span>
+                                @elseif($postTests && $postTests->isNotEmpty())
+                                    <span class="badge badge-warning">Sedang Belajar</span>
+                                @elseif($prog->status === 'sedang belajar')
+                                    <span class="badge badge-warning">Sedang Belajar</span>
                                 @else
                                     <span class="badge">{{ $prog->status }}</span>
                                 @endif
@@ -165,7 +171,7 @@
                                         Hasil Post-test
                                     </a>
                                 @elseif($isPostTestTerkunci)
-                                    <button type="button" class="btn btn-secondary btn-small" disabled title="Selesaikan materi terlebih dahulu">
+                                    <button type="button" class="btn btn-secondary btn-small" disabled title="Buka materi terlebih dahulu">
                                         🔒 Post-test
                                     </button>
                                 @else

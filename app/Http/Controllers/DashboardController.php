@@ -11,28 +11,28 @@ class DashboardController extends Controller
     {
         Kuis::sinkronisasiStatus();
 
-        $jumlahSiswa = DB::table('user')
+        $jumlahSiswa = DB::table('tm_user')
             ->where('role', 'siswa')
             ->count();
 
-        $jumlahMateri = DB::table('materi')
+        $jumlahMateri = DB::table('tm_materi')
             ->count();
 
-        $jumlahKuis = DB::table('kuis')
+        $jumlahKuis = DB::table('tm_kuis')
             ->where('is_aktif', 1)
             ->count();
 
-        $rataNilai = DB::table('mengerjakan')
+        $rataNilai = DB::table('tr_mengerjakan')
             ->whereNotNull('nilai')
             ->avg('nilai');
 
-        $kuisTerbaru = DB::table('kuis')
+        $kuisTerbaru = DB::table('tm_kuis')
             ->where('is_aktif', 1)
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
 
-        $materiTerbaru = DB::table('materi')
+        $materiTerbaru = DB::table('tm_materi')
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();

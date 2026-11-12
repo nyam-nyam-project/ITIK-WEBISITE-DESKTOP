@@ -8,7 +8,6 @@ use App\Models\Pengajaran;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -105,7 +104,7 @@ class MateriController extends Controller
             'id_mapel' => [
                 'required',
                 'string',
-                Rule::exists('mapel', 'id_mapel')->where(function ($q) use ($user) {
+                Rule::exists('tm_mapel', 'id_mapel')->where(function ($q) use ($user) {
                     $q->where('is_aktif', 1);
                     if ($user && $user->role === 'guru') {
                         $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
@@ -139,7 +138,7 @@ class MateriController extends Controller
                 ->with('error', 'Materi dengan kelas, bab, dan judul tersebut sudah ada.');
         }
 
-        $validated['id_materi'] = $this->idBerikutnya('materi', 'id_materi', 'M');
+        $validated['id_materi'] = $this->idBerikutnya('tm_materi', 'id_materi', 'M');
 
         $validated['id_user'] = Auth::user()->id_user;
 
@@ -188,7 +187,7 @@ class MateriController extends Controller
         }
 
         $mapel = Mapel::where(fn ($q) => $q->where('is_aktif', 1)
-                ->orWhere('id_mapel', $materi->id_mapel))
+            ->orWhere('id_mapel', $materi->id_mapel))
             ->when($user && $user->role === 'guru', function ($q) use ($user) {
                 $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
             })
@@ -215,7 +214,7 @@ class MateriController extends Controller
             'id_mapel' => [
                 'required',
                 'string',
-                Rule::exists('mapel', 'id_mapel')->where(function ($q) use ($user, $materi) {
+                Rule::exists('tm_mapel', 'id_mapel')->where(function ($q) use ($user, $materi) {
                     if ($user && $user->role === 'guru') {
                         $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
                     }

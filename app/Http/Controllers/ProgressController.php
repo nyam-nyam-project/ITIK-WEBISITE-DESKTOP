@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kelas;
+use App\Models\Kuis;
 use App\Models\Mapel;
 use App\Models\Materi;
+use App\Models\Mengerjakan;
 use App\Models\Progress;
+use App\Services\MateriProgressService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -21,24 +24,24 @@ class ProgressController extends Controller
     {
         $user = Auth::user();
 
-        if (! Schema::hasTable('anggota_kelas') || ! Schema::hasTable('mapel_kelas')) {
+        if (! Schema::hasTable('tp_anggota_kelas') || ! Schema::hasTable('tp_mapel_kelas')) {
             return [Mapel::pluck('id_mapel'), 'DEFAULT', false];
         }
 
-        $idKelas = \App\Models\Kelas::kelasAktifSiswa($user);
+        $idKelas = Kelas::kelasAktifSiswa($user);
 
-        if (!$idKelas) {
+        if (! $idKelas) {
             return [collect(), null, true];
         }
 
-        $mapelIds = \App\Models\Kelas::mapelUntukSiswa($user);
+        $mapelIds = Kelas::mapelUntukSiswa($user);
 
         return [$mapelIds, $idKelas, false];
     }
 
     public function index(Request $request)
     {
-        $user    = Auth::user();
+        $user = Auth::user();
         $idMapel = $request->query('mapel');
 
         [$mapelIds, $idKelas, $tanpaKelas] = $this->mapelSiswa();
@@ -52,13 +55,13 @@ class ProgressController extends Controller
         // Batasi mapelAktif hanya ke mapel kelas siswa
         $mapelAktif = Mapel::aktif()
             ->withCount('materi')
-            ->when(!$tanpaKelas, fn($q) => $q->whereIn('id_mapel', $mapelIds))
-            ->when($tanpaKelas, fn($q) => $q->whereRaw('1 = 0'))  // kosongkan jika belum punya kelas
+            ->when(! $tanpaKelas, fn ($q) => $q->whereIn('id_mapel', $mapelIds))
+            ->when($tanpaKelas, fn ($q) => $q->whereRaw('1 = 0'))  // kosongkan jika belum punya kelas
             ->orderBy('nama_mapel')
             ->get();
 
         $mapelTerpilih = null;
-        $materi        = collect();
+        $materi = collect();
         $kuisSelesaiIds = collect();
 
         if ($idMapel) {
@@ -70,18 +73,18 @@ class ProgressController extends Controller
                         'kuis' => function ($q) {
                             $q->where('is_aktif', true)
                                 ->where('status_publikasi', 'terbit');
-                        }
+                        },
                     ])
                     ->withCount(['kuis' => function ($q) {
                         $q->where('is_aktif', true)
                             ->where('status_publikasi', 'terbit');
                     }]);
 
-                if (Schema::hasTable('progress')) {
+                if (Schema::hasTable('tr_progress')) {
                     $query->with([
                         'progress' => function ($q) use ($user) {
                             $q->where('id_user', $user->id_user);
-                        }
+                        },
                     ]);
                 }
 
@@ -89,10 +92,10 @@ class ProgressController extends Controller
                     ->orderBy('judul')
                     ->get();
 
-                if ($materi->isNotEmpty() && Schema::hasTable('mengerjakan')) {
+                if ($materi->isNotEmpty() && Schema::hasTable('tr_mengerjakan')) {
                     $semuaKuisIds = $materi->pluck('kuis')->flatten()->pluck('id_kuis')->unique();
                     if ($semuaKuisIds->isNotEmpty()) {
-                        $kuisSelesaiIds = \App\Models\Mengerjakan::whereIn('id_kuis', $semuaKuisIds)
+                        $kuisSelesaiIds = Mengerjakan::whereIn('id_kuis', $semuaKuisIds)
                             ->where('id_user', $user->id_user)
                             ->where('status_pengerjaan', 'final')
                             ->pluck('id_kuis')
@@ -111,22 +114,23 @@ class ProgressController extends Controller
             'kuisSelesaiIds',
         ));
     }
+
     /**
      * Menampilkan materi untuk siswa.
      */
     public function show($idMateri)
     {
-        $user   = Auth::user();
+        $user = Auth::user();
         $materi = Materi::findOrFail($idMateri);
 
         // Tolak jika mapel materi di luar mapel kelas siswa
         [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
-        if ($tanpaKelas || !$mapelIds->contains($materi->id_mapel)) {
+        if ($tanpaKelas || ! $mapelIds->contains($materi->id_mapel)) {
             abort(403, 'Materi ini tidak termasuk dalam mata pelajaran kelasmu.');
         }
 
         // Cek apakah ada Pre-test aktif & terbit yang belum diselesaikan siswa
-        if (Schema::hasTable('mengerjakan')) {
+        if (Schema::hasTable('tr_mengerjakan')) {
             $preTestBelumSelesai = $materi->kuis()
                 ->where('is_aktif', true)
                 ->where('status_publikasi', 'terbit')
@@ -140,19 +144,19 @@ class ProgressController extends Controller
             if ($preTestBelumSelesai) {
                 return redirect()
                     ->route('siswa.materi.index', ['mapel' => $materi->id_mapel])
-                    ->with('error', 'Materi ini terkunci. Silakan kerjakan Pre-test "' . $preTestBelumSelesai->judul . '" terlebih dahulu.');
+                    ->with('error', 'Materi ini terkunci. Silakan kerjakan Pre-test "'.$preTestBelumSelesai->judul.'" terlebih dahulu.');
             }
         }
 
         $progress = Progress::firstOrCreate(
             [
                 'id_materi' => $materi->id_materi,
-                'id_user'   => $user->id_user,
+                'id_user' => $user->id_user,
             ],
             [
-                'id_progress' => 'P' . Str::upper(Str::random(10)),
-                'status'      => 'sedang belajar',
-                'tanggal'     => now()->toDateString(),
+                'id_progress' => 'P'.Str::upper(Str::random(10)),
+                'status' => 'sedang belajar',
+                'tanggal' => now()->toDateString(),
             ]
         );
 
@@ -161,32 +165,51 @@ class ProgressController extends Controller
         $kuisTerkait = $materi->kuis()
             ->where('is_aktif', true)
             ->where('status_publikasi', 'terbit')
+            ->with(['mengerjakan' => function ($query) use ($user) {
+                $query->where('id_user', $user->id_user)
+                    ->where('status_pengerjaan', 'final');
+            }])
             ->get();
+
+        $postTests = $kuisTerkait->filter(
+            fn (Kuis $kuis) => strtolower(trim($kuis->kategori ?? '')) === 'post-test'
+        );
+        $postTest = $postTests->first();
+        $postTestSelesai = $postTests->isNotEmpty()
+            && $postTests->every(fn (Kuis $kuis) => $kuis->mengerjakan->isNotEmpty());
+        $materiSelesai = $postTests->isNotEmpty()
+            ? $postTestSelesai
+            : $progress->status === 'selesai';
+        $materiProgressDibuka = $progress->exists;
 
         return view('siswa.materi.show', compact(
             'materi',
             'progress',
             'pdfUrl',
-            'kuisTerkait'
+            'kuisTerkait',
+            'postTest',
+            'postTestSelesai',
+            'materiSelesai',
+            'materiProgressDibuka'
         ));
     }
 
     /**
      * Menandai materi selesai.
      */
-    public function selesai($idMateri)
+    public function selesai($idMateri, MateriProgressService $materiProgressService)
     {
-        $user   = Auth::user();
+        $user = Auth::user();
         $materi = Materi::findOrFail($idMateri);
 
         // Tolak jika mapel materi di luar mapel kelas siswa
         [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
-        if ($tanpaKelas || !$mapelIds->contains($materi->id_mapel)) {
+        if ($tanpaKelas || ! $mapelIds->contains($materi->id_mapel)) {
             abort(403, 'Materi ini tidak termasuk dalam mata pelajaran kelasmu.');
         }
 
         // Cek apakah ada Pre-test aktif & terbit yang belum diselesaikan
-        if (Schema::hasTable('mengerjakan')) {
+        if (Schema::hasTable('tr_mengerjakan')) {
             $preTestBelumSelesai = $materi->kuis()
                 ->where('is_aktif', true)
                 ->where('status_publikasi', 'terbit')
@@ -204,14 +227,18 @@ class ProgressController extends Controller
             }
         }
 
+        if ($materiProgressService->hasPostTestBelumDikerjakan($materi, $user->id_user)) {
+            return back()->with('error', 'Selesaikan Post-test terlebih dahulu sebelum menandai materi selesai.');
+        }
+
         $progress = Progress::firstOrCreate(
             [
                 'id_materi' => $materi->id_materi,
-                'id_user'   => $user->id_user,
+                'id_user' => $user->id_user,
             ],
             [
-                'id_progress' => 'P' . Str::upper(Str::random(10)),
-                'tanggal'     => now()->toDateString(),
+                'id_progress' => 'P'.Str::upper(Str::random(10)),
+                'tanggal' => now()->toDateString(),
             ]
         );
 

@@ -7,10 +7,8 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use RuntimeException;
 
 class AuthController extends Controller
 {
@@ -71,7 +69,7 @@ class AuthController extends Controller
     //             'nullable',
     //             'email',
     //             'max:100',
-    //             Rule::unique('user', 'email')->ignore($user->id_user, 'id_user'),
+    //             Rule::unique('tm_user', 'email')->ignore($user->id_user, 'id_user'),
     //         ],
     //     ], [
     //         'nama_lengkap.required' => 'Nama lengkap wajib diisi.',
@@ -92,7 +90,6 @@ class AuthController extends Controller
     //         'data' => $this->userPayload($user->fresh()),
     //     ]);
     // }
-
 
     public function updatePassword(Request $request): JsonResponse
     {
@@ -159,7 +156,6 @@ class AuthController extends Controller
             'wajib_ganti_password' => $user->wajib_ganti_password,
         ];
     }
-
 
     private function throwLoginError(string $message): never
     {

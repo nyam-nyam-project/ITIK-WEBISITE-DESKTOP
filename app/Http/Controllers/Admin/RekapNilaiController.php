@@ -9,15 +9,16 @@ use App\Models\Mapel;
 use App\Models\TahunAjaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class RekapNilaiController extends Controller
 {
     public function index(Request $request)
     {
         $request->validate([
-            'tahun_ajaran' => ['nullable', 'string', 'exists:tahun_ajaran,id_tahun_ajaran'],
-            'mapel' => ['nullable', 'string', 'exists:mapel,id_mapel'],
-            'kuis' => ['nullable', 'string', 'exists:kuis,id_kuis'],
+            'tahun_ajaran' => ['nullable', 'string', 'exists:tm_tahun_ajaran,id_tahun_ajaran'],
+            'mapel' => ['nullable', 'string', 'exists:tm_mapel,id_mapel'],
+            'kuis' => ['nullable', 'string', 'exists:tm_kuis,id_kuis'],
         ]);
 
         $daftarTahun = TahunAjaran::orderByDesc('nama')->get();
@@ -36,7 +37,7 @@ class RekapNilaiController extends Controller
         $idKuis = $request->input('kuis');
         $kuisTerpilih = $idKuis ? $daftarKuis->firstWhere('id_kuis', $idKuis) : null;
         if ($idKuis && ! $kuisTerpilih) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'kuis' => 'Kuis tidak sesuai dengan filter tahun ajaran atau mata pelajaran.',
             ]);
         }
@@ -47,7 +48,7 @@ class RekapNilaiController extends Controller
             ->get();
 
         $rekap = $daftarKelas->map(function ($kelas) use ($kuisTerpilih, $idMapel, $idTahun) {
-            /** @var \App\Models\Kelas $kelas */
+            /** @var Kelas $kelas */
             return $this->rekapKelas($kelas, $kuisTerpilih, $idMapel, $idTahun);
         });
 
@@ -75,34 +76,34 @@ class RekapNilaiController extends Controller
     ): array {
         $kkm = $kuis?->kkm ?? 75;
 
-        $nilaiTerbaik = DB::table('mengerjakan')
-            ->join('kuis', 'kuis.id_kuis', '=', 'mengerjakan.id_kuis')
-            ->whereNotNull('mengerjakan.nilai')
-            ->where('mengerjakan.status_pengerjaan', 'final')
-            ->when($kuis, fn ($q) => $q->where('mengerjakan.id_kuis', $kuis->id_kuis))
-            ->when($idMapel, fn ($q) => $q->where('kuis.id_mapel', $idMapel))
-            ->when($idTahun, fn ($q) => $q->where('kuis.id_tahun_ajaran', $idTahun))
-            ->groupBy('mengerjakan.id_user', 'mengerjakan.id_kuis')
-            ->select('mengerjakan.id_user', 'mengerjakan.id_kuis', DB::raw('MAX(mengerjakan.nilai) AS nilai'));
+        $nilaiTerbaik = DB::table('tr_mengerjakan')
+            ->join('tm_kuis', 'tm_kuis.id_kuis', '=', 'tr_mengerjakan.id_kuis')
+            ->whereNotNull('tr_mengerjakan.nilai')
+            ->where('tr_mengerjakan.status_pengerjaan', 'final')
+            ->when($kuis, fn ($q) => $q->where('tr_mengerjakan.id_kuis', $kuis->id_kuis))
+            ->when($idMapel, fn ($q) => $q->where('tm_kuis.id_mapel', $idMapel))
+            ->when($idTahun, fn ($q) => $q->where('tm_kuis.id_tahun_ajaran', $idTahun))
+            ->groupBy('tr_mengerjakan.id_user', 'tr_mengerjakan.id_kuis')
+            ->select('tr_mengerjakan.id_user', 'tr_mengerjakan.id_kuis', DB::raw('MAX(tr_mengerjakan.nilai) AS nilai'));
 
-        $nilaiPerSiswa = DB::table('anggota_kelas')
-            ->join('user', 'user.id_user', '=', 'anggota_kelas.id_user')
+        $nilaiPerSiswa = DB::table('tp_anggota_kelas')
+            ->join('tm_user', 'tm_user.id_user', '=', 'tp_anggota_kelas.id_user')
             ->joinSub($nilaiTerbaik, 'nilai_terbaik', function ($join) {
-                $join->on('nilai_terbaik.id_user', '=', 'user.id_user');
+                $join->on('nilai_terbaik.id_user', '=', 'tm_user.id_user');
             })
-            ->where('anggota_kelas.id_kelas', $kelas->id_kelas)
-            ->where('user.role', 'siswa')
-            ->groupBy('user.id_user', 'user.nama_lengkap', 'user.nomor_induk')
+            ->where('tp_anggota_kelas.id_kelas', $kelas->id_kelas)
+            ->where('tm_user.role', 'siswa')
+            ->groupBy('tm_user.id_user', 'tm_user.nama_lengkap', 'tm_user.nomor_induk')
             ->select(
-                'user.id_user',
-                'user.nama_lengkap',
-                'user.nomor_induk',
+                'tm_user.id_user',
+                'tm_user.nama_lengkap',
+                'tm_user.nomor_induk',
                 DB::raw('AVG(nilai_terbaik.nilai) AS nilai_akhir'),
                 DB::raw('COUNT(nilai_terbaik.id_kuis) AS jumlah_kuis')
             )
             ->get();
 
-        $jumlahAnggota = DB::table('anggota_kelas')
+        $jumlahAnggota = DB::table('tp_anggota_kelas')
             ->where('id_kelas', $kelas->id_kelas)
             ->count();
 

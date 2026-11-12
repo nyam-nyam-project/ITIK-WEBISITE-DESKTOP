@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class Kelas extends Model
 {
@@ -71,34 +74,34 @@ class Kelas extends Model
     }
 
     /**
-     * Mengembalikan id_mapel dari mapel_kelas untuk kelas siswa di tahun aktif,
-     * via anggota_kelas.
+     * Mengembalikan id_mapel dari tp_mapel_kelas untuk kelas siswa di tahun aktif,
+     * via tp_anggota_kelas.
      */
-    public static function mapelUntukSiswa(User $siswa): \Illuminate\Support\Collection
+    public static function mapelUntukSiswa(User $siswa): Collection
     {
-        if (! \Illuminate\Support\Facades\Schema::hasTable('anggota_kelas') ||
-            ! \Illuminate\Support\Facades\Schema::hasTable('mapel_kelas')) {
+        if (! Schema::hasTable('tp_anggota_kelas') ||
+            ! Schema::hasTable('tp_mapel_kelas')) {
             return collect();
         }
 
         $tahunAktif = TahunAjaran::aktif();
 
-        if (! $tahunAktif || ! \Illuminate\Support\Facades\Schema::hasTable('kelas')) {
-            return \Illuminate\Support\Facades\DB::table('anggota_kelas')
-                ->join('mapel_kelas', 'anggota_kelas.id_kelas', '=', 'mapel_kelas.id_kelas')
-                ->where('anggota_kelas.id_user', $siswa->id_user)
+        if (! $tahunAktif || ! Schema::hasTable('tm_kelas')) {
+            return DB::table('tp_anggota_kelas')
+                ->join('tp_mapel_kelas', 'tp_anggota_kelas.id_kelas', '=', 'tp_mapel_kelas.id_kelas')
+                ->where('tp_anggota_kelas.id_user', $siswa->id_user)
                 ->distinct()
-                ->pluck('mapel_kelas.id_mapel');
+                ->pluck('tp_mapel_kelas.id_mapel');
         }
 
-        return \Illuminate\Support\Facades\DB::table('anggota_kelas')
-            ->join('kelas', 'anggota_kelas.id_kelas', '=', 'kelas.id_kelas')
-            ->join('mapel_kelas', 'kelas.id_kelas', '=', 'mapel_kelas.id_kelas')
-            ->where('anggota_kelas.id_user', $siswa->id_user)
-            ->where('kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran)
-            ->where('kelas.is_aktif', true)
+        return DB::table('tp_anggota_kelas')
+            ->join('tm_kelas', 'tp_anggota_kelas.id_kelas', '=', 'tm_kelas.id_kelas')
+            ->join('tp_mapel_kelas', 'tm_kelas.id_kelas', '=', 'tp_mapel_kelas.id_kelas')
+            ->where('tp_anggota_kelas.id_user', $siswa->id_user)
+            ->where('tm_kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran)
+            ->where('tm_kelas.is_aktif', true)
             ->distinct()
-            ->pluck('mapel_kelas.id_mapel');
+            ->pluck('tp_mapel_kelas.id_mapel');
     }
 
     /**
@@ -106,23 +109,23 @@ class Kelas extends Model
      */
     public static function kelasAktifSiswa(User $siswa): ?string
     {
-        if (! \Illuminate\Support\Facades\Schema::hasTable('anggota_kelas')) {
+        if (! Schema::hasTable('tp_anggota_kelas')) {
             return null;
         }
 
         $tahunAktif = TahunAjaran::aktif();
 
-        if (! $tahunAktif || ! \Illuminate\Support\Facades\Schema::hasTable('kelas')) {
-            return \Illuminate\Support\Facades\DB::table('anggota_kelas')
+        if (! $tahunAktif || ! Schema::hasTable('tm_kelas')) {
+            return DB::table('tp_anggota_kelas')
                 ->where('id_user', $siswa->id_user)
                 ->value('id_kelas');
         }
 
-        return \Illuminate\Support\Facades\DB::table('anggota_kelas')
-            ->join('kelas', 'anggota_kelas.id_kelas', '=', 'kelas.id_kelas')
-            ->where('anggota_kelas.id_user', $siswa->id_user)
-            ->where('kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran)
-            ->where('kelas.is_aktif', true)
-            ->value('kelas.id_kelas');
+        return DB::table('tp_anggota_kelas')
+            ->join('tm_kelas', 'tp_anggota_kelas.id_kelas', '=', 'tm_kelas.id_kelas')
+            ->where('tp_anggota_kelas.id_user', $siswa->id_user)
+            ->where('tm_kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran)
+            ->where('tm_kelas.is_aktif', true)
+            ->value('tm_kelas.id_kelas');
     }
 }

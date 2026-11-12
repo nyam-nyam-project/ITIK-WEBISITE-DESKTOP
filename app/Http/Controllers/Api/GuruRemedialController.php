@@ -30,7 +30,7 @@ class GuruRemedialController extends Controller
         $validated = $request->validate([
             'judul' => ['required', 'string', 'max:150'],
             'deskripsi' => ['nullable', 'string'],
-            'id_kuis_asal' => ['required', 'string', 'exists:kuis,id_kuis'],
+            'id_kuis_asal' => ['required', 'string', 'exists:tm_kuis,id_kuis'],
             'alokasi_waktu' => ['nullable', 'integer', 'min:1', 'max:300'],
             'kkm' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
@@ -125,7 +125,7 @@ class GuruRemedialController extends Controller
     {
         $validated = $request->validate([
             'id_mengerjakan' => ['required', 'array', 'min:1'],
-            'id_mengerjakan.*' => ['required', 'integer', 'distinct', 'exists:mengerjakans,id_mengerjakan'],
+            'id_mengerjakan.*' => ['required', 'integer', 'distinct', 'exists:tr_mengerjakan,id_mengerjakan'],
         ]);
 
         $ditugaskan = DB::transaction(function () use ($validated, $remedial, $request): int {

@@ -270,15 +270,15 @@ class GuruKuisController extends Controller
      */
     private function validatedKuis(Request $request, ?Kuis $kuis = null): array
     {
-        $supportsTahunAjaran = Schema::hasColumn('kuis', 'id_tahun_ajaran');
+        $supportsTahunAjaran = Schema::hasColumn('tm_kuis', 'id_tahun_ajaran');
         $idTahunAjaran = $supportsTahunAjaran ? $kuis?->id_tahun_ajaran : null;
-        if ($supportsTahunAjaran && $idTahunAjaran === null && Schema::hasTable('tahun_ajaran')) {
+        if ($supportsTahunAjaran && $idTahunAjaran === null && Schema::hasTable('tm_tahun_ajaran')) {
             $idTahunAjaran = TahunAjaran::aktif()?->id_tahun_ajaran;
         }
 
         $mapelRules = ['nullable', 'string'];
-        if (Schema::hasTable('mapel')) {
-            $mapelRules[] = Rule::exists('mapel', 'id_mapel')
+        if (Schema::hasTable('tm_mapel')) {
+            $mapelRules[] = Rule::exists('tm_mapel', 'id_mapel')
                 ->where(fn ($query) => $query
                     ->where('is_aktif', true)
                     ->when($kuis !== null, fn ($query) => $query->orWhere('id_mapel', $kuis->id_mapel)));
@@ -297,7 +297,7 @@ class GuruKuisController extends Controller
             'waktu_selesai' => ['required_if:kategori,ulangan', 'nullable', 'date'],
             'materi' => ['nullable', 'array'],
             'materi.*' => ['string', 'exists:tm_materi,id_materi'],
-            'id_kuis_asal' => ['required_if:kategori,remedial', 'nullable', 'string', 'exists:kuis,id_kuis'],
+            'id_kuis_asal' => ['required_if:kategori,remedial', 'nullable', 'string', 'exists:tm_kuis,id_kuis'],
         ]);
 
         $materiIds = $validated['materi'] ?? [];

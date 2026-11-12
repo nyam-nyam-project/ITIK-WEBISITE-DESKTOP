@@ -19,8 +19,8 @@ class SiswaController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'tahun_ajaran' => ['nullable', 'string', 'exists:tahun_ajaran,id_tahun_ajaran'],
-            'kelas' => ['nullable', 'string', 'exists:kelas,id_kelas'],
+            'tahun_ajaran' => ['nullable', 'string', 'exists:tm_tahun_ajaran,id_tahun_ajaran'],
+            'kelas' => ['nullable', 'string', 'exists:tm_kelas,id_kelas'],
             'status' => ['nullable', Rule::in(['aktif', 'nonaktif'])],
             'cari' => ['nullable', 'string', 'max:100'],
         ]);
@@ -40,9 +40,9 @@ class SiswaController extends Controller
             ->when($request->filled('kelas'), function ($q) use ($request) {
                 $q->whereExists(function ($sub) use ($request) {
                     $sub->select(DB::raw(1))
-                        ->from('anggota_kelas')
-                        ->whereColumn('anggota_kelas.id_user', 'user.id_user')
-                        ->where('anggota_kelas.id_kelas', $request->input('kelas'));
+                        ->from('tp_anggota_kelas')
+                        ->whereColumn('tp_anggota_kelas.id_user', 'tm_user.id_user')
+                        ->where('tp_anggota_kelas.id_kelas', $request->input('kelas'));
                 });
             })
             ->when($request->filled('cari'), function ($q) use ($request) {
@@ -72,11 +72,11 @@ class SiswaController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nomor_induk' => ['required', 'string', 'max:50', 'regex:/^\d+$/', 'unique:user,nomor_induk'],
+            'nomor_induk' => ['required', 'string', 'max:50', 'regex:/^\d+$/', 'unique:tm_user,nomor_induk'],
             'nama_lengkap' => ['required', 'string', 'max:100'],
             'email' => ['nullable', 'email', 'max:100'],
             'password' => ['required', 'string', 'min:6'],
-            'id_kelas' => ['nullable', 'string', Rule::exists('kelas', 'id_kelas')->where('is_aktif', 1)],
+            'id_kelas' => ['nullable', 'string', Rule::exists('tm_kelas', 'id_kelas')->where('is_aktif', 1)],
         ], [
             'nomor_induk.regex' => 'NISN hanya boleh berisi angka.',
             'nomor_induk.unique' => 'NISN itu sudah terpakai.',
@@ -84,7 +84,7 @@ class SiswaController extends Controller
 
         $siswa = DB::transaction(function () use ($validated, $request) {
             $siswa = User::create([
-                'id_user' => $this->idBerikutnya('user', 'id_user', 'U'),
+                'id_user' => $this->idBerikutnya('tm_user', 'id_user', 'U'),
                 'nomor_induk' => $validated['nomor_induk'],
                 'nama_lengkap' => $validated['nama_lengkap'],
                 'role' => 'siswa',
@@ -126,7 +126,7 @@ class SiswaController extends Controller
         $validated = $request->validate([
             'nomor_induk' => [
                 'required', 'string', 'max:50', 'regex:/^\d+$/',
-                Rule::unique('user', 'nomor_induk')->ignore($siswa->id_user, 'id_user'),
+                Rule::unique('tm_user', 'nomor_induk')->ignore($siswa->id_user, 'id_user'),
             ],
             'nama_lengkap' => ['required', 'string', 'max:100'],
             'email' => ['nullable', 'email', 'max:100'],

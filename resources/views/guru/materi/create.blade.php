@@ -63,18 +63,23 @@
                     value="{{ old('bab') }}"
                     placeholder="Contoh: Bab 1"
                 >
+                <p class="help">Bab harus unik untuk mata pelajaran dan kelas yang dipilih.</p>
                 @error('bab') <div class="error">{{ $message }}</div> @enderror
             </div>
 
             <div class="field">
                 <label for="kelas">Kelas</label>
-                <input
-                    type="text"
-                    id="kelas"
-                    name="kelas"
-                    value="{{ old('kelas') }}"
-                    placeholder="Contoh: X RPL 1"
-                >
+                <select id="kelas" name="kelas">
+                    <option value="">-- Pilih Kelas --</option>
+                    @foreach ($kelasOptions as $kelas)
+                        <option value="{{ $kelas }}" @selected(old('kelas') === $kelas)>
+                            {{ $kelas }}
+                        </option>
+                    @endforeach
+                </select>
+                @if ($kelasOptions->isEmpty())
+                    <p class="help">Belum ada kelas aktif pada tahun ajaran aktif.</p>
+                @endif
                 @error('kelas') <div class="error">{{ $message }}</div> @enderror
             </div>
         </div>

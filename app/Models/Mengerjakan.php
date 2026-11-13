@@ -67,16 +67,16 @@ class Mengerjakan extends Model
             $query->whereHas('kuis', fn (Builder $kuis) => $kuis->where('id_user', $guru->id_user))
                 ->orWhereExists(function ($subQuery) use ($guru) {
                     $subQuery->selectRaw('1')
-                        ->from('pengajaran')
-                        ->join('tm_kuis as kuis_dikelola', 'kuis_dikelola.id_mapel', '=', 'pengajaran.id_mapel')
+                        ->from('tr_pengajaran')
+                        ->join('tm_kuis as kuis_dikelola', 'kuis_dikelola.id_mapel', '=', 'tr_pengajaran.id_mapel')
                         ->whereColumn('kuis_dikelola.id_kuis', 'tr_mengerjakan.id_kuis')
-                        ->where('pengajaran.id_user', $guru->id_user)
+                        ->where('tr_pengajaran.id_user', $guru->id_user)
                         ->where(function ($assignment) {
-                            $assignment->whereNull('pengajaran.id_kelas')
+                            $assignment->whereNull('tr_pengajaran.id_kelas')
                                 ->orWhereExists(function ($classMembership) {
                                     $classMembership->selectRaw('1')
                                         ->from('tp_anggota_kelas')
-                                        ->whereColumn('tp_anggota_kelas.id_kelas', 'pengajaran.id_kelas')
+                                        ->whereColumn('tp_anggota_kelas.id_kelas', 'tr_pengajaran.id_kelas')
                                         ->whereColumn('tp_anggota_kelas.id_user', 'tr_mengerjakan.id_user');
                                 });
                         });

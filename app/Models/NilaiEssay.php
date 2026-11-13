@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class NilaiEssay extends Model
 {
-    protected $table = 'nilai_essay';
+    protected $table = 'tr_nilai_essay';
 
     protected $primaryKey = 'id_nilai_essay';
 

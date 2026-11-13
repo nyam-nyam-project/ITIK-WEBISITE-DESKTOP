@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 
 class Pengajaran extends Model
 {
-    protected $table = 'pengajaran';
+    protected $table = 'tr_pengajaran';
 
     protected $primaryKey = 'id_pengajaran';
 
@@ -45,7 +45,7 @@ class Pengajaran extends Model
      */
     public static function mapelUntukGuru(User $guru): Collection
     {
-        if (Schema::hasTable('pengajaran') === false) {
+        if (Schema::hasTable('tr_pengajaran') === false) {
             return collect();
         }
 
@@ -57,10 +57,10 @@ class Pengajaran extends Model
                 ->pluck('id_mapel');
         }
 
-        return static::join('tm_kelas', 'pengajaran.id_kelas', '=', 'tm_kelas.id_kelas')
-            ->where('pengajaran.id_user', $guru->id_user)
+        return static::join('tm_kelas', 'tr_pengajaran.id_kelas', '=', 'tm_kelas.id_kelas')
+            ->where('tr_pengajaran.id_user', $guru->id_user)
             ->where('tm_kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran)
             ->distinct()
-            ->pluck('pengajaran.id_mapel');
+            ->pluck('tr_pengajaran.id_mapel');
     }
 }

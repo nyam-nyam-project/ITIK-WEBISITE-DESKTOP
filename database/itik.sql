@@ -936,7 +936,7 @@ ALTER TABLE `tahun_ajaran`
 ALTER TABLE `user`
   ADD PRIMARY KEY (`id_user`),
   ADD UNIQUE KEY `uq_user_nomor_induk` (`nomor_induk`),
-  ADD KEY `idx_user_dibuat_oleh` (`dibuat_oleh`);
+  ADD KEY `idx_user_di  buat_oleh` (`dibuat_oleh`);
 
 --
 -- AUTO_INCREMENT for dumped tables

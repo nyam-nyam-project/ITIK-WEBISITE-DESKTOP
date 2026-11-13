@@ -122,7 +122,7 @@
                 <div class="demo-row">
                     <span class="demo-role">Admin</span>
                     <span class="demo-email">andi@sekolah.sch.id</span>
-                    <span class="demo-pass">123456</span>
+                    <span class="demo-pass">password123</span>
                 </div>
             </div>
 

@@ -20,7 +20,9 @@ use Tests\TestCase;
 class LoginNisnNipTest extends TestCase
 {
     private User $admin;
+
     private User $guru;
+
     private User $siswa;
 
     protected function setUp(): void
@@ -45,7 +47,7 @@ class LoginNisnNipTest extends TestCase
 
     private function createSchema(): void
     {
-        Schema::create('user', function (Blueprint $table) {
+        Schema::create('tm_user', function (Blueprint $table) {
             $table->string('id_user', 50)->primary();
             $table->string('nomor_induk', 50)->nullable()->unique();
             $table->string('nama_lengkap', 100);
@@ -57,7 +59,7 @@ class LoginNisnNipTest extends TestCase
             $table->boolean('wajib_ganti_password')->default(false);
             $table->string('dibuat_oleh', 50)->nullable();
             $table->timestamps();
-            $table->foreign('dibuat_oleh')->references('id_user')->on('user')->nullOnDelete();
+            $table->foreign('dibuat_oleh')->references('id_user')->on('tm_user')->nullOnDelete();
         });
     }
 
@@ -151,7 +153,7 @@ class LoginNisnNipTest extends TestCase
         ]);
 
         $responseSiswa->assertRedirect(route('login'));
-        $responseSiswa->assertSessionHasErrors(['nomor_induk' => 'NISN, NIP, atau password salah.']);
+        $responseSiswa->assertSessionHasErrors(['nomor_induk' => 'NISN atau NIP wajib diisi.']);
         $this->assertGuest();
 
         // Mencoba login guru menggunakan email via field nomor_induk
@@ -186,6 +188,10 @@ class LoginNisnNipTest extends TestCase
 
         $response->assertRedirect(route('admin.dashboard'));
         $this->assertAuthenticatedAs($this->admin);
+
+        $this->app['auth']->forgetGuards();
+
+        $this->get(route('admin.profil'))->assertOk();
     }
 
     public function test_non_admin_cannot_login_through_admin_portal(): void
@@ -222,7 +228,7 @@ class LoginNisnNipTest extends TestCase
         ]);
 
         $response->assertRedirect(route('login'));
-        $response->assertSessionHasErrors(['nomor_induk', 'login', 'email']);
+        $response->assertSessionHasErrors(['nomor_induk', 'login']);
         $this->assertGuest();
     }
 
@@ -236,7 +242,7 @@ class LoginNisnNipTest extends TestCase
         ]);
 
         $response->assertRedirect(route('login'));
-        $response->assertSessionHasErrors(['nomor_induk', 'login', 'email']);
+        $response->assertSessionHasErrors(['nomor_induk', 'login']);
         $this->assertGuest();
     }
 

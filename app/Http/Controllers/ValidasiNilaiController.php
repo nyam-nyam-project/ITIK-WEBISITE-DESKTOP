@@ -118,7 +118,7 @@ class ValidasiNilaiController extends Controller
         $kelasList = collect();
         $kelasTerpilih = null;
 
-        if (Schema::hasTable('tm_kelas') && Schema::hasTable('pengajaran')) {
+        if (Schema::hasTable('tm_kelas') && Schema::hasTable('tr_pengajaran')) {
             $kelasQuery = Kelas::aktif();
             $penugasanGlobal = Pengajaran::where('id_user', $guru->id_user)
                 ->whereNull('id_kelas')

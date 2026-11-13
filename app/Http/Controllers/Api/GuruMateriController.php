@@ -206,10 +206,31 @@ class GuruMateriController extends Controller
      */
     private function ensureUniqueMateri(array $data, ?Materi $materi = null): void
     {
+        $idMapel = $data['id_mapel'] ?? $materi?->id_mapel;
+        $kelas = array_key_exists('kelas', $data) ? $data['kelas'] : $materi?->kelas;
+        $bab = array_key_exists('bab', $data) ? $data['bab'] : $materi?->bab;
+
+        if ($bab !== null && $bab !== '') {
+            $babQuery = Materi::query()
+                ->where('id_mapel', $idMapel)
+                ->where('kelas', $kelas)
+                ->where('bab', $bab);
+
+            if ($materi) {
+                $babQuery->where('id_materi', '!=', $materi->id_materi);
+            }
+
+            if ($babQuery->exists()) {
+                throw ValidationException::withMessages([
+                    'bab' => ['Bab tersebut sudah digunakan untuk mata pelajaran dan kelas ini.'],
+                ]);
+            }
+        }
+
         $query = Materi::query()
             ->where('judul', $data['judul'])
-            ->where('kelas', $data['kelas'] ?? null)
-            ->where('bab', $data['bab'] ?? null);
+            ->where('kelas', $kelas)
+            ->where('bab', $bab);
 
         if ($materi) {
             $query->where('id_materi', '!=', $materi->id_materi);

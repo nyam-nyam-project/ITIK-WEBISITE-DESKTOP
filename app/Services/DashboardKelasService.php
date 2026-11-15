@@ -211,6 +211,82 @@ class DashboardKelasService
         ];
     }
 
+    /**
+     * @return array{
+     *     siswa: stdClass,
+     *     jumlah_materi: int,
+     *     jumlah_materi_dibaca: int,
+     *     kuis: Collection<int, stdClass>,
+     *     hasil_kuis: Collection<string, stdClass>
+     * }|null
+     */
+    public function detailSiswa(User $guru, string $idKelas, string $idMapel, string $idSiswa): ?array
+    {
+        $context = $this->contextKelas($guru, $idKelas, $idMapel);
+
+        if ($context === null) {
+            return null;
+        }
+
+        $student = DB::table('tp_anggota_kelas as anggota')
+            ->join('tm_user as siswa', 'siswa.id_user', '=', 'anggota.id_user')
+            ->where('anggota.id_kelas', $idKelas)
+            ->where('anggota.id_user', $idSiswa)
+            ->where('siswa.role', 'siswa')
+            ->select('siswa.id_user', 'siswa.nama_lengkap', 'siswa.nomor_induk')
+            ->first();
+
+        if ($student === null) {
+            return null;
+        }
+
+        $materials = DB::table('tm_materi')
+            ->where('id_mapel', $idMapel)
+            ->where(function ($query) use ($context): void {
+                $query->whereNull('kelas')
+                    ->orWhere('kelas', $context->nama_kelas)
+                    ->orWhere('kelas', $context->tingkat);
+            })
+            ->select('id_materi')
+            ->get();
+
+        $readMaterialsCount = $materials->isEmpty()
+            ? 0
+            : DB::table('tr_progress')
+                ->where('id_user', $idSiswa)
+                ->whereIn('id_materi', $materials->pluck('id_materi'))
+                ->distinct()
+                ->count('id_materi');
+
+        $quizzes = DB::table('tm_kuis')
+            ->where('id_mapel', $idMapel)
+            ->where('id_tahun_ajaran', $context->id_tahun_ajaran)
+            ->where('is_aktif', true)
+            ->select(['id_kuis', 'judul', 'kategori', 'kkm'])
+            ->orderBy('judul')
+            ->get();
+
+        $attempts = $quizzes->isEmpty()
+            ? collect()
+            : DB::table('tr_mengerjakan')
+                ->where('id_user', $idSiswa)
+                ->whereIn('id_kuis', $quizzes->pluck('id_kuis'))
+                ->where('status_pengerjaan', 'final')
+                ->groupBy('id_kuis')
+                ->select('id_kuis')
+                ->selectRaw('MAX(nilai) as nilai')
+                ->get()
+                ->keyBy('id_kuis');
+
+        return [
+            'siswa' => $student,
+            'jumlah_materi' => $materials->count(),
+            'jumlah_materi_dibaca' => $readMaterialsCount,
+            'kuis' => $quizzes,
+            'hasil_kuis' => $attempts,
+        ];
+    }
+
     private function contextKelas(User $guru, string $idKelas, string $idMapel): ?stdClass
     {
         return DB::table('tr_pengajaran as pengajaran')

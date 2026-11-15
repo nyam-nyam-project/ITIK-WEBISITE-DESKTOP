@@ -2,6 +2,10 @@
 @section('title', 'Dashboard Guru')
 @section('content')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/guru/dashboard.css') }}">
+@endpush
+
 <div class="page-heading">
     <div>
         <h1>Dashboard</h1>
@@ -14,7 +18,7 @@
     <div class="stat">
         <span class="label">Siswa</span>
         <span class="value">{{ $jumlahSiswa }}</span>
-        <small>Terdaftar di sistem</small>
+        <small>Di kelas yang diajar</small>
     </div>
     <div class="stat">
         <span class="label">Materi</span>
@@ -29,9 +33,36 @@
     <div class="stat">
         <span class="label">Rata-rata Nilai</span>
         <span class="value">{{ $rataNilai ? number_format($rataNilai, 0) : '—' }}</span>
-        <small>Dari seluruh pengerjaan</small>
+        <small>Dari kuis kelas yang diajar</small>
     </div>
 </div>
+
+<section class="card grafik-dashboard" data-grafik="{{ json_encode($grafik) }}">
+    <div class="card-header">
+        <div>
+            <h2>Monitoring Siswa</h2>
+            <p class="muted">Ringkasan nilai, ketuntasan kuis, dan progres belajar di kelas ajar.</p>
+        </div>
+    </div>
+    <div class="grafik-grid">
+        <div class="grafik-panel">
+            <h3>Nilai per Tingkat Kesulitan</h3>
+            <canvas id="grafik-nilai-per-tingkat" role="img" aria-label="Grafik nilai per tingkat kesulitan"></canvas>
+        </div>
+        <div class="grafik-panel">
+            <h3>Ketuntasan per Kuis</h3>
+            <canvas id="grafik-ketuntasan-per-kuis" role="img" aria-label="Grafik ketuntasan siswa per kuis"></canvas>
+        </div>
+        <div class="grafik-panel">
+            <h3>Progres Materi</h3>
+            <canvas id="grafik-progres-materi" role="img" aria-label="Grafik progres penyelesaian materi"></canvas>
+        </div>
+        <div class="grafik-panel">
+            <h3>Pre-test ke Post-test</h3>
+            <canvas id="grafik-pre-post-test" role="img" aria-label="Grafik perbandingan nilai pre-test dan post-test siswa"></canvas>
+        </div>
+    </div>
+</section>
 
 <div class="grid grid-2">
 
@@ -119,5 +150,10 @@
     </section>
 
 </div>
+
+@push('scripts')
+    <script src="{{ asset('js/vendor/chart.umd.min.js') }}" defer></script>
+    <script src="{{ asset('js/guru/dashboard/grafik.js') }}" defer></script>
+@endpush
 
 @endsection

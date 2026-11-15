@@ -3,47 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kuis;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use App\Services\GrafikGuruService;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function __construct(private GrafikGuruService $grafikGuruService) {}
+
+    public function index(): View
     {
         Kuis::sinkronisasiStatus();
 
-        $jumlahSiswa = DB::table('tm_user')
-            ->where('role', 'siswa')
-            ->count();
+        $guru = auth()->user();
 
-        $jumlahMateri = DB::table('tm_materi')
-            ->count();
+        abort_unless($guru instanceof User && $guru->role === 'guru', 403);
 
-        $jumlahKuis = DB::table('tm_kuis')
-            ->where('is_aktif', 1)
-            ->count();
+        $hasilDashboard = $this->grafikGuruService->ambilUntuk($guru);
+        $grafik = $hasilDashboard;
+        unset($grafik['statistik']);
 
-        $rataNilai = DB::table('tr_mengerjakan')
-            ->whereNotNull('nilai')
-            ->avg('nilai');
-
-        $kuisTerbaru = DB::table('tm_kuis')
-            ->where('is_aktif', 1)
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
-
-        $materiTerbaru = DB::table('tm_materi')
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
-
-        return view('guru.dashboard', compact(
-            'jumlahSiswa',
-            'jumlahMateri',
-            'jumlahKuis',
-            'rataNilai',
-            'kuisTerbaru',
-            'materiTerbaru'
-        ));
+        return view('guru.dashboard', $hasilDashboard['statistik'] + ['grafik' => $grafik]);
     }
 }

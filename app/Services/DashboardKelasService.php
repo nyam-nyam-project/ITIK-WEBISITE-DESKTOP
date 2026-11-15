@@ -109,6 +109,8 @@ class DashboardKelasService
             'persentase_lulus' => 0.0,
             'jumlah_lulus' => 0,
             'jumlah_dinilai' => 0,
+            'jumlah_dikerjakan' => 0,
+            'jumlah_peluang' => 0,
         ]);
 
         if ($context === null) {
@@ -122,23 +124,35 @@ class DashboardKelasService
             $categoryStats[$category] = [
                 'jumlah_lulus' => 0,
                 'jumlah_dinilai' => 0,
+                'jumlah_dikerjakan' => 0,
+                'jumlah_peluang' => 0,
             ];
         }
 
-        foreach ($data['attempts'] as $attempt) {
-            if ($attempt->nilai === null) {
-                continue;
-            }
+        foreach ($data['kuis'] as $quiz) {
+            $category = mb_strtolower(trim($quiz->kategori));
 
+            if (array_key_exists($category, $categoryStats)) {
+                $categoryStats[$category]['jumlah_peluang'] += $data['siswa']->count();
+            }
+        }
+
+        foreach ($data['attempts'] as $attempt) {
             $quiz = $data['kuis']->get($attempt->id_kuis);
 
-            if ($quiz === null || $quiz->kkm === null) {
+            if ($quiz === null) {
                 continue;
             }
 
             $category = mb_strtolower(trim($quiz->kategori));
 
             if (! array_key_exists($category, $categoryStats)) {
+                continue;
+            }
+
+            $categoryStats[$category]['jumlah_dikerjakan']++;
+
+            if ($attempt->nilai === null || $quiz->kkm === null) {
                 continue;
             }
 
@@ -154,9 +168,11 @@ class DashboardKelasService
                 $stats = $categoryStats[$row['kategori']];
                 $row['jumlah_lulus'] = $stats['jumlah_lulus'];
                 $row['jumlah_dinilai'] = $stats['jumlah_dinilai'];
-                $row['persentase_lulus'] = $stats['jumlah_dinilai'] === 0
+                $row['jumlah_dikerjakan'] = $stats['jumlah_dikerjakan'];
+                $row['jumlah_peluang'] = $stats['jumlah_peluang'];
+                $row['persentase_lulus'] = $stats['jumlah_peluang'] === 0
                     ? 0.0
-                    : round(($stats['jumlah_lulus'] / $stats['jumlah_dinilai']) * 100, 2);
+                    : round(($stats['jumlah_lulus'] / $stats['jumlah_peluang']) * 100, 2);
 
                 return (object) $row;
             });
@@ -242,11 +258,6 @@ class DashboardKelasService
 
         $materials = DB::table('tm_materi')
             ->where('id_mapel', $idMapel)
-            ->where(function ($query) use ($context): void {
-                $query->whereNull('kelas')
-                    ->orWhere('kelas', $context->nama_kelas)
-                    ->orWhere('kelas', $context->tingkat);
-            })
             ->select('id_materi')
             ->get();
 
@@ -258,12 +269,14 @@ class DashboardKelasService
                 ->distinct()
                 ->count('id_materi');
 
-        $quizzes = DB::table('tm_kuis')
-            ->where('id_mapel', $idMapel)
-            ->where('id_tahun_ajaran', $context->id_tahun_ajaran)
-            ->where('is_aktif', true)
-            ->select(['id_kuis', 'judul', 'kategori', 'kkm'])
-            ->orderBy('judul')
+        $quizzes = DB::table('tm_kuis as kuis')
+            ->join('tp_kuis_kelas as kk', 'kk.id_kuis', '=', 'kuis.id_kuis')
+            ->where('kk.id_kelas', $context->id_kelas)
+            ->where('kuis.id_mapel', $idMapel)
+            ->where('kuis.id_tahun_ajaran', $context->id_tahun_ajaran)
+            ->where('kuis.is_aktif', true)
+            ->select(['kuis.id_kuis', 'kuis.judul', 'kuis.kategori', 'kuis.kkm'])
+            ->orderBy('kuis.judul')
             ->get();
 
         $attempts = $quizzes->isEmpty()
@@ -320,11 +333,13 @@ class DashboardKelasService
     {
         $students = $this->siswaAktifUntukKelas($context->id_kelas, $cari);
         $studentIds = $students->pluck('id_user');
-        $quizzes = DB::table('tm_kuis')
-            ->where('id_mapel', $context->id_mapel)
-            ->where('id_tahun_ajaran', $context->id_tahun_ajaran)
-            ->where('is_aktif', true)
-            ->select(['id_kuis', 'kategori', 'kkm'])
+        $quizzes = DB::table('tm_kuis as kuis')
+            ->join('tp_kuis_kelas as kk', 'kk.id_kuis', '=', 'kuis.id_kuis')
+            ->where('kk.id_kelas', $context->id_kelas)
+            ->where('kuis.id_mapel', $context->id_mapel)
+            ->where('kuis.id_tahun_ajaran', $context->id_tahun_ajaran)
+            ->where('kuis.is_aktif', true)
+            ->select(['kuis.id_kuis', 'kuis.kategori', 'kuis.kkm'])
             ->get()
             ->keyBy('id_kuis');
 
@@ -341,11 +356,6 @@ class DashboardKelasService
 
         $materials = DB::table('tm_materi')
             ->where('id_mapel', $context->id_mapel)
-            ->where(function ($query) use ($context): void {
-                $query->whereNull('kelas')
-                    ->orWhere('kelas', $context->nama_kelas)
-                    ->orWhere('kelas', $context->tingkat);
-            })
             ->select('id_materi')
             ->get();
 

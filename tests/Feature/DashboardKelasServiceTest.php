@@ -72,6 +72,12 @@ class DashboardKelasServiceTest extends TestCase
             $table->unique(['id_kelas', 'id_user']);
         });
 
+        Schema::create('tp_kuis_kelas', function (Blueprint $table): void {
+            $table->string('id_kuis', 50);
+            $table->string('id_kelas', 50);
+            $table->primary(['id_kuis', 'id_kelas']);
+        });
+
         Schema::create('tm_kuis', function (Blueprint $table): void {
             $table->string('id_kuis', 50)->primary();
             $table->string('judul', 150);
@@ -225,12 +231,61 @@ class DashboardKelasServiceTest extends TestCase
 
         $this->assertSame(
             [
-                ['kategori' => 'post-test', 'persentase_lulus' => 50.0, 'jumlah_lulus' => 1, 'jumlah_dinilai' => 2],
-                ['kategori' => 'pre-test', 'persentase_lulus' => 50.0, 'jumlah_lulus' => 1, 'jumlah_dinilai' => 2],
-                ['kategori' => 'kuis harian', 'persentase_lulus' => 0.0, 'jumlah_lulus' => 0, 'jumlah_dinilai' => 0],
-                ['kategori' => 'ulangan', 'persentase_lulus' => 0.0, 'jumlah_lulus' => 0, 'jumlah_dinilai' => 0],
+                ['kategori' => 'post-test', 'persentase_lulus' => 50.0, 'jumlah_lulus' => 1, 'jumlah_dinilai' => 2, 'jumlah_dikerjakan' => 2, 'jumlah_peluang' => 2],
+                ['kategori' => 'pre-test', 'persentase_lulus' => 50.0, 'jumlah_lulus' => 1, 'jumlah_dinilai' => 2, 'jumlah_dikerjakan' => 2, 'jumlah_peluang' => 2],
+                ['kategori' => 'kuis harian', 'persentase_lulus' => 0.0, 'jumlah_lulus' => 0, 'jumlah_dinilai' => 0, 'jumlah_dikerjakan' => 0, 'jumlah_peluang' => 2],
+                ['kategori' => 'ulangan', 'persentase_lulus' => 0.0, 'jumlah_lulus' => 0, 'jumlah_dinilai' => 0, 'jumlah_dikerjakan' => 0, 'jumlah_peluang' => 2],
             ],
             $categories->map(fn (object $category): array => (array) $category)->all()
+        );
+    }
+
+    public function test_category_progress_shows_one_of_three_separately_from_pass_rate(): void
+    {
+        $this->seedBase();
+        $this->assign('G001', 'K001', 'MP001');
+        $this->addStudent('S001', 'Alya', 'K001');
+        $this->addQuiz('Q001', 'Kuis Harian 1', 'MP001', 70, 'kuis harian');
+        $this->addQuiz('Q002', 'Kuis Harian 2', 'MP001', 70, 'kuis harian');
+        $this->addQuiz('Q003', 'Kuis Harian 3', 'MP001', 70, 'kuis harian');
+        $this->addQuiz('Q004', 'Post Test Essay', 'MP001', 70, 'post-test');
+        $this->addAttempt('Q001', 'S001', 80, 'final');
+        $this->addAttempt('Q002', 'S001', 100, 'dibatalkan');
+        $this->addAttempt('Q004', 'S001', null, 'final');
+
+        $categories = app(DashboardKelasService::class)
+            ->kelulusanPerKategori($this->guru('G001'), 'K001', 'MP001')
+            ->keyBy('kategori');
+
+        $this->assertSame(
+            [
+                'persentase_lulus' => 33.33,
+                'jumlah_lulus' => 1,
+                'jumlah_dinilai' => 1,
+                'jumlah_dikerjakan' => 1,
+                'jumlah_peluang' => 3,
+            ],
+            [
+                'persentase_lulus' => $categories['kuis harian']->persentase_lulus,
+                'jumlah_lulus' => $categories['kuis harian']->jumlah_lulus,
+                'jumlah_dinilai' => $categories['kuis harian']->jumlah_dinilai,
+                'jumlah_dikerjakan' => $categories['kuis harian']->jumlah_dikerjakan,
+                'jumlah_peluang' => $categories['kuis harian']->jumlah_peluang,
+            ]
+        );
+        $this->assertSame(
+            [
+                'persentase_lulus' => 0.0,
+                'jumlah_dinilai' => 0,
+                'jumlah_dikerjakan' => 1,
+                'jumlah_peluang' => 1,
+            ],
+            [
+                'persentase_lulus' => $categories['post-test']->persentase_lulus,
+                'jumlah_dinilai' => $categories['post-test']->jumlah_dinilai,
+                'jumlah_dikerjakan' => $categories['post-test']->jumlah_dikerjakan,
+                'jumlah_peluang' => $categories['post-test']->jumlah_peluang,
+            ]
         );
     }
 
@@ -313,8 +368,14 @@ class DashboardKelasServiceTest extends TestCase
         ]);
     }
 
-    private function addQuiz(string $id, string $title, string $subjectId, float $kkm, string $category): void
-    {
+    private function addQuiz(
+        string $id,
+        string $title,
+        string $subjectId,
+        float $kkm,
+        string $category,
+        string $classId = 'K001'
+    ): void {
         DB::table('tm_kuis')->insert([
             'id_kuis' => $id,
             'judul' => $title,
@@ -327,6 +388,34 @@ class DashboardKelasServiceTest extends TestCase
             'status_publikasi' => 'terbit',
             'is_aktif' => true,
         ]);
+
+        DB::table('tp_kuis_kelas')->insert([
+            'id_kuis' => $id,
+            'id_kelas' => $classId,
+        ]);
+    }
+
+    public function test_quiz_with_same_subject_not_linked_to_class_is_excluded(): void
+    {
+        $this->seedBase();
+        $this->assign('G001', 'K001', 'MP001');
+        $this->addStudent('S001', 'Alya', 'K001');
+
+        // Kuis 1 untuk K001
+        $this->addQuiz('Q001', 'Kuis K001', 'MP001', 70, 'kuis harian', 'K001');
+        // Kuis 2 untuk K002 (bukan K001)
+        $this->addQuiz('Q002', 'Kuis K002', 'MP001', 70, 'kuis harian', 'K002');
+
+        $summary = app(DashboardKelasService::class)
+            ->daftarSiswa($this->guru('G001'), 'K001', 'MP001');
+
+        $this->assertSame(1, $summary->first()->jumlah_kuis_total);
+
+        $categories = app(DashboardKelasService::class)
+            ->kelulusanPerKategori($this->guru('G001'), 'K001', 'MP001')
+            ->keyBy('kategori');
+
+        $this->assertSame(1, $categories['kuis harian']->jumlah_peluang);
     }
 
     private function addAttempt(

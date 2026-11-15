@@ -54,10 +54,30 @@ class DashboardController extends Controller
         $cari = trim($filters['cari'] ?? '');
         $idKelas = $kelasDipilih->id_kelas;
         $idMapel = $kelasDipilih->id_mapel;
+        $daftarSiswa = $this->dashboardKelasService->daftarSiswa($guru, $idKelas, $idMapel, $cari);
+
+        $rataRataMateri = $daftarSiswa->isEmpty()
+            ? 0.0
+            : round((float) $daftarSiswa->avg('persentase_materi_dibaca'), 0);
+        $radiusCincin = 42;
+        $kelilingCincin = round(2 * M_PI * $radiusCincin, 2);
+        $offsetCincin = round($kelilingCincin * (1 - ($rataRataMateri / 100)), 2);
+
+        $progresKelas = [
+            'persentase_materi' => $rataRataMateri,
+            'keliling_cincin' => $kelilingCincin,
+            'offset_cincin' => $offsetCincin,
+        ];
+
         $kategoriKelulusan = $this->dashboardKelasService
             ->kelulusanPerKategori($guru, $idKelas, $idMapel)
             ->each(static function (stdClass $kategori): void {
                 $kategori->bar_width = max(0, min(100, $kategori->persentase_lulus));
+                $kategori->jumlah_menunggu = max(0, $kategori->jumlah_dikerjakan - $kategori->jumlah_dinilai);
+                $kategori->jumlah_belum = max(0, $kategori->jumlah_dinilai - $kategori->jumlah_lulus);
+                $kategori->persentase_progres = $kategori->jumlah_peluang === 0
+                    ? 0.0
+                    : round(($kategori->jumlah_dikerjakan / $kategori->jumlah_peluang) * 100, 1);
             });
         $detailSiswa = null;
 
@@ -80,7 +100,8 @@ class DashboardController extends Controller
             'mapelUntukKelas' => $kelasUntukGuru->where('id_kelas', $idKelas)->unique('id_mapel'),
             'cari' => $cari,
             'ringkasan' => $this->dashboardKelasService->ringkasanKelas($guru, $idKelas, $idMapel),
-            'daftarSiswa' => $this->dashboardKelasService->daftarSiswa($guru, $idKelas, $idMapel, $cari),
+            'daftarSiswa' => $daftarSiswa,
+            'progresKelas' => $progresKelas,
             'kategoriKelulusan' => $kategoriKelulusan,
             'remedial' => $this->dashboardKelasService->remedialKelas($guru, $idKelas, $idMapel),
             'detailSiswa' => $detailSiswa,
@@ -102,7 +123,7 @@ class DashboardController extends Controller
      *     persentase_materi: float,
      *     keliling_cincin: float,
      *     offset_cincin: float,
-     *     progres_kategori: Collection<int, array{kategori: string, jumlah_kuis: int, dikerjakan: int, lulus: int, belum: int}>,
+     *     progres_kategori: Collection<int, array{kategori: string, jumlah_kuis: int, dikerjakan: int, lulus: int, belum: int, menunggu: int}>,
      *     grafik_nilai: array{lebar: int, tinggi: int, kiri: int, dasar: int, ticks: array<int, array{nilai: int, y: int}>, points: array<int, array<string, mixed>>, pesan: string|null}
      * }
      */
@@ -120,6 +141,7 @@ class DashboardController extends Controller
             ->map(function (Collection $quizzes, string $category) use ($detail): array {
                 $attemptedCount = 0;
                 $passedCount = 0;
+                $pendingCount = 0;
 
                 foreach ($quizzes as $quiz) {
                     $attempt = $detail['hasil_kuis']->get($quiz->id_kuis);
@@ -129,6 +151,10 @@ class DashboardController extends Controller
                     }
 
                     $attemptedCount++;
+
+                    if ($attempt->nilai === null) {
+                        $pendingCount++;
+                    }
 
                     if (
                         $attempt->nilai !== null
@@ -144,7 +170,8 @@ class DashboardController extends Controller
                     'jumlah_kuis' => $quizzes->count(),
                     'dikerjakan' => $attemptedCount,
                     'lulus' => $passedCount,
-                    'belum' => $attemptedCount - $passedCount,
+                    'menunggu' => $pendingCount,
+                    'belum' => $attemptedCount - $passedCount - $pendingCount,
                 ];
             })
             ->values();

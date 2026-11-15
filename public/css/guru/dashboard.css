@@ -1,38 +1,128 @@
-.grafik-dashboard {
-    margin-bottom: 22px;
+.dashboard-heading {
+    align-items: center;
 }
 
-.grafik-grid {
+.dashboard-heading__filters {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: min(100%, 620px);
+}
+
+.dashboard-heading__filters .field {
+    flex: 1 1 180px;
+    margin-bottom: 0;
+}
+
+.dashboard-kelas-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-search {
+    padding: 18px 22px;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    vertical-align: middle;
+}
+
+.dashboard-table td:first-child {
+    min-width: 190px;
+}
+
+.dashboard-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.dashboard-status--perlu-dibantu {
+    background: #fff0f2;
+    color: #96293b;
+}
+
+.dashboard-status--belum-mulai {
+    background: #fff7e8;
+    color: #8a4d08;
+}
+
+.dashboard-status--lancar {
+    background: #e8f5ed;
+    color: #24603e;
+}
+
+.dashboard-category-list {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
-    margin-top: 18px;
 }
 
-.grafik-panel {
-    min-width: 0;
-    padding: 18px;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    background: #fff;
+.dashboard-category__label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 7px;
 }
 
-.grafik-panel h3 {
-    margin: 0 0 14px;
-    font-size: 15px;
+.dashboard-category__label span {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
 }
 
-.grafik-panel canvas {
-    width: 100% !important;
-    height: 280px !important;
+.dashboard-bar {
+    height: 12px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #f0eff4;
 }
 
-@media (max-width: 800px) {
-    .grafik-grid {
-        grid-template-columns: minmax(0, 1fr);
+.dashboard-bar progress {
+    display: block;
+    width: 100%;
+    height: 12px;
+    border: 0;
+    appearance: none;
+    background: transparent;
+}
+
+.dashboard-bar progress::-webkit-progress-bar {
+    border-radius: 999px;
+    background: transparent;
+}
+
+.dashboard-bar progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: var(--purple);
+}
+
+.dashboard-bar progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: var(--purple);
+}
+
+.dashboard-remedial .card-header {
+    margin-bottom: 0;
+}
+
+@media (max-width: 760px) {
+    .dashboard-heading__filters {
+        width: 100%;
     }
 
-    .grafik-panel canvas {
-        height: 250px !important;
+    .dashboard-heading__filters .field {
+        flex-basis: 100%;
+    }
+
+    .dashboard-heading__filters .btn {
+        width: 100%;
+    }
+
+    .dashboard-kelas-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }

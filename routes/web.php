@@ -1,29 +1,33 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\PasswordController;
-use App\Http\Controllers\MateriController;
-use App\Http\Controllers\KuisController;
-use App\Http\Controllers\SoalController;
-use App\Http\Controllers\SiswaKuisController;
-use App\Http\Controllers\SiswaDashboardController;
-use App\Http\Controllers\ValidasiNilaiController;
-use App\Http\Controllers\RemedialSiswaController;
-use App\Http\Controllers\RemedialController;
-use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\TahunAjaranController;
-use App\Http\Controllers\Admin\MapelController;
-use App\Http\Controllers\Admin\KelasController;
-use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\GuruController;
+use App\Http\Controllers\Admin\KelasController;
+use App\Http\Controllers\Admin\MapelController;
 use App\Http\Controllers\Admin\PengajaranController;
 use App\Http\Controllers\Admin\RekapNilaiController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\SiswaController;
+use App\Http\Controllers\Admin\TahunAjaranController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KuisController;
+use App\Http\Controllers\MateriController;
+use App\Http\Controllers\PasswordController;
+use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\RemedialController;
+use App\Http\Controllers\RemedialSiswaController;
+use App\Http\Controllers\SiswaDashboardController;
+use App\Http\Controllers\SiswaKuisController;
+use App\Http\Controllers\SoalController;
+use App\Http\Controllers\ValidasiNilaiController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return redirect()->route('login');
 });
 Route::get('/dashboard', function () {
     if (auth()->user()->role === 'admin') {
@@ -50,7 +54,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/profil/password', [PasswordController::class, 'updateProfilPassword'])->name('profil.password');
 });
 
-
 // =====================================================
 // UMUM - GUEST
 // =====================================================
@@ -70,7 +73,6 @@ Route::post('/admin/login', [AuthController::class, 'adminLogin'])
 Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
 
-
 // =====================================================
 // GURU
 // =====================================================
@@ -85,7 +87,6 @@ Route::middleware(['auth', 'role:guru'])->group(function () {
 
 });
 
-
 // =====================================================
 // GURU - NILAI & REMEDIAL
 // =====================================================
@@ -98,7 +99,7 @@ Route::middleware(['auth', 'role:guru'])
         // -------------------------
         // VALIDASI NILAI
         // -------------------------
-    
+
         Route::get('/nilai', [ValidasiNilaiController::class, 'index'])
             ->name('nilai.index');
 
@@ -117,11 +118,10 @@ Route::middleware(['auth', 'role:guru'])
         Route::post('/nilai/{mengerjakan}/remedial', [ValidasiNilaiController::class, 'tugaskanRemedial'])
             ->name('nilai.remedial');
 
-
         // -------------------------
         // REMEDIAL
         // -------------------------
-    
+
         Route::get('/remedial', [RemedialController::class, 'index'])
             ->name('remedial.index');
 
@@ -140,7 +140,6 @@ Route::middleware(['auth', 'role:guru'])
         Route::get('/remedial/{id}', [RemedialController::class, 'show'])
             ->name('remedial.show');
     });
-
 
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
@@ -185,10 +184,9 @@ Route::middleware(['auth', 'role:guru'])->group(function () {
     Route::resource('kuis.soal', SoalController::class)
         ->parameters([
             'kuis' => 'kuis',
-            'soal' => 'soal'
+            'soal' => 'soal',
         ]);
 });
-
 
 // =====================================================
 // SISWA
@@ -205,7 +203,7 @@ Route::middleware(['auth', 'role:siswa'])
         // -------------------------
         // MATERI
         // -------------------------
-    
+
         Route::get('/materi', [ProgressController::class, 'index'])
             ->name('materi.index');
 
@@ -218,7 +216,7 @@ Route::middleware(['auth', 'role:siswa'])
         // -------------------------
         // KUIS
         // -------------------------
-    
+
         Route::get('/kuis', [SiswaKuisController::class, 'index'])
             ->name('kuis.index');
 
@@ -240,21 +238,19 @@ Route::middleware(['auth', 'role:siswa'])
         Route::get('/kuis/{kuis}/hasil', [SiswaKuisController::class, 'hasil'])
             ->name('kuis.hasil');
 
-
         // -------------------------
         // NILAI
         // -------------------------
-    
+
         Route::get('/nilai', [SiswaKuisController::class, 'daftarNilai'])
             ->name('nilai');
         Route::get('/nilai/semua', [SiswaKuisController::class, 'daftarNilai'])
             ->name('nilai.index');
 
-
         // -------------------------
         // REMEDIAL SISWA
         // -------------------------
-    
+
         Route::get('/remedial', [RemedialSiswaController::class, 'index'])
             ->name('remedial.index');
 

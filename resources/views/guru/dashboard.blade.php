@@ -326,56 +326,6 @@
         </section>
     @endif
 
-    <section class="card dashboard-categories">
-        <div class="card-header">
-            <div>
-                <h2>Kelulusan per kategori</h2>
-                <p class="muted">Kelulusan dihitung terhadap total kesempatan kuis aktif di kelas.</p>
-            </div>
-        </div>
-        <div class="dashboard-category-list">
-            @foreach($kategoriKelulusan as $kategori)
-                <div class="dashboard-category">
-                    <div class="dashboard-category__label">
-                        <strong>{{ ucfirst($kategori->kategori) }}</strong>
-                        <span>{{ number_format($kategori->persentase_lulus, 0) }}%</span>
-                    </div>
-                    <div class="dashboard-bar">
-                        <progress max="100" value="{{ $kategori->bar_width }}" aria-label="Kelulusan {{ $kategori->kategori }}">
-                            {{ $kategori->persentase_lulus }}%
-                        </progress>
-                    </div>
-                    <p class="dashboard-category__pass-detail muted">
-                        @if($kategori->jumlah_dinilai > 0)
-                            {{ $kategori->jumlah_lulus }} dari {{ $kategori->jumlah_dinilai }} pengerjaan dinilai lulus
-                        @else
-                            Belum ada pengerjaan yang dinilai.
-                        @endif
-                    </p>
-                    <div class="dashboard-category__completion">
-                        <div class="dashboard-category__completion-label">
-                            <span>Progres pengerjaan</span>
-                            <strong>{{ $kategori->jumlah_dikerjakan }} dari {{ $kategori->jumlah_peluang }} kesempatan</strong>
-                        </div>
-                        @if($kategori->jumlah_peluang > 0)
-                            <div class="dashboard-bar dashboard-bar--completion">
-                                <progress
-                                    max="{{ $kategori->jumlah_peluang }}"
-                                    value="{{ $kategori->jumlah_dikerjakan }}"
-                                    aria-label="Progres pengerjaan {{ $kategori->kategori }}"
-                                >
-                                    {{ $kategori->jumlah_dikerjakan }} dari {{ $kategori->jumlah_peluang }}
-                                </progress>
-                            </div>
-                        @else
-                            <p class="muted">Tidak ada kesempatan pengerjaan pada kategori ini.</p>
-                        @endif
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </section>
-
     <section class="card dashboard-remedial">
         <div class="card-header">
             <div>

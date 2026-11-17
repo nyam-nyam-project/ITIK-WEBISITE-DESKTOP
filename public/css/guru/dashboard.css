@@ -267,21 +267,21 @@
     }
 }
 
-/* Card Progres Kelas (Desain Gelap ala Foto) */
+/* Card Progres Kelas (Harmonis dengan Tema Putih & Ungu ITIK) */
 .dashboard-progres-card {
-    background: #15171e;
-    border: 1px solid #232733;
+    background: white;
+    border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 24px;
-    color: #f1f5f9;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    padding: 24px 28px;
+    color: var(--ink);
+    box-shadow: 0 4px 20px #29263d04;
     margin-bottom: 22px;
 }
 
 .dashboard-progres-card__body {
     display: grid;
-    grid-template-columns: minmax(140px, 180px) minmax(0, 1fr);
-    gap: 32px;
+    grid-template-columns: minmax(130px, 160px) minmax(0, 1fr);
+    gap: 36px;
     align-items: center;
 }
 
@@ -295,44 +295,44 @@
 
 .dashboard-progres-ring {
     display: block;
-    width: 130px;
-    height: 130px;
+    width: 120px;
+    height: 120px;
     max-width: 100%;
 }
 
 .dashboard-progres-ring__bg {
-    stroke: #222634;
+    stroke: var(--purple-light);
 }
 
 .dashboard-progres-ring__val {
-    stroke: #2563eb;
+    stroke: var(--purple);
     transition: stroke-dashoffset 0.4s ease;
 }
 
 .dashboard-progres-ring__text {
-    fill: #ffffff;
-    font-size: 22px;
+    fill: var(--purple);
+    font-size: 24px;
     font-weight: 700;
     font-family: inherit;
 }
 
 .dashboard-progres-ring__caption {
     margin-top: 10px;
-    color: #94a3b8;
+    color: var(--muted);
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .dashboard-progres-card__title {
-    color: #94a3b8;
-    font-size: 14px;
-    font-weight: 500;
-    margin: 0 0 18px 0;
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
 }
 
 .dashboard-progres-card__list {
     display: grid;
-    gap: 16px;
+    gap: 14px;
 }
 
 .dashboard-progres-row__meta {
@@ -340,33 +340,33 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
     font-size: 13.5px;
 }
 
 .dashboard-progres-row__name {
-    color: #ffffff;
+    color: var(--ink);
     font-weight: 600;
 }
 
 .dashboard-progres-row__numbers {
-    color: #94a3b8;
+    color: var(--muted);
     font-variant-numeric: tabular-nums;
     font-size: 13px;
 }
 
 .dashboard-progres-row__numbers .text-lulus {
-    color: #22c55e;
+    color: #15803d;
     font-weight: 600;
 }
 
 .dashboard-progres-row__numbers .text-menunggu {
-    color: #f59e0b;
+    color: #b45309;
     font-weight: 600;
 }
 
 .dashboard-progres-row__numbers .text-belum {
-    color: #ef4444;
+    color: #b91c1c;
     font-weight: 600;
 }
 
@@ -374,7 +374,7 @@
     height: 8px;
     border-radius: 999px;
     overflow: hidden;
-    background: #222634;
+    background: #f0eff4;
 }
 
 .dashboard-progres-track progress {
@@ -393,10 +393,10 @@
 
 .dashboard-progres-track progress::-webkit-progress-value {
     border-radius: 999px;
-    background: #2563eb;
+    background: var(--purple);
 }
 
 .dashboard-progres-track progress::-moz-progress-bar {
     border-radius: 999px;
-    background: #2563eb;
+    background: var(--purple);
 }

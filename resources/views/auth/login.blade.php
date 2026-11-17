@@ -29,7 +29,7 @@
                 </div>
 
                 <div class="logo-text">
-                    <h2>ITIK</h2>
+                    <h2>I - TIK</h2>
                     <span>Media Pembelajaran</span>
                 </div>
 
@@ -38,8 +38,7 @@
             <div class="welcome">
 
                 <h1>
-                    Selamat Datang<br>
-                    Kembali 👋
+                    Selamat Datang
                 </h1>
 
                 <p>

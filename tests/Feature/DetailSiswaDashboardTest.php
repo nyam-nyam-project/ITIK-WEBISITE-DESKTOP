@@ -75,6 +75,12 @@ class DetailSiswaDashboardTest extends TestCase
             $table->unique(['id_kelas', 'id_user']);
         });
 
+        Schema::create('tp_kuis_kelas', function (Blueprint $table): void {
+            $table->string('id_kuis', 50);
+            $table->string('id_kelas', 50);
+            $table->primary(['id_kuis', 'id_kelas']);
+        });
+
         Schema::create('tm_kuis', function (Blueprint $table): void {
             $table->string('id_kuis', 50)->primary();
             $table->string('judul', 150);
@@ -274,7 +280,7 @@ class DetailSiswaDashboardTest extends TestCase
         ]);
     }
 
-    private function addQuiz(string $id, string $title, ?float $kkm): void
+    private function addQuiz(string $id, string $title, ?float $kkm, string $classId = 'K001'): void
     {
         DB::table('tm_kuis')->insert([
             'id_kuis' => $id,
@@ -288,6 +294,24 @@ class DetailSiswaDashboardTest extends TestCase
             'status_publikasi' => 'terbit',
             'is_aktif' => true,
         ]);
+
+        DB::table('tp_kuis_kelas')->insert([
+            'id_kuis' => $id,
+            'id_kelas' => $classId,
+        ]);
+    }
+
+    public function test_pending_essay_quiz_displays_as_menunggu_penilaian_not_belum_lulus(): void
+    {
+        $this->seedDashboard();
+        $this->addQuiz('Q001', 'Kuis Essay Pending', 70);
+        $this->addAttempt('Q001', 'S001', null);
+
+        $this->actingAs($this->guru())
+            ->get($this->detailUrl())
+            ->assertOk()
+            ->assertSee('1 menunggu penilaian')
+            ->assertDontSee('1 belum');
     }
 
     private function addAttempt(string $quizId, string $studentId, ?float $score): void

@@ -75,6 +75,12 @@ class DashboardKelasPageTest extends TestCase
             $table->unique(['id_kelas', 'id_user']);
         });
 
+        Schema::create('tp_kuis_kelas', function (Blueprint $table): void {
+            $table->string('id_kuis', 50);
+            $table->string('id_kelas', 50);
+            $table->primary(['id_kuis', 'id_kelas']);
+        });
+
         Schema::create('tm_kuis', function (Blueprint $table): void {
             $table->string('id_kuis', 50)->primary();
             $table->string('judul', 150);
@@ -161,8 +167,11 @@ class DashboardKelasPageTest extends TestCase
             ->assertSee('112233')
             ->assertSee('1 dari 2')
             ->assertSee('Rata-rata kelas')
-            ->assertSee('Kelulusan per kategori')
-            ->assertSee('<progress max="100" value="100"', false)
+            ->assertSee('Materi dibaca')
+            ->assertSee('Progres kuis per kategori')
+            ->assertSee('dashboard-progres-card')
+            ->assertSee('1 dari 1')
+            ->assertSee('1 lulus')
             ->assertSee('Remedial')
             ->assertDontSee('Budi Kelas Dua')
             ->assertSee('css/guru/dashboard.css')
@@ -290,8 +299,13 @@ class DashboardKelasPageTest extends TestCase
         ]);
     }
 
-    private function addQuiz(string $id, string $title, string $subjectId, string $category = 'kuis harian'): void
-    {
+    private function addQuiz(
+        string $id,
+        string $title,
+        string $subjectId,
+        string $category = 'kuis harian',
+        string $classId = 'K001'
+    ): void {
         DB::table('tm_kuis')->insert([
             'id_kuis' => $id,
             'judul' => $title,
@@ -303,6 +317,11 @@ class DashboardKelasPageTest extends TestCase
             'id_user' => 'G001',
             'status_publikasi' => 'terbit',
             'is_aktif' => true,
+        ]);
+
+        DB::table('tp_kuis_kelas')->insert([
+            'id_kuis' => $id,
+            'id_kelas' => $classId,
         ]);
     }
 

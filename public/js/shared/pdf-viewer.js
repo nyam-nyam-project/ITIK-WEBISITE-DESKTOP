@@ -1,76 +1,66 @@
-const url = document.querySelector('.pdf-viewer-container').dataset.pdfUrl;
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+(function () {
+    const container = document.querySelector('.pdf-viewer-container');
+    if (!container) return;
 
-let pdfDoc = null,
-    pageNum = 1,
-    pageRendering = false,
-    pageNumPending = null,
-    scale = 1.3,
-    canvas = document.getElementById('pdf-canvas'),
-    ctx = canvas.getContext('2d'),
-    loadingEl = document.getElementById('pdf-loading'),
-    prevBtn = document.getElementById('prev-page'),
-    nextBtn = document.getElementById('next-page'),
-    pageNumEl = document.getElementById('page_num'),
-    pageCountEl = document.getElementById('page_count');
+    const url = container.dataset.pdfUrl;
+    const wrapper = document.getElementById('pdf-canvas-wrapper');
+    const loadingEl = document.getElementById('pdf-loading');
+    const statusEl = document.getElementById('pdf-page-status');
+    const fullscreenBtn = document.getElementById('pdf-fullscreen');
 
-function renderPage(num) {
-    pageRendering = true;
-    pdfDoc.getPage(num).then(function(page) {
-        const viewport = page.getViewport({ scale: scale });
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        const renderContext = {
-            canvasContext: ctx,
-            viewport: viewport
-        };
-        const renderTask = page.render(renderContext);
+    pdfjsLib
+        .getDocument(url)
+        .promise.then(function (pdfDoc) {
+            const totalPages = pdfDoc.numPages;
 
-        renderTask.promise.then(function() {
-            pageRendering = false;
-            if (loadingEl) loadingEl.classList.add('u-display-none');
-            canvas.classList.remove('u-display-none');
-            canvas.classList.add('u-display-block');
+            if (statusEl) statusEl.textContent = totalPages + ' halaman';
 
-            if (pageNumPending !== null) {
-                renderPage(pageNumPending);
-                pageNumPending = null;
+            const renderPage = function (pageIndex) {
+                return pdfDoc.getPage(pageIndex).then(function (page) {
+                    const scale = 1.5;
+                    const viewport = page.getViewport({ scale: scale });
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'pdf-page-canvas';
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    wrapper.appendChild(canvas);
+
+                    return page.render({
+                        canvasContext: canvas.getContext('2d'),
+                        viewport: viewport,
+                    }).promise;
+                });
+            };
+
+            const renderAll = function (index) {
+                if (index > totalPages) {
+                    if (loadingEl) loadingEl.style.display = 'none';
+                    return;
+                }
+                renderPage(index).then(function () {
+                    renderAll(index + 1);
+                });
+            };
+
+            renderAll(1);
+        })
+        .catch(function () {
+            if (loadingEl) {
+                loadingEl.textContent =
+                    'Gagal memuat pratinjau PDF. Anda dapat membuka PDF secara langsung di tab baru.';
             }
         });
-    });
 
-    pageNumEl.textContent = num;
-    prevBtn.disabled = num <= 1;
-    nextBtn.disabled = num >= pdfDoc.numPages;
-}
-
-function queueRenderPage(num) {
-    if (pageRendering) {
-        pageNumPending = num;
-    } else {
-        renderPage(num);
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', function () {
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+                container.webkitRequestFullscreen();
+            }
+        });
     }
-}
-
-prevBtn.addEventListener('click', function() {
-    if (pageNum <= 1) return;
-    pageNum--;
-    queueRenderPage(pageNum);
-});
-
-nextBtn.addEventListener('click', function() {
-    if (pageNum >= pdfDoc.numPages) return;
-    pageNum++;
-    queueRenderPage(pageNum);
-});
-
-pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
-    pdfDoc = pdfDoc_;
-    pageCountEl.textContent = pdfDoc.numPages;
-    renderPage(pageNum);
-}).catch(function(err) {
-    if (loadingEl) {
-        loadingEl.textContent = 'Gagal memuat pratinjau PDF. Anda dapat membuka PDF secara langsung di tab baru.';
-    }
-});
+}());

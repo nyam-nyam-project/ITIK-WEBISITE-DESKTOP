@@ -38,19 +38,11 @@
             @if($pdfUrl)
                 <div class="pdf-viewer-container" data-pdf-url="{{ $pdfUrl }}">
                     <div class="pdf-toolbar">
-                        <button type="button" id="prev-page" class="btn btn-secondary btn-small">
-                            ← Sebelumnya
-                        </button>
-                        <span class="pdf-page-indicator">
-                            Halaman <strong id="page_num">1</strong> dari <strong id="page_count">-</strong>
-                        </span>
-                        <button type="button" id="next-page" class="btn btn-secondary btn-small">
-                            Selanjutnya →
-                        </button>
+                        <span class="pdf-page-indicator" id="pdf-page-status">Memuat...</span>
+                        <button type="button" id="pdf-fullscreen" class="btn btn-secondary btn-small">⛶ Layar Penuh</button>
                     </div>
-                    <div class="pdf-canvas-wrapper">
+                    <div class="pdf-canvas-wrapper" id="pdf-canvas-wrapper">
                         <div id="pdf-loading" class="pdf-loading">Memuat dokumen materi...</div>
-                        <canvas class="u-display-none" id="pdf-canvas"></canvas>
                     </div>
                 </div>
             @elseif($materi->isi_materi)

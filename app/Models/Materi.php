@@ -61,11 +61,11 @@ class Materi extends Model
         }
 
         if (Storage::disk('public')->exists($this->isi_materi)) {
-            return Storage::disk('public')->url($this->isi_materi);
+            return '/storage/'.ltrim($this->isi_materi, '/');
         }
 
         if (file_exists(public_path($this->isi_materi))) {
-            return asset($this->isi_materi);
+            return '/'.ltrim($this->isi_materi, '/');
         }
 
         return null;

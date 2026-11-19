@@ -43,6 +43,12 @@
                     </div>
                     <div class="pdf-canvas-wrapper" id="pdf-canvas-wrapper">
                         <div id="pdf-loading" class="pdf-loading">Memuat dokumen materi...</div>
+                        <canvas id="pdf-canvas" class="pdf-page-canvas u-display-none"></canvas>
+                    </div>
+                    <div class="pdf-navigation-bar">
+                        <button type="button" id="pdf-prev" class="btn btn-secondary btn-small" disabled>Kembali</button>
+                        <span class="pdf-page-info" id="pdf-page-info">Halaman - / -</span>
+                        <button type="button" id="pdf-next" class="btn btn-secondary btn-small" disabled>Selanjutnya</button>
                     </div>
                 </div>
             @elseif($materi->isi_materi)

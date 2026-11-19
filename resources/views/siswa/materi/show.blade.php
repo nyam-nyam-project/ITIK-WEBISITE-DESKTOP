@@ -59,17 +59,6 @@
                 </div>
             @endif
         </section>
-
-        @if($materi->link_youtube)
-            <section class="card">
-                <div class="card-header">
-                    <h2>Video Pembelajaran</h2>
-                </div>
-                <a href="{{ $materi->link_youtube }}" target="_blank" class="btn btn-secondary">
-                    ▶ Tonton video pembelajaran di YouTube ↗
-                </a>
-            </section>
-        @endif
     </div>
 
     <!-- KANAN: INFORMASI & PROGRESS -->
@@ -103,6 +92,17 @@
                 </div>
             </dl>
         </section>
+
+        @if($materi->link_youtube)
+            <section class="card">
+                <div class="card-header">
+                    <h2>Video Pembelajaran</h2>
+                </div>
+                <a href="{{ $materi->link_youtube }}" target="_blank" class="btn btn-secondary">
+                    ▶ Tonton video pembelajaran di YouTube ↗
+                </a>
+            </section>
+        @endif
 
         <section class="card">
             <div class="card-header">

@@ -57,6 +57,7 @@ class GuruNilaiController extends Controller
                         });
                     }
                 })
+                
                 ->get(['id_kuis', 'id_user', 'percobaan_ke', 'waktu_mulai', 'waktu_selesai'])
                 ->keyBy(fn (SesiKuis $sesi): string => implode('|', [
                     $sesi->id_kuis,

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use stdClass;
 
 class DashboardKelasService
@@ -258,6 +259,7 @@ class DashboardKelasService
 
         $materials = DB::table('tm_materi')
             ->where('id_mapel', $idMapel)
+            ->when(Schema::hasColumn('tm_materi', 'is_aktif'), fn ($q) => $q->where('is_aktif', true))
             ->select('id_materi')
             ->get();
 
@@ -356,6 +358,7 @@ class DashboardKelasService
 
         $materials = DB::table('tm_materi')
             ->where('id_mapel', $context->id_mapel)
+            ->when(Schema::hasColumn('tm_materi', 'is_aktif'), fn ($q) => $q->where('is_aktif', true))
             ->select('id_materi')
             ->get();
 

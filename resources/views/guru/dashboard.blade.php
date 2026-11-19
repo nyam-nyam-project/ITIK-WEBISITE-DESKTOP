@@ -85,7 +85,7 @@
             </div>
 
             <div class="dashboard-progres-card__content">
-                <h2 class="dashboard-progres-card__title">Progres kuis per kategori</h2>
+                <h2 class="dashboard-progres-card__title">Progres kuis</h2>
                 <div class="dashboard-progres-card__list">
                     @foreach($kategoriKelulusan as $kategori)
                         <div class="dashboard-progres-row">

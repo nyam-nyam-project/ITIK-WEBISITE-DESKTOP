@@ -168,7 +168,7 @@ class DashboardKelasPageTest extends TestCase
             ->assertSee('1 dari 2')
             ->assertSee('Rata-rata kelas')
             ->assertSee('Materi dibaca')
-            ->assertSee('Progres kuis per kategori')
+            ->assertSee('Progres kuis')
             ->assertSee('dashboard-progres-card')
             ->assertSee('1 dari 1')
             ->assertSee('1 lulus')

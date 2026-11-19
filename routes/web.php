@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/password/wajib', [PasswordController::class, 'formWajibGanti'])->name('password.wajib');
     Route::post('/password/wajib', [PasswordController::class, 'simpanWajibGanti'])->name('password.wajib.update');
     Route::put('/profil/password', [PasswordController::class, 'updateProfilPassword'])->name('profil.password');
+
+    Route::get('/materi/{id}/pdf', [MateriController::class, 'streamPdf'])->name('materi.pdf');
 });
 
 // =====================================================

@@ -7,17 +7,16 @@ use App\Models\Mapel;
 use App\Models\TahunAjaran;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class KuisAutoPublishTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->createSchema();
 
         User::create([
             'id_user' => 'U001',
@@ -38,65 +37,10 @@ class KuisAutoPublishTest extends TestCase
 
         Mapel::create([
             'id_mapel' => 'MP01',
+            'kode_mapel' => 'TIK',
             'nama_mapel' => 'Dasar TIK',
             'is_aktif' => true,
         ]);
-    }
-
-    private function createSchema(): void
-    {
-        Schema::dropIfExists('kuis');
-        Schema::dropIfExists('mapel');
-        Schema::dropIfExists('tahun_ajaran');
-        Schema::dropIfExists('user');
-
-        Schema::create('user', function (Blueprint $table) {
-            $table->string('id_user', 50)->primary();
-            $table->string('nomor_induk', 50)->nullable();
-            $table->string('nama_lengkap', 100);
-            $table->string('role', 20);
-            $table->string('status', 20)->default('aktif');
-            $table->string('email', 100)->nullable();
-            $table->string('password', 255);
-            $table->boolean('wajib_ganti_password')->default(false);
-            $table->timestamps();
-        });
-
-        Schema::create('tahun_ajaran', function (Blueprint $table) {
-            $table->string('id_tahun_ajaran', 50)->primary();
-            $table->string('nama', 100);
-            $table->boolean('is_aktif')->default(true);
-            $table->string('tampil_jawaban', 20)->default('setelah_submit');
-            $table->timestamps();
-        });
-
-        Schema::create('mapel', function (Blueprint $table) {
-            $table->string('id_mapel', 50)->primary();
-            $table->string('nama_mapel', 150);
-            $table->boolean('is_aktif')->default(true);
-            $table->string('tampil_jawaban', 20)->default('setelah_submit');
-            $table->timestamps();
-        });
-
-        Schema::create('kuis', function (Blueprint $table) {
-            $table->string('id_kuis', 50)->primary();
-            $table->string('judul', 150);
-            $table->text('deskripsi')->nullable();
-            $table->string('kategori', 50);
-            $table->string('tingkat_kesulitan', 20)->default('sedang');
-            $table->string('id_mapel', 50)->nullable();
-            $table->string('id_tahun_ajaran', 50)->nullable();
-            $table->unsignedInteger('alokasi_waktu')->nullable();
-            $table->decimal('kkm', 5, 2)->nullable();
-            $table->dateTime('waktu_mulai')->nullable();
-            $table->dateTime('waktu_selesai')->nullable();
-            $table->string('id_user', 50)->nullable();
-            $table->string('status_publikasi', 20)->default('draft');
-            $table->string('id_publisher', 50)->nullable();
-            $table->boolean('is_aktif')->default(true);
-            $table->string('tampil_jawaban', 20)->default('setelah_submit');
-            $table->timestamp('created_at')->nullable()->useCurrent();
-        });
     }
 
     public function test_kuis_otomatis_terbit_saat_waktu_mulai_tiba(): void

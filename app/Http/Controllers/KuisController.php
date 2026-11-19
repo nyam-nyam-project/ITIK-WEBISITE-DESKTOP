@@ -404,9 +404,16 @@ class KuisController extends Controller
             $kuis->materi()->sync($request->materi);
         }
 
+        Kuis::sinkronisasiStatus();
+        $kuis->refresh();
+
+        $pesanSukses = $kuis->status_publikasi === 'terbit'
+            ? 'Kuis berhasil dibuat dan otomatis terbit sesuai jadwal.'
+            : 'Kuis berhasil dibuat sebagai draft.';
+
         return redirect()
             ->route('kuis.index', ['mapel' => $kuis->id_mapel])
-            ->with('success', 'Kuis berhasil dibuat sebagai draft.');
+            ->with('success', $pesanSukses);
     }
 
     public function show($id)
@@ -566,6 +573,8 @@ class KuisController extends Controller
             if (! in_array($kuis->kategori, ['pre-test', 'post-test', 'remedial'], true)) {
                 $kuis->materi()->sync($request->materi ?? []);
             }
+
+            Kuis::sinkronisasiStatus();
 
             return redirect()
                 ->route('kuis.index', ['mapel' => $kuis->id_mapel])

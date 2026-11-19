@@ -187,6 +187,9 @@ class SiswaKuisController extends Controller
 
     public function mulai(Kuis $kuis)
     {
+        Kuis::sinkronisasiStatus();
+        $kuis->refresh();
+
         $user = Auth::user();
 
         // Pastikan yang mengakses adalah siswa

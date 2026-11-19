@@ -61,7 +61,7 @@ class Materi extends Model
         }
 
         if (Storage::disk('public')->exists($this->isi_materi)) {
-            return '/storage/'.ltrim($this->isi_materi, '/');
+            return route('materi.pdf', $this->id_materi, false);
         }
 
         if (file_exists(public_path($this->isi_materi))) {

@@ -47,10 +47,13 @@
 
             renderAll(1);
         })
-        .catch(function () {
+        .catch(function (err) {
+            console.error('PDF.js error:', err);
             if (loadingEl) {
                 loadingEl.textContent =
-                    'Gagal memuat pratinjau PDF. Anda dapat membuka PDF secara langsung di tab baru.';
+                    'Gagal memuat pratinjau PDF: ' +
+                    (err && err.message ? err.message : String(err)) +
+                    '. Anda dapat membuka PDF secara langsung di tab baru.';
             }
         });
 

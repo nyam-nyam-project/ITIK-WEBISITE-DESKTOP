@@ -177,6 +177,19 @@ class MateriController extends Controller
             ->with('success', 'Materi berhasil ditambahkan.');
     }
 
+    public function streamPdf(string $id)
+    {
+        $materi = Materi::findOrFail($id);
+
+        if (! $materi->isi_materi || ! Storage::disk('public')->exists($materi->isi_materi)) {
+            abort(404, 'File PDF tidak ditemukan.');
+        }
+
+        $path = storage_path('app/public/'.$materi->isi_materi);
+
+        return response()->file($path, ['Content-Type' => 'application/pdf']);
+    }
+
     public function show($id)
     {
         $materi = Materi::findOrFail($id);

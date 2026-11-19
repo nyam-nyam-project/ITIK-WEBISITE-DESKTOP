@@ -12,11 +12,16 @@
         <h1>Kuis &amp; Soal</h1>
         <p>{{ $mapelTerpilih ? 'Kelola kuis mata pelajaran: ' . $mapelTerpilih->nama_mapel : 'Pilih mata pelajaran untuk mengelola kuis dan soal.' }}</p>
     </div>
-    @if ($mapelTerpilih)
-        <a href="{{ route('kuis.create', ['mapel' => $mapelTerpilih->id_mapel]) }}" class="btn">
-            + Tambah Kuis
+    <div class="actions">
+        <a href="{{ route('guru.arsip.index', ['tab' => 'kuis', 'mapel' => $mapelTerpilih?->id_mapel]) }}" class="btn btn-secondary">
+            📁 Kotak Arsip
         </a>
-    @endif
+        @if ($mapelTerpilih)
+            <a href="{{ route('kuis.create', ['mapel' => $mapelTerpilih->id_mapel]) }}" class="btn">
+                + Tambah Kuis
+            </a>
+        @endif
+    </div>
 </div>
 
 @if (!$mapelTerpilih)
@@ -167,7 +172,7 @@
                                                     @else
                                                         <a href="{{ route('kuis.edit', $item->id_kuis) }}" class="btn btn-secondary btn-small">Edit</a>
                                                     @endif
-                                                    <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini?">
+                                                    <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini? Kuis dapat dipulihkan kapan saja dari Kotak Arsip.">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-danger btn-small">Arsip</button>
@@ -245,7 +250,7 @@
                                             @else
                                                 <a href="{{ route('kuis.edit', $item->id_kuis) }}" class="btn btn-secondary btn-small">Edit</a>
                                             @endif
-                                            <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini?">
+                                            <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini? Kuis dapat dipulihkan kapan saja dari Kotak Arsip.">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-small">Arsip</button>
@@ -309,7 +314,7 @@
                                             @else
                                                 <a href="{{ route('kuis.edit', $item->id_kuis) }}" class="btn btn-secondary btn-small">Edit</a>
                                             @endif
-                                            <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini?">
+                                            <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini? Kuis dapat dipulihkan kapan saja dari Kotak Arsip.">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-small">Arsip</button>

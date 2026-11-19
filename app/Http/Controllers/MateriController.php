@@ -43,7 +43,7 @@ class MateriController extends Controller
 
             $mapelAktif = Mapel::aktif()
                 ->whereIn('id_mapel', $mapelPengajaranIds)
-                ->withCount('materi')
+                ->withCount(['materi' => fn ($q) => $q->where('is_aktif', true)])
                 ->orderBy('nama_mapel')
                 ->get();
 
@@ -53,7 +53,8 @@ class MateriController extends Controller
             if ($idMapel) {
                 $mapelTerpilih = Mapel::find($idMapel);
                 if ($mapelTerpilih) {
-                    $materi = Materi::where('id_mapel', $idMapel)
+                    $materi = Materi::where('is_aktif', true)
+                        ->where('id_mapel', $idMapel)
                         ->orderBy('bab')
                         ->orderBy('judul')
                         ->get();
@@ -62,7 +63,7 @@ class MateriController extends Controller
         } else {
             // Admin tidak berubah
             $mapelAktif = Mapel::aktif()
-                ->withCount('materi')
+                ->withCount(['materi' => fn ($q) => $q->where('is_aktif', true)])
                 ->orderBy('nama_mapel')
                 ->get();
 
@@ -72,7 +73,8 @@ class MateriController extends Controller
             if ($idMapel) {
                 $mapelTerpilih = Mapel::find($idMapel);
                 if ($mapelTerpilih) {
-                    $materi = Materi::where('id_mapel', $idMapel)
+                    $materi = Materi::where('is_aktif', true)
+                        ->where('id_mapel', $idMapel)
                         ->orderBy('bab')
                         ->orderBy('judul')
                         ->get();
@@ -333,15 +335,18 @@ class MateriController extends Controller
 
         $idMapel = $materi->id_mapel;
 
-        if ($materi->isi_materi && Storage::disk('public')->exists($materi->isi_materi)) {
-            Storage::disk('public')->delete($materi->isi_materi);
-        }
-
-        $materi->delete();
+        /*
+         * Soft delete / arsip.
+         * File PDF dan data tetap disimpan agar riwayat belajar siswa terjaga,
+         * dan guru dapat memulihkannya sewaktu-waktu dari Kotak Arsip.
+         */
+        $materi->update([
+            'is_aktif' => false,
+        ]);
 
         return redirect()
-            ->route('materi.index')
-            ->with('success', 'Materi berhasil dihapus.');
+            ->route('materi.index', ['mapel' => $idMapel])
+            ->with('success', 'Materi berhasil diarsipkan.');
     }
 
     /**

@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\TahunAjaranController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Guru\ArsipController;
 use App\Http\Controllers\KuisController;
 use App\Http\Controllers\MateriController;
 use App\Http\Controllers\PasswordController;
@@ -141,6 +142,25 @@ Route::middleware(['auth', 'role:guru'])
 
         Route::get('/remedial/{id}', [RemedialController::class, 'show'])
             ->name('remedial.show');
+
+        // -------------------------
+        // ARSIP (KUIS & MATERI)
+        // -------------------------
+
+        Route::get('/arsip', [ArsipController::class, 'index'])
+            ->name('arsip.index');
+
+        Route::patch('/arsip/kuis/{id}/pulihkan', [ArsipController::class, 'pulihkanKuis'])
+            ->name('arsip.kuis.pulihkan');
+
+        Route::delete('/arsip/kuis/{id}/hapus-permanen', [ArsipController::class, 'hapusPermanenKuis'])
+            ->name('arsip.kuis.hapus-permanen');
+
+        Route::patch('/arsip/materi/{id}/pulihkan', [ArsipController::class, 'pulihkanMateri'])
+            ->name('arsip.materi.pulihkan');
+
+        Route::delete('/arsip/materi/{id}/hapus-permanen', [ArsipController::class, 'hapusPermanenMateri'])
+            ->name('arsip.materi.hapus-permanen');
     });
 
 Route::middleware(['auth', 'role:admin'])

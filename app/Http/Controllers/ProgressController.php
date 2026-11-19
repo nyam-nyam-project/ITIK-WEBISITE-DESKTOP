@@ -54,7 +54,7 @@ class ProgressController extends Controller
 
         // Batasi mapelAktif hanya ke mapel kelas siswa
         $mapelAktif = Mapel::aktif()
-            ->withCount('materi')
+            ->withCount(['materi' => fn ($q) => $q->where('is_aktif', true)])
             ->when(! $tanpaKelas, fn ($q) => $q->whereIn('id_mapel', $mapelIds))
             ->when($tanpaKelas, fn ($q) => $q->whereRaw('1 = 0'))  // kosongkan jika belum punya kelas
             ->orderBy('nama_mapel')
@@ -68,7 +68,8 @@ class ProgressController extends Controller
             $mapelTerpilih = Mapel::find($idMapel);
 
             if ($mapelTerpilih) {
-                $query = Materi::where('id_mapel', $idMapel)
+                $query = Materi::where('is_aktif', true)
+                    ->where('id_mapel', $idMapel)
                     ->with([
                         'kuis' => function ($q) {
                             $q->where('is_aktif', true)
@@ -122,6 +123,10 @@ class ProgressController extends Controller
     {
         $user = Auth::user();
         $materi = Materi::findOrFail($idMateri);
+
+        if (! $materi->is_aktif) {
+            abort(404, 'Materi tidak ditemukan atau telah diarsipkan.');
+        }
 
         // Tolak jika mapel materi di luar mapel kelas siswa
         [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
@@ -201,6 +206,10 @@ class ProgressController extends Controller
     {
         $user = Auth::user();
         $materi = Materi::findOrFail($idMateri);
+
+        if (! $materi->is_aktif) {
+            abort(404, 'Materi tidak ditemukan atau telah diarsipkan.');
+        }
 
         // Tolak jika mapel materi di luar mapel kelas siswa
         [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();

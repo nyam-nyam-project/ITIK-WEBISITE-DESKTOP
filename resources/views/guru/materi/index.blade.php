@@ -16,6 +16,11 @@
             <h1>Materi Pembelajaran</h1>
             <p>Pilih mata pelajaran untuk melihat dan mengelola materi pembelajaran siswa.</p>
         </div>
+        <div class="actions">
+            <a href="{{ route('guru.arsip.index', ['tab' => 'materi']) }}" class="btn btn-secondary">
+                📁 Kotak Arsip
+            </a>
+        </div>
     </div>
 
     @if($tanpaPengajaran ?? false)
@@ -62,9 +67,14 @@
             <h1>{{ $mapelTerpilih->nama_mapel }}</h1>
             <p>{{ $materi->count() }} materi pembelajaran tersedia untuk mata pelajaran ini.</p>
         </div>
-        <a href="{{ route('materi.create', ['mapel' => $mapelTerpilih->id_mapel]) }}" class="btn">
-            + Tambah Materi
-        </a>
+        <div class="actions">
+            <a href="{{ route('guru.arsip.index', ['tab' => 'materi', 'mapel' => $mapelTerpilih->id_mapel]) }}" class="btn btn-secondary">
+                📁 Kotak Arsip
+            </a>
+            <a href="{{ route('materi.create', ['mapel' => $mapelTerpilih->id_mapel]) }}" class="btn">
+                + Tambah Materi
+            </a>
+        </div>
     </div>
 
     @if($materi->isEmpty())
@@ -113,13 +123,12 @@
                         <form class="u-display-inline"
                             action="{{ route('materi.destroy', $item->id_materi) }}"
                             method="POST"
-
-                            data-confirm="Yakin ingin menghapus materi ini?"
+                            data-confirm="Arsipkan materi ini? Materi dapat dipulihkan kapan saja dari Kotak Arsip."
                         >
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-small">
-                                Hapus
+                                Arsip
                             </button>
                         </form>
                     </div>

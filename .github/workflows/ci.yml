@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [sadan, main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+
+      - name: Pasang PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, curl, pdo_sqlite, sqlite3, bcmath, intl, zip
+          coverage: none
+
+      - name: Pasang dependensi
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Siapkan environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Jalankan tes (tanpa ApiTest)
+        run: php artisan test --filter='/^(?!.*ApiTest).*$/'

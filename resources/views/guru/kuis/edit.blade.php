@@ -2,6 +2,7 @@
 @section('title', 'Edit Kuis - ' . $kuis->judul)
 
 @push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="{{ asset('css/guru/kuis/edit.css') }}">
 @endpush
 
@@ -188,24 +189,34 @@
             <div class="grid grid-2">
                 <div class="field">
                     <label for="waktu_mulai">Tanggal &amp; Waktu Terbit Otomatis</label>
-                    <input
-                        type="datetime-local"
-                        id="waktu_mulai"
-                        name="waktu_mulai"
-                        value="{{ old('waktu_mulai', $kuis->waktu_mulai?->format('Y-m-d\TH:i')) }}"
-                    >
+                    <div class="input-waktu-group">
+                        <input
+                            type="text"
+                            id="waktu_mulai"
+                            name="waktu_mulai"
+                            value="{{ old('waktu_mulai', $kuis->waktu_mulai?->format('Y-m-d H:i')) }}"
+                            placeholder="Pilih tanggal &amp; waktu..."
+                            autocomplete="off"
+                        >
+                        <button type="button" class="btn-clear-waktu" id="btn-clear-mulai" title="Hapus jadwal">×</button>
+                    </div>
                     <p class="help">Kuis otomatis berstatus "Terbit" saat waktu ini tiba.</p>
                     @error('waktu_mulai') <div class="error">{{ $message }}</div> @enderror
                 </div>
 
                 <div class="field">
                     <label for="waktu_selesai">Tanggal &amp; Waktu Selesai (Otomatis Ditutup / Draft)</label>
-                    <input
-                        type="datetime-local"
-                        id="waktu_selesai"
-                        name="waktu_selesai"
-                        value="{{ old('waktu_selesai', $kuis->waktu_selesai?->format('Y-m-d\TH:i')) }}"
-                    >
+                    <div class="input-waktu-group">
+                        <input
+                            type="text"
+                            id="waktu_selesai"
+                            name="waktu_selesai"
+                            value="{{ old('waktu_selesai', $kuis->waktu_selesai?->format('Y-m-d H:i')) }}"
+                            placeholder="Pilih tanggal &amp; waktu..."
+                            autocomplete="off"
+                        >
+                        <button type="button" class="btn-clear-waktu" id="btn-clear-selesai" title="Hapus jadwal">×</button>
+                    </div>
                     <p class="help">Kuis otomatis kembali ke "Draft" saat waktu ini lewat.</p>
                     @error('waktu_selesai') <div class="error">{{ $message }}</div> @enderror
                 </div>
@@ -242,6 +253,8 @@
 </section>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
 <script src="{{ asset('js/guru/kuis/form.js') }}" defer></script>
 @endpush
 

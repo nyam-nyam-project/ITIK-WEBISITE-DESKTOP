@@ -47,7 +47,7 @@
     <div class="arsip-filter-card">
         <div class="arsip-filter-group">
             <label for="filter-mapel">Filter Mata Pelajaran:</label>
-            <select id="filter-mapel" onchange="window.location.href = this.value">
+            <select id="filter-mapel">
                 <option value="{{ route('guru.arsip.index', ['tab' => $tab]) }}">
                     Semua Mata Pelajaran
                 </option>
@@ -203,5 +203,9 @@
         </div>
     @endif
 @endif
+
+@push('scripts')
+<script src="{{ asset('js/guru/arsip/index.js') }}" defer></script>
+@endpush
 
 @endsection

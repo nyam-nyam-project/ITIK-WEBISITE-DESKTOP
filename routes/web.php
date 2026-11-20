@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GuruController;
 use App\Http\Controllers\Admin\KelasController;
@@ -104,7 +105,7 @@ Route::middleware(['auth', 'role:guru'])
         // -------------------------
         // VALIDASI NILAI
         // -------------------------
-    
+
         Route::get('/nilai', [ValidasiNilaiController::class, 'index'])
             ->name('nilai.index');
 
@@ -126,7 +127,7 @@ Route::middleware(['auth', 'role:guru'])
         // -------------------------
         // REMEDIAL
         // -------------------------
-    
+
         Route::get('/remedial', [RemedialController::class, 'index'])
             ->name('remedial.index');
 
@@ -148,7 +149,7 @@ Route::middleware(['auth', 'role:guru'])
         // -------------------------
         // ARSIP (KUIS & MATERI)
         // -------------------------
-    
+
         Route::get('/arsip', [ArsipController::class, 'index'])
             ->name('arsip.index');
 
@@ -195,6 +196,11 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/guru/{guru}/aktifkan', [GuruController::class, 'aktifkan'])
             ->name('guru.aktifkan');
         Route::resource('guru', GuruController::class)->except(['show', 'destroy']);
+        Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
+        Route::get('/admin/create', [AdminController::class, 'create'])->name('admin.create');
+        Route::post('/admin', [AdminController::class, 'store'])->name('admin.store');
+        Route::patch('/admin/{admin}/toggle-status', [AdminController::class, 'toggleStatus'])
+            ->name('admin.toggle-status');
         Route::resource('pengajaran', PengajaranController::class)->only(['index', 'store', 'destroy']);
         Route::get('/rekap', [RekapNilaiController::class, 'index'])->name('rekap.index');
     });
@@ -227,7 +233,7 @@ Route::middleware(['auth', 'role:siswa'])
         // -------------------------
         // MATERI
         // -------------------------
-    
+
         Route::get('/materi', [ProgressController::class, 'index'])
             ->name('materi.index');
 
@@ -240,7 +246,7 @@ Route::middleware(['auth', 'role:siswa'])
         // -------------------------
         // KUIS
         // -------------------------
-    
+
         Route::get('/kuis', [SiswaKuisController::class, 'index'])
             ->name('kuis.index');
 
@@ -265,7 +271,7 @@ Route::middleware(['auth', 'role:siswa'])
         // -------------------------
         // NILAI
         // -------------------------
-    
+
         Route::get('/nilai', [SiswaKuisController::class, 'daftarNilai'])
             ->name('nilai');
         Route::get('/nilai/semua', [SiswaKuisController::class, 'daftarNilai'])
@@ -274,7 +280,7 @@ Route::middleware(['auth', 'role:siswa'])
         // -------------------------
         // REMEDIAL SISWA
         // -------------------------
-    
+
         Route::get('/remedial', [RemedialSiswaController::class, 'index'])
             ->name('remedial.index');
 

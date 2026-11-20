@@ -51,7 +51,7 @@
 
             <div class="login-title">
                 <h2>Login Admin</h2>
-                <p>Masukkan email dan password akun administrator.</p>
+                <p>Masukkan username atau email dan password akun administrator.</p>
             </div>
 
             @if ($errors->any())
@@ -63,18 +63,17 @@
             <form action="{{ route('admin.login.process') }}" method="POST">
                 @csrf
 
-                <!-- EMAIL -->
                 <div class="form-group">
-                    <label for="email">Email Administrator</label>
+                    <label for="login">Username atau Email Administrator</label>
                     <div class="input-wrapper">
                         <span class="input-icon">✉</span>
                         <input
-                            type="email"
-                            id="email"
-                            name="email"
+                            type="text"
+                            id="login"
+                            name="login"
                             class="form-control"
-                            placeholder="admin@sekolah.sch.id"
-                            value="{{ old('email') }}"
+                            placeholder="Username atau admin@sekolah.sch.id"
+                            value="{{ old('login', old('email')) }}"
                             required
                             autofocus
                         >

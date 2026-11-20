@@ -156,6 +156,11 @@ legend { font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 8px; }
 .alert p:last-child { margin-bottom: 0; }
 .alert ul { margin: 6px 0 0; padding-left: 20px; }
 
+.banner-pengingat { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.banner-pengingat-content { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 260px; }
+.banner-pengingat-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.banner-pengingat-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
 .badge { display: inline-block; border-radius: 20px; padding: 3px 9px; font-size: 11px; font-weight: 600; background: var(--purple-light); color: var(--purple); white-space: nowrap; }
 .badge-success { background: #e8f5ed; color: #24603e; }
 .badge-muted { background: #f0eff4; color: #635e72; }

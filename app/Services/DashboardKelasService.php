@@ -268,6 +268,7 @@ class DashboardKelasService
             : DB::table('tr_progress')
                 ->where('id_user', $idSiswa)
                 ->whereIn('id_materi', $materials->pluck('id_materi'))
+                ->where('status', 'selesai')
                 ->distinct()
                 ->count('id_materi');
 
@@ -367,6 +368,7 @@ class DashboardKelasService
             : DB::table('tr_progress')
                 ->whereIn('id_materi', $materials->pluck('id_materi'))
                 ->whereIn('id_user', $studentIds)
+                ->where('status', 'selesai')
                 ->select('id_materi', 'id_user')
                 ->get()
                 ->groupBy('id_user')

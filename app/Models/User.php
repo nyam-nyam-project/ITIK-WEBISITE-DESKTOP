@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -111,5 +112,15 @@ class User extends Authenticatable
     public static function mapelUntukSiswa(User $siswa): Collection
     {
         return Kelas::mapelUntukSiswa($siswa);
+    }
+
+    public function kelasAktif(): ?string
+    {
+        return DB::table('tp_anggota_kelas as ak')
+            ->join('tm_kelas as k', 'k.id_kelas', '=', 'ak.id_kelas')
+            ->join('tm_tahun_ajaran as t', 't.id_tahun_ajaran', '=', 'k.id_tahun_ajaran')
+            ->where('ak.id_user', $this->id_user)
+            ->where('t.is_aktif', 1)
+            ->value('k.nama_kelas');
     }
 }

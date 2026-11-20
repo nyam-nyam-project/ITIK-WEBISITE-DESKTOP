@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -30,6 +31,7 @@ class User extends Authenticatable
         'password',
         'wajib_ganti_password',
         'dibuat_oleh',
+        'foto',
     ];
 
     protected $hidden = [
@@ -106,7 +108,7 @@ class User extends Authenticatable
         return $query->where('role', 'guru');
     }
 
-    public static function mapelUntukSiswa(User $siswa): \Illuminate\Support\Collection
+    public static function mapelUntukSiswa(User $siswa): Collection
     {
         return Kelas::mapelUntukSiswa($siswa);
     }

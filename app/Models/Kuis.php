@@ -45,6 +45,15 @@ class Kuis extends Model
         'kkm' => 'decimal:2',
     ];
 
+    /**
+     * Format serialisasi timestamp API konsisten dalam WIB (Asia/Jakarta)
+     * agar tidak bergeser ke UTC di sisi klien.
+     */
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return Carbon::instance($date)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s');
+    }
+
     public function pembuat()
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
@@ -83,6 +92,18 @@ class Kuis extends Model
             'id_materi',
             'id_kuis',
             'id_materi'
+        );
+    }
+
+    public function kelas()
+    {
+        return $this->belongsToMany(
+            Kelas::class,
+            'tp_kuis_kelas',
+            'id_kuis',
+            'id_kelas',
+            'id_kuis',
+            'id_kelas'
         );
     }
 

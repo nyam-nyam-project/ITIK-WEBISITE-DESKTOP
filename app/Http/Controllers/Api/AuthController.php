@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -36,9 +37,9 @@ class AuthController extends Controller
             $this->throwLoginError('Akun Administrator silakan masuk melalui halaman login khusus Admin.');
         }
 
-        // if ($user->status !== 'aktif') {
-        //     $this->throwLoginError('Akun Anda sudah tidak aktif. Hubungi admin sekolah.');
-        // }
+        if ($user->status !== 'aktif') {
+            $this->throwLoginError('Akun Anda sudah tidak aktif. Hubungi admin sekolah.');
+        }
 
         $token = $user->createToken('flutter-mobile');
 
@@ -57,39 +58,84 @@ class AuthController extends Controller
         ]);
     }
 
-    // public function updateProfile(Request $request): JsonResponse
-    // {
-    //     /** @var User $user */
-    //     $user = $request->user();
+    public function updateProfile(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
 
-    //     $validated = $request->validate([
-    //         'nama_lengkap' => ['sometimes', 'required', 'string', 'max:100'],
-    //         'email' => [
-    //             'sometimes',
-    //             'nullable',
-    //             'email',
-    //             'max:100',
-    //             Rule::unique('tm_user', 'email')->ignore($user->id_user, 'id_user'),
-    //         ],
-    //     ], [
-    //         'nama_lengkap.required' => 'Nama lengkap wajib diisi.',
-    //         'email.email' => 'Format email tidak valid.',
-    //         'email.unique' => 'Email sudah digunakan akun lain.',
-    //     ]);
+        $validated = $request->validate([
+            'nama_lengkap' => ['sometimes', 'required', 'string', 'max:100'],
+            'email' => [
+                'sometimes',
+                'nullable',
+                'email',
+                'max:100',
+                Rule::unique('tm_user', 'email')->ignore($user->id_user, 'id_user'),
+            ],
+        ], [
+            'nama_lengkap.required' => 'Nama lengkap wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah digunakan akun lain.',
+        ]);
 
-    //     if ($validated === []) {
-    //         throw ValidationException::withMessages([
-    //             'profile' => ['Isi minimal satu data profil untuk diperbarui.'],
-    //         ]);
-    //     }
+        if ($validated === []) {
+            throw ValidationException::withMessages([
+                'profile' => ['Isi minimal satu data profil untuk diperbarui.'],
+            ]);
+        }
 
-    //     $user->update($validated);
+        $user->update($validated);
 
-    //     return response()->json([
-    //         'message' => 'Profil berhasil diperbarui.',
-    //         'data' => $this->userPayload($user->fresh()),
-    //     ]);
-    // }
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui.',
+            'data' => $this->userPayload($user->fresh()),
+        ]);
+    }
+
+    public function updatePhoto(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $request->validate([
+            'foto' => ['required', 'image', 'max:2048'],
+        ]);
+
+        $file = $request->file('foto');
+        $extension = $file->getClientOriginalExtension() ?: 'png';
+        $filename = hash('sha256', $user->id_user).'.'.$extension;
+
+        Storage::disk('public')->putFileAs('profile', $file, $filename);
+
+        $user->update([
+            'foto' => 'profile/'.$filename,
+        ]);
+
+        return response()->json([
+            'message' => 'Foto profil berhasil diperbarui.',
+            'data' => $this->userPayload($user->fresh()),
+        ]);
+    }
+
+    public function deletePhoto(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $filename = hash('sha256', $user->id_user).'.png';
+        if (Storage::disk('public')->exists('profile/'.$filename)) {
+            Storage::disk('public')->delete('profile/'.$filename);
+        }
+
+        $user->update([
+            'foto' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Foto profil berhasil dihapus.',
+            'data' => $this->userPayload($user->fresh()),
+        ]);
+    }
 
     public function updatePassword(Request $request): JsonResponse
     {
@@ -146,6 +192,11 @@ class AuthController extends Controller
      */
     private function userPayload(User $user): array
     {
+        $fotoUrl = null;
+        if ($user->foto && Storage::disk('public')->exists($user->foto)) {
+            $fotoUrl = Storage::disk('public')->url($user->foto).'?v='.Storage::disk('public')->lastModified($user->foto);
+        }
+
         return [
             'id_user' => $user->id_user,
             'nomor_induk' => $user->nomor_induk,
@@ -154,6 +205,7 @@ class AuthController extends Controller
             'kelas' => $user->kelas,
             'email' => $user->email,
             'wajib_ganti_password' => $user->wajib_ganti_password,
+            'foto_url' => $fotoUrl,
         ];
     }
 

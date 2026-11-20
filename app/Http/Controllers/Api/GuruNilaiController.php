@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Mengerjakan;
+use App\Models\SesiKuis;
 use App\Models\Soal;
 use App\Services\KuisEssayGradingService;
 use Illuminate\Http\JsonResponse;
@@ -31,7 +32,7 @@ class GuruNilaiController extends Controller
 
         $query = Mengerjakan::query()
             ->dikelolaOlehGuru($request->user())
-            ->with(['kuis:id_kuis,judul,kategori,kkm', 'siswa:id_user,nama_lengkap,nomor_induk,kelas', 'validator:id_user,nama_lengkap'])
+            ->with(['kuis:id_kuis,judul,kategori,kkm', 'siswa:id_user,nama_lengkap,nomor_induk,kelas', 'validator:id_user,nama_lengkap', 'remedialSiswa'])
             ->where('status_pengerjaan', 'final')
             ->orderBy('status_validasi')
             ->orderByDesc('tanggal');
@@ -57,7 +58,7 @@ class GuruNilaiController extends Controller
                         });
                     }
                 })
-                
+
                 ->get(['id_kuis', 'id_user', 'percobaan_ke', 'waktu_mulai', 'waktu_selesai'])
                 ->keyBy(fn (SesiKuis $sesi): string => implode('|', [
                     $sesi->id_kuis,

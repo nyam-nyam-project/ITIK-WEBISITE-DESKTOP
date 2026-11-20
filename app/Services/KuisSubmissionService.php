@@ -64,9 +64,9 @@ class KuisSubmissionService
         return $jumlah;
     }
 
-    public function submit(SesiKuis $sesi, bool $hanyaKedaluwarsa = false): ?Mengerjakan
+    public function submit(SesiKuis $sesi, bool $hanyaKedaluwarsa = false, bool $isTerlambat = false): ?Mengerjakan
     {
-        return DB::transaction(function () use ($sesi, $hanyaKedaluwarsa) {
+        return DB::transaction(function () use ($sesi, $hanyaKedaluwarsa, $isTerlambat) {
             $kuis = Kuis::whereKey($sesi->id_kuis)->lockForUpdate()->firstOrFail();
             $sesi = SesiKuis::whereKey($sesi->id_sesi)->lockForUpdate()->firstOrFail();
             $sesi->setRelation('kuis', $kuis);
@@ -117,12 +117,16 @@ class KuisSubmissionService
 
             $this->materiProgressService->tandaiSelesaiSetelahPostTest($kuis, $sesi->id_user);
 
+            $terlambat = $isTerlambat || $sekarang->gt($batasWaktu);
+            $catatanTerlambat = $terlambat ? 'Terlambat dikumpulkan pada '.$sekarang->format('Y-m-d H:i:s') : null;
+
             foreach ($soal->where('tipe', 'essay') as $item) {
                 NilaiEssay::create([
                     'id_mengerjakan' => $hasil->id_mengerjakan,
                     'id_soal' => $item->id_soal,
                     'jawaban_teks' => $draft->get($item->id_soal)?->jawaban_teks,
                     'nilai' => null,
+                    'catatan_guru' => $catatanTerlambat,
                 ]);
             }
 

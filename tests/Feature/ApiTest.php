@@ -13,7 +13,6 @@ use App\Models\SesiKuis;
 use App\Models\Soal;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -23,26 +22,245 @@ use Tests\TestCase;
 
 class ApiTest extends TestCase
 {
-    use RefreshDatabase;
-
     protected function setUp(): void
     {
         parent::setUp();
 
-        Schema::create('user', function (Blueprint $table): void {
+        $this->assertTrue($this->app->environment('testing'));
+        $this->assertSame('sqlite', config('database.default'));
+        $this->assertSame(':memory:', config('database.connections.sqlite.database'));
+        $this->assertSame('sqlite', DB::connection()->getDriverName());
+
+        $this->withoutVite();
+        $this->createSchema();
+    }
+
+    private function createSchema(): void
+    {
+        Schema::create('personal_access_tokens', function (Blueprint $table): void {
+            $table->id();
+            $table->string('tokenable_type');
+            $table->string('tokenable_id');
+            $table->text('name');
+            $table->string('token', 64)->unique();
+            $table->text('abilities')->nullable();
+            $table->timestamp('last_used_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('tm_user', function (Blueprint $table): void {
             $table->string('id_user', 50)->primary();
             $table->string('nomor_induk', 50)->nullable()->unique();
             $table->string('nama_lengkap', 100);
-            $table->string('role', 20);
+            $table->string('role', 50);
             $table->string('status', 20)->default('aktif');
             $table->string('kelas', 50)->nullable();
             $table->string('email', 100)->nullable();
             $table->string('password');
             $table->boolean('wajib_ganti_password')->default(false);
             $table->string('dibuat_oleh', 50)->nullable();
+            $table->string('foto', 255)->nullable();
             $table->timestamps();
-            $table->foreign('dibuat_oleh')->references('id_user')->on('user')->nullOnDelete();
         });
+
+        Schema::create('tm_tahun_ajaran', function (Blueprint $table): void {
+            $table->string('id_tahun_ajaran', 50)->primary();
+            $table->string('nama', 20)->unique();
+            $table->date('tanggal_mulai')->nullable();
+            $table->date('tanggal_selesai')->nullable();
+            $table->boolean('is_aktif')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('tm_mapel', function (Blueprint $table): void {
+            $table->string('id_mapel', 50)->primary();
+            $table->string('kode_mapel', 20)->nullable();
+            $table->string('nama_mapel', 100);
+            $table->text('deskripsi')->nullable();
+            $table->boolean('is_aktif')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('tm_kelas', function (Blueprint $table): void {
+            $table->string('id_kelas', 50)->primary();
+            $table->string('nama_kelas', 50);
+            $table->string('tingkat', 10)->nullable();
+            $table->string('id_tahun_ajaran', 50)->nullable();
+            $table->boolean('is_aktif')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('tm_materi', function (Blueprint $table): void {
+            $table->string('id_materi', 50)->primary();
+            $table->string('judul', 150);
+            $table->string('bab', 50)->nullable();
+            $table->string('kelas', 50)->nullable();
+            $table->string('id_mapel', 50)->nullable();
+            $table->text('deskripsi')->nullable();
+            $table->longText('isi_materi')->nullable();
+            $table->string('link_youtube', 255)->nullable();
+            $table->string('id_user', 50)->nullable();
+            $table->boolean('is_aktif')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('tm_kuis', function (Blueprint $table): void {
+            $table->string('id_kuis', 50)->primary();
+            $table->string('judul', 150);
+            $table->text('deskripsi')->nullable();
+            $table->string('kategori', 50);
+            $table->string('tingkat_kesulitan', 20)->default('mudah');
+            $table->string('id_mapel', 50)->nullable();
+            $table->string('id_tahun_ajaran', 50)->nullable();
+            $table->unsignedInteger('alokasi_waktu')->nullable();
+            $table->decimal('kkm', 5, 2)->nullable();
+            $table->dateTime('waktu_mulai')->nullable();
+            $table->dateTime('waktu_selesai')->nullable();
+            $table->string('id_user', 50)->nullable();
+            $table->string('status_publikasi', 20)->default('draft');
+            $table->string('id_publisher', 50)->nullable();
+            $table->boolean('is_aktif')->default(true);
+            $table->string('tampil_jawaban', 20)->default('setelah_submit');
+            $table->timestamps();
+        });
+
+        Schema::create('tm_soal', function (Blueprint $table): void {
+            $table->string('id_soal', 50)->primary();
+            $table->string('id_kuis', 50);
+            $table->text('pertanyaan');
+            $table->string('tipe', 20)->default('pilihan_ganda');
+            $table->string('opsi_a', 255)->nullable();
+            $table->string('opsi_b', 255)->nullable();
+            $table->string('opsi_c', 255)->nullable();
+            $table->string('opsi_d', 255)->nullable();
+            $table->string('opsi_e', 255)->nullable();
+            $table->string('jawaban', 10)->nullable();
+            $table->integer('bobot')->default(1);
+            $table->string('tingkat_kesulitan', 20)->default('mudah');
+            $table->timestamps();
+        });
+
+        Schema::create('tr_sesi_kuis', function (Blueprint $table): void {
+            $table->increments('id_sesi');
+            $table->string('id_kuis', 50);
+            $table->string('id_user', 50);
+            $table->unsignedInteger('percobaan_ke')->default(1);
+            $table->dateTime('waktu_mulai');
+            $table->dateTime('waktu_selesai')->nullable();
+            $table->unsignedInteger('jumlah_pelanggaran')->default(0);
+            $table->timestamps();
+        });
+
+        Schema::create('tr_draft_jawaban', function (Blueprint $table): void {
+            $table->increments('id_draft');
+            $table->string('id_kuis', 50);
+            $table->string('id_user', 50);
+            $table->string('id_soal', 50);
+            $table->string('jawaban_dipilih', 5)->nullable();
+            $table->text('jawaban_teks')->nullable();
+            $table->timestamp('updated_at')->nullable();
+            $table->unique(['id_kuis', 'id_user', 'id_soal']);
+        });
+
+        Schema::create('tr_mengerjakan', function (Blueprint $table): void {
+            $table->increments('id_mengerjakan');
+            $table->string('id_kuis', 50);
+            $table->string('id_user', 50);
+            $table->decimal('nilai', 5, 2)->nullable();
+            $table->date('tanggal')->nullable();
+            $table->unsignedInteger('percobaan_ke')->default(1);
+            $table->string('status_pengerjaan', 20)->default('final');
+            $table->string('status_validasi', 30)->default('belum divalidasi');
+            $table->string('id_validator', 50)->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('tr_progress', function (Blueprint $table): void {
+            $table->string('id_progress', 50)->primary();
+            $table->string('status', 20);
+            $table->date('tanggal')->nullable();
+            $table->string('id_materi', 50);
+            $table->string('id_user', 50);
+        });
+
+        Schema::create('tr_remedial', function (Blueprint $table): void {
+            $table->increments('id_remedial');
+            $table->string('id_kuis_remedial', 50);
+            $table->string('id_kuis_asal', 50);
+        });
+
+        Schema::create('tr_remedial_siswa', function (Blueprint $table): void {
+            $table->increments('id_remedial_siswa');
+            $table->string('id_kuis_remedial', 50);
+            $table->unsignedInteger('id_mengerjakan_asal');
+            $table->string('id_guru', 50)->nullable();
+            $table->date('tanggal_ditugaskan')->nullable();
+            $table->string('status', 20)->default('ditugaskan');
+        });
+
+        Schema::create('tp_anggota_kelas', function (Blueprint $table): void {
+            $table->string('id_kelas', 50);
+            $table->string('id_user', 50);
+            $table->primary(['id_kelas', 'id_user']);
+        });
+
+        Schema::create('tp_mapel_kelas', function (Blueprint $table): void {
+            $table->string('id_mapel', 50);
+            $table->string('id_kelas', 50);
+            $table->primary(['id_mapel', 'id_kelas']);
+        });
+
+        Schema::create('tp_kuis_kelas', function (Blueprint $table): void {
+            $table->string('id_kuis', 50);
+            $table->string('id_kelas', 50);
+            $table->primary(['id_kuis', 'id_kelas']);
+        });
+
+        Schema::create('tr_pengajaran', function (Blueprint $table): void {
+            $table->increments('id_pengajaran');
+            $table->string('id_user', 50);
+            $table->string('id_kelas', 50);
+            $table->string('id_mapel', 50);
+            $table->timestamps();
+        });
+
+        Schema::create('tr_nilai_essay', function (Blueprint $table): void {
+            $table->increments('id_nilai_essay');
+            $table->unsignedInteger('id_mengerjakan');
+            $table->string('id_soal', 50);
+            $table->text('jawaban_teks')->nullable();
+            $table->decimal('nilai', 5, 2)->nullable();
+            $table->text('catatan_guru')->nullable();
+            $table->string('id_penilai', 50)->nullable();
+            $table->timestamp('dinilai_at')->nullable();
+        });
+
+        Schema::create('tp_materi_kuis', function (Blueprint $table): void {
+            $table->increments('id');
+            $table->string('id_materi', 50);
+            $table->string('id_kuis', 50);
+        });
+
+        DB::statement('CREATE VIEW IF NOT EXISTS user AS SELECT * FROM tm_user');
+        DB::statement('CREATE VIEW IF NOT EXISTS kuis AS SELECT * FROM tm_kuis');
+        DB::statement('CREATE VIEW IF NOT EXISTS draft_jawaban AS SELECT * FROM tr_draft_jawaban');
+        DB::statement('CREATE VIEW IF NOT EXISTS materis AS SELECT * FROM tm_materi');
+        DB::statement('CREATE VIEW IF NOT EXISTS progress AS SELECT * FROM tr_progress');
+        DB::statement('CREATE VIEW IF NOT EXISTS mengerjakans AS SELECT * FROM tr_mengerjakan');
+        DB::statement('CREATE VIEW IF NOT EXISTS mengerjakan AS SELECT * FROM tr_mengerjakan');
+        DB::statement('
+            CREATE TRIGGER IF NOT EXISTS materis_update INSTEAD OF UPDATE ON materis
+            FOR EACH ROW BEGIN
+                UPDATE tm_materi SET created_at = NEW.created_at, updated_at = NEW.updated_at WHERE id_materi = OLD.id_materi;
+            END
+        ');
+        DB::statement('
+            CREATE TRIGGER IF NOT EXISTS kuis_update INSTEAD OF UPDATE ON kuis
+            FOR EACH ROW BEGIN
+                UPDATE tm_kuis SET created_at = NEW.created_at, updated_at = NEW.updated_at, id_publisher = NEW.id_publisher, status_publikasi = NEW.status_publikasi WHERE id_kuis = OLD.id_kuis;
+            END
+        ');
     }
 
     public function test_mobile_login_issues_a_sanctum_token(): void

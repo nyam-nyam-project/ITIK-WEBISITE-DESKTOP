@@ -1,4 +1,3 @@
-{{-- resources/views/partials/sidebar.blade.php --}}
 
 @php
     $role = Auth::user()->role;
@@ -37,7 +36,7 @@
         <div class="logo-icon">IT</div>
 
         <div>
-            <h2>ITIK</h2>
+            <h2>I-TIK</h2>
             <span>{{ $label }}</span>
         </div>
     </div>

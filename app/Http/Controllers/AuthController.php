@@ -99,22 +99,41 @@ class AuthController extends Controller
     public function adminLogin(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'login' => ['nullable', 'string', 'max:100'],
+            'email' => ['nullable', 'email', 'max:100'],
             'password' => ['required', 'string'],
         ], [
-            'email.required' => 'Email admin wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'password.required' => 'Password wajib diisi.',
         ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+        $identifier = $credentials['login'] ?? $credentials['email'] ?? null;
 
-        if (! $user || $user->role !== 'admin' || ! Hash::check($credentials['password'], $user->password)) {
+        if (! $identifier) {
             return back()
                 ->withErrors([
+                    'login' => 'Username atau email admin wajib diisi.',
+                    'email' => 'Username atau email admin wajib diisi.',
+                ])
+                ->withInput();
+        }
+
+        $user = User::query()
+            ->where('role', 'admin')
+            ->where('nomor_induk', $identifier)
+            ->first()
+            ?? User::query()
+                ->where('role', 'admin')
+                ->where('email', $identifier)
+                ->first();
+
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            return back()
+                ->withErrors([
+                    'login' => 'Username, email, atau password administrator salah.',
                     'email' => 'Email atau password administrator salah.',
                 ])
-                ->onlyInput('email');
+                ->onlyInput('login', 'email');
         }
 
         Auth::login($user, $request->boolean('remember'));
@@ -127,9 +146,10 @@ class AuthController extends Controller
 
             return back()
                 ->withErrors([
+                    'login' => 'Akun administrator Anda sudah tidak aktif. Hubungi pengelola sistem.',
                     'email' => 'Akun administrator Anda sudah tidak aktif. Hubungi pengelola sistem.',
                 ])
-                ->onlyInput('email');
+                ->onlyInput('login', 'email');
         }
 
         if ($user->wajib_ganti_password) {

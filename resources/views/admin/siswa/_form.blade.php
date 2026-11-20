@@ -7,7 +7,22 @@
 <div class="field"><label for="password">{{ $sedangEdit ? 'Kata sandi baru (opsional)' : 'Kata sandi sementara *' }}</label><input id="password" name="password" type="password" minlength="6" autocomplete="new-password" @required(!$sedangEdit) aria-describedby="password-help" aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"><p class="help" id="password-help">Minimal 6 karakter. {{ $sedangEdit ? 'Kosongkan untuk mempertahankan kata sandi saat ini.' : 'Sampaikan kata sandi sementara kepada siswa secara aman.' }} Kata sandi tidak ditampilkan kembali.</p>@error('password')<p class="error">{{ $message }}</p>@enderror</div>
 @if($sedangEdit)
     <div class="field"><label for="status">Status akun *</label><select id="status" name="status" required aria-invalid="{{ $errors->has('status') ? 'true' : 'false' }}"><option value="aktif" @selected(old('status', $siswa->status) === 'aktif')>Aktif</option><option value="nonaktif" @selected(old('status', $siswa->status) === 'nonaktif')>Nonaktif / keluar sekolah</option></select><p class="help">Status nonaktif menjaga riwayat nilai dan keanggotaan siswa tetap tersimpan.</p>@error('status')<p class="error">{{ $message }}</p>@enderror</div>
-    <div class="alert alert-info">Formulir ini hanya mengubah akun. Kelola keanggotaan siswa melalui <a href="{{ route('admin.kelas.index') }}">halaman kelas</a>; keanggotaan historis tidak dihapus.</div>
+    <div class="field">
+        <label for="id_kelas">Penempatan kelas tahun ajaran aktif</label>
+        <select id="id_kelas" name="id_kelas" aria-invalid="{{ $errors->has('id_kelas') ? 'true' : 'false' }}">
+            <option value="">Belum ditempatkan di kelas aktif</option>
+            @foreach($daftarKelas as $kelasPilihan)
+                <option value="{{ $kelasPilihan->id_kelas }}" @selected(old('id_kelas', $kelasTerpilih) == $kelasPilihan->id_kelas)>
+                    {{ $kelasPilihan->nama_kelas }}
+                </option>
+            @endforeach
+        </select>
+        <p class="help">Pilih satu kelas untuk tahun ajaran aktif. Keanggotaan pada tahun ajaran sebelumnya tetap tersimpan.</p>
+        @if($daftarKelas->isEmpty())
+            <p class="help">Belum ada kelas aktif pada tahun ajaran aktif.</p>
+        @endif
+        @error('id_kelas')<p class="error">{{ $message }}</p>@enderror
+    </div>
 @else
     <div class="field"><label for="id_kelas">Kelas awal (opsional)</label><select id="id_kelas" name="id_kelas"><option value="">Belum ditempatkan di kelas</option>@foreach($daftarKelas as $kelasPilihan)<option value="{{ $kelasPilihan->id_kelas }}" @selected(old('id_kelas') == $kelasPilihan->id_kelas)>{{ $kelasPilihan->nama_kelas }} · {{ $kelasPilihan->tahunAjaran?->nama ?? '—' }}</option>@endforeach</select><p class="help">Periksa tahun ajarannya. Keanggotaan tambahan dapat diatur setelah akun disimpan.</p>@error('id_kelas')<p class="error">{{ $message }}</p>@enderror</div>
     <div class="alert alert-info">Akun siswa baru dibuat dengan status aktif dan ditandai wajib mengganti kata sandi.</div>

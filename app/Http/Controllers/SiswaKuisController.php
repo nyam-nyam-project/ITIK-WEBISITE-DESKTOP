@@ -26,6 +26,8 @@ class SiswaKuisController extends Controller
 {
     public const BATAS_PELANGGARAN = 3;
 
+    public const TOLERANSI_TERLAMBAT_MENIT = 2;
+
     public function __construct(
         private KuisSubmissionService $submission,
         private MateriProgressService $materiProgressService,
@@ -579,6 +581,12 @@ class SiswaKuisController extends Controller
             ], 404);
         }
 
+        if ($soal->tipe === 'essay' && $request->filled('jawaban')) {
+            throw ValidationException::withMessages([
+                'jawaban' => 'Soal essay tidak menerima opsi jawaban pilihan ganda.',
+            ]);
+        }
+
         /*
          * Simpan / update jawaban.
          */
@@ -681,7 +689,19 @@ class SiswaKuisController extends Controller
                 ->with('error', 'Pengerjaan kuis ini sudah selesai.');
         }
 
-        $hasil = DB::transaction(function () use ($request, $kuis, $sesi) {
+        $batasWaktu = $this->submission->batasWaktu($sesi);
+        $batasToleransi = $batasWaktu->copy()->addMinutes(self::TOLERANSI_TERLAMBAT_MENIT);
+
+        // Jika sudah melewati batas toleransi keterlambatan (grace period), tolak submission
+        if (now()->gt($batasToleransi)) {
+            $this->submission->submit($sesi, true);
+
+            return redirect()
+                ->route('siswa.kuis.index')
+                ->with('error', 'Waktu pengerjaan telah habis dan melewati batas toleransi pengumpulan.');
+        }
+
+        $hasil = DB::transaction(function () use ($request, $kuis, $sesi, $batasWaktu, $batasToleransi) {
             $kuis = Kuis::whereKey($kuis->id_kuis)->lockForUpdate()->firstOrFail();
             $sesi = SesiKuis::whereKey($sesi->id_sesi)->lockForUpdate()->firstOrFail();
             $sesi->setRelation('kuis', $kuis);
@@ -700,7 +720,9 @@ class SiswaKuisController extends Controller
                 ->where('percobaan_ke', $sesi->percobaan_ke)
                 ->exists();
 
-            if (! $sudahAda && now()->lt($this->submission->batasWaktu($sesi))) {
+            $isTerlambat = now()->gt($batasWaktu);
+
+            if (! $sudahAda && now()->lte($batasToleransi)) {
                 $validated = $request->validate([
                     'jawaban_teks' => ['sometimes', 'array'],
                     'jawaban_teks.*' => ['nullable', 'string', 'max:10000'],
@@ -730,7 +752,7 @@ class SiswaKuisController extends Controller
             }
 
             // Draft dipertahankan untuk evaluasi sampai siswa memulai percobaan baru.
-            return $this->submission->submit($sesi);
+            return $this->submission->submit($sesi, false, $isTerlambat);
         });
 
         if (! $hasil) {

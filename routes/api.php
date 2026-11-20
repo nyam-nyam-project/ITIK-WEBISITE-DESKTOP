@@ -34,7 +34,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/kuis/{kuis}/submit', [SiswaController::class, 'submitKuis']);
     });
 
-    Route::middleware('role:guru')->prefix('guru')->group(function (): void {
+    Route::middleware('role:guru,operator')->prefix('guru')->group(function (): void {
         Route::get('/mapel', [GuruMateriController::class, 'mapel'])
             ->name('guru.mapel.index');
         Route::apiResource('materi', GuruMateriController::class)
@@ -49,7 +49,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
             ->name('guru.kuis.soal.update');
         Route::delete('/kuis/{kuis}/soal/{soal}', [GuruKuisController::class, 'destroySoal'])
             ->name('guru.kuis.soal.destroy');
+    });
 
+    Route::middleware('role:guru')->prefix('guru')->group(function (): void {
         Route::post('/kuis/{kuis}/publish', [GuruKuisController::class, 'publish'])
             ->name('guru.kuis.publish');
 
@@ -59,6 +61,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
             ->name('guru.nilai.show');
         Route::patch('/nilai/{mengerjakan}/validasi', [GuruNilaiController::class, 'validasi'])
             ->name('guru.nilai.validasi');
+        Route::post('/nilai/{mengerjakan}/essay/{soal}', [GuruNilaiController::class, 'nilaiEssay']);
 
         Route::get('/remedial', [GuruRemedialController::class, 'index'])
             ->name('guru.remedial.index');
@@ -70,15 +73,5 @@ Route::middleware('auth:sanctum')->group(function (): void {
             ->name('guru.remedial.tugaskan');
         Route::get('/remedial/{remedial}', [GuruRemedialController::class, 'show'])
             ->name('guru.remedial.show');
-        Route::post('/kuis/{kuis}/publish', [GuruKuisController::class, 'publish']);
-        Route::get('/nilai', [GuruNilaiController::class, 'index']);
-        Route::get('/nilai/{mengerjakan}', [GuruNilaiController::class, 'show']);
-        Route::post('/nilai/{mengerjakan}/essay/{soal}', [GuruNilaiController::class, 'nilaiEssay']);
-        Route::patch('/nilai/{mengerjakan}/validasi', [GuruNilaiController::class, 'validasi']);
-        Route::get('/remedial', [GuruRemedialController::class, 'index']);
-        Route::post('/remedial', [GuruRemedialController::class, 'store']);
-        Route::get('/remedial/{remedial}/siswa', [GuruRemedialController::class, 'siswa']);
-        Route::get('/remedial/{remedial}', [GuruRemedialController::class, 'show']);
-        Route::post('/remedial/{remedial}/tugaskan', [GuruRemedialController::class, 'tugaskan']);
     });
 });

@@ -160,6 +160,11 @@ class SiswaDashboardOptimasiTest extends TestCase
             'is_aktif' => true,
         ]);
 
+        DB::table('tp_kuis_kelas')->insert([
+            ['id_kuis' => $kuisBelum->id_kuis, 'id_kelas' => $this->kelas->id_kelas],
+            ['id_kuis' => $kuisSudah->id_kuis, 'id_kelas' => $this->kelas->id_kelas],
+        ]);
+
         Mengerjakan::create([
             'id_kuis' => $kuisSudah->id_kuis,
             'id_user' => $this->siswa->id_user,
@@ -185,7 +190,7 @@ class SiswaDashboardOptimasiTest extends TestCase
             'is_aktif' => true,
         ]);
 
-        Kuis::create([
+        $kuis = Kuis::create([
             'id_kuis' => 'K01',
             'judul' => 'Kuis Satu',
             'kategori' => 'kuis harian',
@@ -195,6 +200,11 @@ class SiswaDashboardOptimasiTest extends TestCase
             'id_user' => $this->guru->id_user,
             'status_publikasi' => 'terbit',
             'is_aktif' => true,
+        ]);
+
+        DB::table('tp_kuis_kelas')->insert([
+            'id_kuis' => $kuis->id_kuis,
+            'id_kelas' => $this->kelas->id_kelas,
         ]);
 
         $response = $this->actingAs($this->siswa)->get(route('siswa.dashboard'));
@@ -233,6 +243,11 @@ class SiswaDashboardOptimasiTest extends TestCase
             'id_user' => $this->guru->id_user,
             'status_publikasi' => 'terbit',
             'is_aktif' => true,
+        ]);
+
+        DB::table('tp_kuis_kelas')->insert([
+            'id_kuis' => $kuis->id_kuis,
+            'id_kelas' => $this->kelas->id_kelas,
         ]);
 
         Mengerjakan::create([

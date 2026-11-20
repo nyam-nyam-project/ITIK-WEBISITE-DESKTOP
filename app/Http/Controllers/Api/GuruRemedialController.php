@@ -111,8 +111,11 @@ class GuruRemedialController extends Controller
             ->orderBy('nilai')
             ->paginate(20);
 
+        $paginated = $hasilSiswa->toArray();
+        $payload = array_merge($hasilSiswa->items(), $paginated);
+
         return response()->json([
-            'data' => $hasilSiswa,
+            'data' => $payload,
             'kuis_asal' => [
                 'id_kuis' => $kuisAsal->id_kuis,
                 'judul' => $kuisAsal->judul,

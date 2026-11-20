@@ -98,10 +98,21 @@ class SiswaDashboardController extends Controller
          * Kuis terbaru yang terbit, aktif, dan belum dikerjakan oleh siswa ini.
          * Kuis remedial tidak ikut, karena sudah tampil di kartu remedial.
          */
+        $idKelas = (Schema::hasTable('tp_anggota_kelas') && Schema::hasTable('tp_kuis_kelas'))
+            ? Kelas::kelasAktifSiswa($user)
+            : null;
+
         $kuisQuery = Kuis::where('status_publikasi', 'terbit')
             ->where('is_aktif', true)
             ->where('kategori', '!=', 'remedial')
-            ->when($mapelIds !== null, fn ($q) => $q->whereIn('id_mapel', $mapelIds));
+            ->when($mapelIds !== null, fn ($q) => $q->whereIn('id_mapel', $mapelIds))
+            ->when(Schema::hasTable('tp_kuis_kelas'), function ($q) use ($idKelas) {
+                if ($idKelas) {
+                    $q->whereHas('kelas', fn ($k) => $k->where('tp_kuis_kelas.id_kelas', $idKelas));
+                } else {
+                    $q->whereRaw('1 = 0');
+                }
+            });
 
         $kuisTersedia = (clone $kuisQuery)->count();
 

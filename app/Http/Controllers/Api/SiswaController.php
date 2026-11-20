@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DraftJawaban;
+use App\Models\Kelas;
 use App\Models\Kuis;
 use App\Models\Materi;
 use App\Models\Mengerjakan;
@@ -18,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -83,6 +85,7 @@ class SiswaController extends Controller
             ],
             [
                 'id_progress' => 'P'.Str::upper(Str::random(10)),
+                'status' => 'selesai',
                 'tanggal' => now()->toDateString(),
             ]
         );
@@ -101,13 +104,25 @@ class SiswaController extends Controller
     public function kuis(Request $request): JsonResponse
     {
         $user = $request->user();
+        $idKelas = (Schema::hasTable('tp_anggota_kelas') && Schema::hasTable('tp_kuis_kelas'))
+            ? Kelas::kelasAktifSiswa($user)
+            : null;
 
         $kuis = Kuis::query()
             ->where('status_publikasi', 'terbit')
             ->where('is_aktif', true)
             ->whereHas('soal')
-            ->where(function (Builder $query) use ($user): void {
-                $query->where('kategori', '!=', 'remedial')
+            ->where(function (Builder $query) use ($user, $idKelas): void {
+                $query->where(function (Builder $subQ) use ($idKelas): void {
+                    $subQ->where('kategori', '!=', 'remedial');
+                    if (Schema::hasTable('tp_kuis_kelas')) {
+                        if ($idKelas) {
+                            $subQ->whereHas('kelas', fn (Builder $k) => $k->where('tp_kuis_kelas.id_kelas', $idKelas));
+                        } else {
+                            $subQ->whereDoesntHave('kelas');
+                        }
+                    }
+                })
                     ->orWhereHas('remedialSiswa', function (Builder $query) use ($user): void {
                         $query->where('status', 'ditugaskan')
                             ->whereHas('mengerjakanAsal', function (Builder $query) use ($user): void {
@@ -470,6 +485,15 @@ class SiswaController extends Controller
         }
 
         if ($kuis->kategori !== 'remedial') {
+            if (Schema::hasTable('tp_kuis_kelas') && Schema::hasTable('tp_anggota_kelas')) {
+                $idKelas = Kelas::kelasAktifSiswa($user);
+                if ($idKelas) {
+                    abort_unless($kuis->kelas()->where('tp_kuis_kelas.id_kelas', $idKelas)->exists(), 403, 'Kuis ini tidak ditugaskan untuk kelas Anda.');
+                } elseif ($kuis->kelas()->exists()) {
+                    abort(403, 'Kuis ini tidak ditugaskan untuk kelas Anda.');
+                }
+            }
+
             return;
         }
 

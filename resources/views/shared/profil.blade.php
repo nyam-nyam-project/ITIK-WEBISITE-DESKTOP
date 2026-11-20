@@ -2,7 +2,7 @@
 @section('title', 'Profil Saya')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/shared/profil.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/shared/profil.css') }}">
 @endpush
 
 @section('content')
@@ -39,7 +39,7 @@
         </div>
         <div>
             <dt>Kelas</dt>
-            <dd>{{ $pengguna?->kelas ?? '—' }}</dd>
+            <dd>{{ $kelasAktif ?? '—' }}</dd>
         </div>
         <div>
             <dt>Status Akun</dt>
@@ -51,14 +51,16 @@
         <button type="button" class="btn" id="buka-password">
             🔑 Ganti Password
         </button>
-        <a class="btn btn-secondary" href="{{ $pengguna?->role === 'siswa' ? route('siswa.dashboard') : route('dashboard') }}">
+        <a class="btn btn-secondary"
+            href="{{ $pengguna?->role === 'siswa' ? route('siswa.dashboard') : route('dashboard') }}">
             ← Kembali
         </a>
     </div>
 </section>
 
 {{-- MODAL GANTI PASSWORD --}}
-<div id="modalPassword" class="modal-overlay" data-password-errors="{{ ($errors->has('password_lama') || $errors->has('password_baru')) ? '1' : '0' }}">
+<div id="modalPassword" class="modal-overlay"
+    data-password-errors="{{ ($errors->has('password_lama') || $errors->has('password_baru')) ? '1' : '0' }}">
     <div class="modal-card">
         <div class="modal-header">
             <h2>Ganti Password</h2>
@@ -77,35 +79,20 @@
 
             <div class="field">
                 <label for="password_lama">Password Saat Ini</label>
-                <input
-                    type="password"
-                    id="password_lama"
-                    name="password_lama"
-                    placeholder="Masukkan password saat ini"
-                    required
-                >
+                <input type="password" id="password_lama" name="password_lama" placeholder="Masukkan password saat ini"
+                    required>
             </div>
 
             <div class="field">
                 <label for="password_baru">Password Baru</label>
-                <input
-                    type="password"
-                    id="password_baru"
-                    name="password_baru"
-                    placeholder="Minimal 6 karakter"
-                    required
-                >
+                <input type="password" id="password_baru" name="password_baru" placeholder="Minimal 6 karakter"
+                    required>
             </div>
 
             <div class="field">
                 <label for="password_baru_confirmation">Konfirmasi Password Baru</label>
-                <input
-                    type="password"
-                    id="password_baru_confirmation"
-                    name="password_baru_confirmation"
-                    placeholder="Ulangi password baru"
-                    required
-                >
+                <input type="password" id="password_baru_confirmation" name="password_baru_confirmation"
+                    placeholder="Ulangi password baru" required>
             </div>
 
             <div class="actions u-margin-top-20px">
@@ -121,7 +108,7 @@
 </div>
 
 @push('scripts')
-<script defer src="{{ asset('js/shared/profil.js') }}"></script>
+    <script defer src="{{ asset('js/shared/profil.js') }}"></script>
 @endpush
 
 @endsection

@@ -46,7 +46,9 @@ Route::get('/profil', function () {
         return redirect()->route('admin.profil');
     }
 
-    return view('shared.profil');
+    return view('shared.profil', [
+        'kelasAktif' => auth()->user()->kelasAktif(),
+    ]);
 })->middleware('auth')->name('profil');
 
 Route::middleware('auth')->group(function () {
@@ -102,7 +104,7 @@ Route::middleware(['auth', 'role:guru'])
         // -------------------------
         // VALIDASI NILAI
         // -------------------------
-
+    
         Route::get('/nilai', [ValidasiNilaiController::class, 'index'])
             ->name('nilai.index');
 
@@ -124,7 +126,7 @@ Route::middleware(['auth', 'role:guru'])
         // -------------------------
         // REMEDIAL
         // -------------------------
-
+    
         Route::get('/remedial', [RemedialController::class, 'index'])
             ->name('remedial.index');
 
@@ -146,7 +148,7 @@ Route::middleware(['auth', 'role:guru'])
         // -------------------------
         // ARSIP (KUIS & MATERI)
         // -------------------------
-
+    
         Route::get('/arsip', [ArsipController::class, 'index'])
             ->name('arsip.index');
 
@@ -225,7 +227,7 @@ Route::middleware(['auth', 'role:siswa'])
         // -------------------------
         // MATERI
         // -------------------------
-
+    
         Route::get('/materi', [ProgressController::class, 'index'])
             ->name('materi.index');
 
@@ -238,7 +240,7 @@ Route::middleware(['auth', 'role:siswa'])
         // -------------------------
         // KUIS
         // -------------------------
-
+    
         Route::get('/kuis', [SiswaKuisController::class, 'index'])
             ->name('kuis.index');
 
@@ -263,7 +265,7 @@ Route::middleware(['auth', 'role:siswa'])
         // -------------------------
         // NILAI
         // -------------------------
-
+    
         Route::get('/nilai', [SiswaKuisController::class, 'daftarNilai'])
             ->name('nilai');
         Route::get('/nilai/semua', [SiswaKuisController::class, 'daftarNilai'])
@@ -272,7 +274,7 @@ Route::middleware(['auth', 'role:siswa'])
         // -------------------------
         // REMEDIAL SISWA
         // -------------------------
-
+    
         Route::get('/remedial', [RemedialSiswaController::class, 'index'])
             ->name('remedial.index');
 

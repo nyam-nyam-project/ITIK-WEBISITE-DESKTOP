@@ -31,5 +31,4 @@
             <div class="empty"><h3>Belum ada kelas yang ditampilkan</h3><p>{{ $tahunAktif ? 'Buat kelas untuk tahun ajaran aktif, lalu tambahkan siswa dan mata pelajarannya.' : 'Aktifkan tahun ajaran terlebih dahulu untuk melihat kelasnya.' }}</p></div>
         @endif
     </section>
-    <section class="card"><h2>Akses cepat</h2><p class="muted">Siapkan data akademik, kemudian kelola akun dan keanggotaan kelas.</p><div class="actions"><a class="btn" href="{{ route('admin.siswa.create') }}">Tambah siswa</a><a class="btn btn-secondary" href="{{ route('admin.guru.create') }}">Tambah guru</a><a class="btn btn-secondary" href="{{ route('admin.tahun-ajaran.index') }}">Tahun ajaran</a><a class="btn btn-secondary" href="{{ route('admin.mapel.index') }}">Mata pelajaran</a></div></section>
 @endsection

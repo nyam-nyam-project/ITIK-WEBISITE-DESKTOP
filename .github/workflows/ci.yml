@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [sadan, main]
+    branches: [sadan, main, revert/cicd]
   pull_request:
     branches: [main]
 

@@ -43,6 +43,42 @@
     </div>
 </div>
 
+{{-- Banner Notifikasi Kuning: Pengingat Belajar Dinamis --}}
+@php
+    $materiBelumSelesai = max(0, ($totalMateri ?? 0) - ($materiSelesai ?? 0));
+    $jumlahKuisBelum = $kuisBelumDikerjakan ?? 0;
+    $adaPengingat = $materiBelumSelesai > 0 || $jumlahKuisBelum > 0;
+@endphp
+
+@if($adaPengingat)
+    <div class="alert alert-warning banner-pengingat" role="alert">
+        <div class="banner-pengingat-content">
+            <span class="banner-pengingat-icon">📌</span>
+            <div>
+                <strong>Pengingat Belajar:</strong>
+                <span>
+                    @if($materiBelumSelesai > 0 && $jumlahKuisBelum > 0)
+                        Kamu masih memiliki <strong>{{ $materiBelumSelesai }} materi</strong> yang belum selesai dan <strong>{{ $jumlahKuisBelum }} kuis</strong> yang belum dikerjakan.
+                    @elseif($materiBelumSelesai > 0)
+                        Kamu masih memiliki <strong>{{ $materiBelumSelesai }} materi</strong> yang belum selesai dibaca.
+                    @else
+                        Semua materi sudah selesai! Namun kamu masih memiliki <strong>{{ $jumlahKuisBelum }} kuis</strong> yang belum dikerjakan.
+                    @endif
+                    Yuk, lanjutkan belajarmu!
+                </span>
+            </div>
+        </div>
+        <div class="banner-pengingat-actions">
+            @if($materiBelumSelesai > 0)
+                <a href="{{ route('siswa.materi.index') }}" class="btn btn-warning btn-small">Lanjut Belajar Materi</a>
+            @endif
+            @if($jumlahKuisBelum > 0)
+                <a href="{{ route('siswa.kuis.index') }}" class="btn btn-warning btn-small">Kerjakan Kuis</a>
+            @endif
+        </div>
+    </div>
+@endif
+
 <div class="grid grid-2">
 
     {{-- Materi Terbaru --}}
@@ -80,7 +116,7 @@
                                         @elseif($progress->status === 'selesai')
                                             <span class="badge badge-success">Selesai</span>
                                         @else
-                                            <span class="badge">Sedang Belajar</span>
+                                            <span class="badge badge-warning">Sedang Belajar</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -89,7 +125,13 @@
                     </table>
                 </div>
             @else
-                <div class="empty"><p>Belum ada materi yang tersedia.</p></div>
+                <div class="empty">
+                    @if(($totalMateri ?? 0) > 0 && ($materiSelesai ?? 0) >= ($totalMateri ?? 0))
+                        <p>🎉 Luar biasa! Semua materi pembelajaran sudah selesai dibaca.</p>
+                    @else
+                        <p>Belum ada materi yang perlu dipelajari saat ini.</p>
+                    @endif
+                </div>
             @endif
         </section>
     @endisset
@@ -131,7 +173,13 @@
                     </table>
                 </div>
             @else
-                <div class="empty"><p>Belum ada kuis yang tersedia.</p></div>
+                <div class="empty">
+                    @if(($kuisTersedia ?? 0) > 0)
+                        <p>🎉 Hebat! Semua kuis yang tersedia sudah kamu kerjakan.</p>
+                    @else
+                        <p>Belum ada kuis yang tersedia saat ini.</p>
+                    @endif
+                </div>
             @endif
         </section>
     @endisset

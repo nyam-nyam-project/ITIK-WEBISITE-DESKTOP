@@ -1,11 +1,34 @@
 # Wasiat AI (Handoff Document)
 
-> Terakhir diperbarui: 2026-11-20 (Pemilih Jadwal Kuis Flatpickr 24 Jam Bahasa Indonesia, Validasi Ketat Jadwal Terbit & Selesai, Perbaikan Auto-Publish Jadwal Kuis). Proyek: **ITIK** — web media pembelajaran TIK untuk SMK TKJ (Laravel 13.34, MySQL 8.4.3 via Laragon).
+> Terakhir diperbarui: 2026-11-20 (Optimasi Dashboard Siswa — Filter Materi/Kuis Belum Selesai, Banner Notifikasi, Perbaikan Cakupan Materi Guru). Proyek: **ITIK** — web media pembelajaran TIK untuk SMK TKJ (Laravel 13.34, MySQL 8.4.3 via Laragon).
 > Pemilik proyek adalah pelajar berbahasa Indonesia — jelaskan langkah demi langkah dan pakai bahasa Indonesia.
 
 ---
 
 ## Status Terakhir
+
+**2026-11-20 — Optimasi Dashboard Siswa & Perbaikan Statistik Guru (Cakupan Materi).**
+- **Filter Materi Terbaru di Dashboard Siswa (`SiswaDashboardController`):**
+  - Query `materiTerbaru` kini hanya menampilkan materi yang progresnya berstatus `'belum mulai'` atau `'sedang belajar'` (kecualikan status `'selesai'`).
+  - Jika semua materi sudah selesai dibaca, dashboard menampilkan pesan ramah: "Hebat! Semua materi sudah selesai dibaca."
+- **Filter Kuis Terbaru di Dashboard Siswa:**
+  - Query `kuisTerbaru` kini hanya menampilkan kuis yang belum pernah dikerjakan oleh siswa yang sedang login (menggunakan `whereDoesntHave('mengerjakan')`).
+  - Jika semua kuis sudah dikerjakan, dashboard menampilkan pesan ramah: "Semua kuis sudah dikerjakan."
+- **Badge 'Sedang Belajar' Menjadi Kuning (`resources/views/siswa/dashboard.blade.php`):**
+  - Badge status `Sedang Belajar` diubah dari `class="badge"` menjadi `class="badge badge-warning"` agar konsisten dengan warna kuning di halaman daftar materi siswa.
+  - CSS `.badge-warning` sudah terdefinisi di `public/css/app.css`.
+- **Banner Notifikasi Kuning Dinamis:**
+  - Ditambahkan banner berwarna kuning (class `.banner-pengingat`) tepat di bawah deretan 4 card statistik atas dashboard siswa.
+  - Banner hanya tampil jika siswa masih memiliki materi belum selesai (`$materiBelumSelesai > 0`) atau kuis belum dikerjakan (`$jumlahKuisBelum > 0`).
+  - Jika semuanya sudah selesai, banner otomatis disembunyikan.
+  - CSS banner ditambahkan di `public/css/app.css` (class `.banner-pengingat`, `.banner-pengingat-content`, `.banner-pengingat-icon`, `.banner-pengingat-actions`).
+- **Perbaikan Perhitungan Cakupan Materi di Statistik Guru (`app/Services/DashboardKelasService.php`):**
+  - Metode `detailSiswa()`: query `readMaterialsCount` ditambahkan `->where('status', 'selesai')` agar hanya materi yang benar-benar selesai yang terhitung (bukan `'sedang belajar'`).
+  - Metode `dataSiswaKelas()`: query `$progress` untuk daftar siswa ditambahkan `->where('status', 'selesai')` agar persentase cakupan materi per siswa akurat.
+- **Pengujian Terotomasi:**
+  - `tests/Feature/SiswaDashboardOptimasiTest.php` (baru): 4 test — filter materi belum selesai, filter kuis belum dikerjakan, banner tampil jika ada yang belum selesai, banner tersembunyi jika semua selesai.
+  - `tests/Feature/DashboardKelasServiceTest.php` (diperbarui): ditambahkan test `test_detail_siswa_and_daftar_siswa_only_counts_completed_materials_progress()`.
+  - Seluruh 27 tes lulus 100%.
 
 **2026-11-20 — Peningkatan Pemilih Jadwal Kuis (Flatpickr 24 Jam Bahasa Indonesia) & Validasi Ketat Jadwal.**
 - **Integrasi Flatpickr 24 Jam & Bahasa Indonesia via CDN:**

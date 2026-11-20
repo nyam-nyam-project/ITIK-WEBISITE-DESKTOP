@@ -188,7 +188,7 @@ class DashboardKelasServiceTest extends TestCase
         $this->addAttempt('Q001', 'S003', 100, 'dibatalkan');
         $this->addMaterial('M001', 'Dasar Jaringan', 'MP001', 'X TKJ 1');
         $this->addMaterial('M002', 'Perangkat Jaringan', 'MP001', 'X');
-        $this->addProgress('P001', 'M001', 'S001', 'sedang belajar');
+        $this->addProgress('P001', 'M001', 'S001', 'selesai');
         $this->addProgress('P002', 'M001', 'S002', 'selesai');
 
         $service = app(DashboardKelasService::class);
@@ -416,6 +416,36 @@ class DashboardKelasServiceTest extends TestCase
             ->keyBy('kategori');
 
         $this->assertSame(1, $categories['kuis harian']->jumlah_peluang);
+    }
+
+    public function test_detail_siswa_and_daftar_siswa_only_counts_completed_materials_progress(): void
+    {
+        $this->seedBase();
+        $this->assign('G001', 'K001', 'MP001');
+        $this->addStudent('S001', 'Alya', 'K001');
+
+        $this->addMaterial('M001', 'Materi Satu', 'MP001', 'X');
+        $this->addMaterial('M002', 'Materi Dua', 'MP001', 'X');
+
+        // Progress M001 masih 'sedang belajar', M002 sudah 'selesai'
+        $this->addProgress('P001', 'M001', 'S001', 'sedang belajar');
+        $this->addProgress('P002', 'M002', 'S001', 'selesai');
+
+        $detail = app(DashboardKelasService::class)
+            ->detailSiswa($this->guru('G001'), 'K001', 'MP001', 'S001');
+
+        $this->assertNotNull($detail);
+        $this->assertSame(2, $detail['jumlah_materi']);
+        // Hanya menghitung 1 materi yang berstatus 'selesai', bukan yang 'sedang belajar'
+        $this->assertSame(1, $detail['jumlah_materi_dibaca']);
+
+        $summary = app(DashboardKelasService::class)
+            ->daftarSiswa($this->guru('G001'), 'K001', 'MP001');
+
+        $studentRow = $summary->firstWhere('id_user', 'S001');
+        $this->assertNotNull($studentRow);
+        // Persentase harus 50.0 (1 dari 2 materi), bukan 100.0
+        $this->assertEquals(50.0, $studentRow->persentase_materi_dibaca);
     }
 
     private function addAttempt(

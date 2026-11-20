@@ -12,6 +12,7 @@ use App\Models\TahunAjaran;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -79,7 +80,7 @@ class ArsipPembelajaranTest extends TestCase
             'is_aktif' => true,
         ]);
 
-        \Illuminate\Support\Facades\DB::table('tp_mapel_kelas')->insert([
+        DB::table('tp_mapel_kelas')->insert([
             'id_mapel' => $this->mapel->id_mapel,
             'id_kelas' => 'K01',
         ]);

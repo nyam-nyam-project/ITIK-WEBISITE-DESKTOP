@@ -281,53 +281,45 @@ class KuisController extends Controller
         $idKuisAsal = $validated['id_kuis_asal'] ?? null;
 
         /*
-        * Validasi khusus kategori ulangan & jadwal otomatis.
+        * Validasi khusus kategori ulangan & jadwal otomatis (semua kategori).
         */
         if ($validated['kategori'] === 'ulangan') {
-
             if (! $request->waktu_mulai || ! $request->waktu_selesai) {
                 throw ValidationException::withMessages([
                     'waktu_mulai' => 'Waktu mulai dan waktu selesai wajib diisi untuk ulangan.',
                 ]);
             }
+        }
 
+        if ($request->filled('waktu_mulai')) {
             $waktuMulai = Carbon::parse($request->waktu_mulai);
+            if ($waktuMulai->lt(now()->startOfMinute())) {
+                throw ValidationException::withMessages([
+                    'waktu_mulai' => 'Waktu mulai tidak boleh di masa lalu.',
+                ]);
+            }
+        }
+
+        if ($request->filled('waktu_selesai')) {
             $waktuSelesai = Carbon::parse($request->waktu_selesai);
-
-            if ($waktuMulai->lt(now())) {
+            if ($waktuSelesai->lt(now()->startOfMinute())) {
                 throw ValidationException::withMessages([
-                    'waktu_mulai' => 'Waktu mulai ulangan tidak boleh sebelum waktu sekarang.',
+                    'waktu_selesai' => 'Waktu selesai tidak boleh di masa lalu.',
                 ]);
             }
 
-            if ($waktuSelesai->lte($waktuMulai)) {
-                throw ValidationException::withMessages([
-                    'waktu_selesai' => 'Waktu selesai harus setelah waktu mulai.',
-                ]);
-            }
-
-            $validated['waktu_mulai'] = $request->waktu_mulai;
-            $validated['waktu_selesai'] = $request->waktu_selesai;
-
-        } elseif (! empty($request->waktu_mulai) || ! empty($request->waktu_selesai)) {
-            if (! empty($request->waktu_mulai) && ! empty($request->waktu_selesai)) {
+            if ($request->filled('waktu_mulai')) {
                 $waktuMulai = Carbon::parse($request->waktu_mulai);
-                $waktuSelesai = Carbon::parse($request->waktu_selesai);
-
                 if ($waktuSelesai->lte($waktuMulai)) {
                     throw ValidationException::withMessages([
                         'waktu_selesai' => 'Waktu selesai harus setelah waktu mulai.',
                     ]);
                 }
             }
-
-            $validated['waktu_mulai'] = $request->waktu_mulai ?: null;
-            $validated['waktu_selesai'] = $request->waktu_selesai ?: null;
-
-        } else {
-            $validated['waktu_mulai'] = null;
-            $validated['waktu_selesai'] = null;
         }
+
+        $validated['waktu_mulai'] = $request->waktu_mulai ?: null;
+        $validated['waktu_selesai'] = $request->waktu_selesai ?: null;
 
         $validated['id_kuis'] = $this->idBerikutnya('tm_kuis', 'id_kuis', 'K');
         $validated['id_tahun_ajaran'] = $tahunAjaran->id_tahun_ajaran;
@@ -404,9 +396,16 @@ class KuisController extends Controller
             $kuis->materi()->sync($request->materi);
         }
 
+        Kuis::sinkronisasiStatus();
+        $kuis->refresh();
+
+        $pesanSukses = $kuis->status_publikasi === 'terbit'
+            ? 'Kuis berhasil dibuat dan otomatis terbit sesuai jadwal.'
+            : 'Kuis berhasil dibuat sebagai draft.';
+
         return redirect()
             ->route('kuis.index', ['mapel' => $kuis->id_mapel])
-            ->with('success', 'Kuis berhasil dibuat sebagai draft.');
+            ->with('success', $pesanSukses);
     }
 
     public function show($id)
@@ -516,48 +515,46 @@ class KuisController extends Controller
                 ]);
             }
 
+            /*
+            * Validasi khusus kategori ulangan & jadwal otomatis (semua kategori).
+            */
             if ($validated['kategori'] === 'ulangan') {
                 if (! $request->waktu_mulai || ! $request->waktu_selesai) {
                     throw ValidationException::withMessages([
                         'waktu_mulai' => 'Waktu mulai dan waktu selesai wajib diisi untuk ulangan.',
                     ]);
                 }
+            }
 
+            if ($request->filled('waktu_mulai')) {
                 $waktuMulai = Carbon::parse($request->waktu_mulai);
+                if ($waktuMulai->lt(now()->startOfMinute())) {
+                    throw ValidationException::withMessages([
+                        'waktu_mulai' => 'Waktu mulai tidak boleh di masa lalu.',
+                    ]);
+                }
+            }
+
+            if ($request->filled('waktu_selesai')) {
                 $waktuSelesai = Carbon::parse($request->waktu_selesai);
-
-                if ($waktuMulai->lt(now())) {
+                if ($waktuSelesai->lt(now()->startOfMinute())) {
                     throw ValidationException::withMessages([
-                        'waktu_mulai' => 'Waktu mulai ulangan tidak boleh sebelum waktu sekarang.',
+                        'waktu_selesai' => 'Waktu selesai tidak boleh di masa lalu.',
                     ]);
                 }
 
-                if ($waktuSelesai->lte($waktuMulai)) {
-                    throw ValidationException::withMessages([
-                        'waktu_selesai' => 'Waktu selesai harus setelah waktu mulai.',
-                    ]);
-                }
-
-                $validated['waktu_mulai'] = $request->waktu_mulai;
-                $validated['waktu_selesai'] = $request->waktu_selesai;
-            } elseif (! empty($request->waktu_mulai) || ! empty($request->waktu_selesai)) {
-                if (! empty($request->waktu_mulai) && ! empty($request->waktu_selesai)) {
+                if ($request->filled('waktu_mulai')) {
                     $waktuMulai = Carbon::parse($request->waktu_mulai);
-                    $waktuSelesai = Carbon::parse($request->waktu_selesai);
-
                     if ($waktuSelesai->lte($waktuMulai)) {
                         throw ValidationException::withMessages([
                             'waktu_selesai' => 'Waktu selesai harus setelah waktu mulai.',
                         ]);
                     }
                 }
-
-                $validated['waktu_mulai'] = $request->waktu_mulai ?: null;
-                $validated['waktu_selesai'] = $request->waktu_selesai ?: null;
-            } else {
-                $validated['waktu_mulai'] = null;
-                $validated['waktu_selesai'] = null;
             }
+
+            $validated['waktu_mulai'] = $request->waktu_mulai ?: null;
+            $validated['waktu_selesai'] = $request->waktu_selesai ?: null;
 
             unset($validated['materi'], $validated['soal']);
             $kuis->update($validated);
@@ -566,6 +563,8 @@ class KuisController extends Controller
             if (! in_array($kuis->kategori, ['pre-test', 'post-test', 'remedial'], true)) {
                 $kuis->materi()->sync($request->materi ?? []);
             }
+
+            Kuis::sinkronisasiStatus();
 
             return redirect()
                 ->route('kuis.index', ['mapel' => $kuis->id_mapel])

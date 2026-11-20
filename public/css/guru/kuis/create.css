@@ -22,3 +22,42 @@
     height: 18px;
     cursor: not-allowed;
 }
+
+.input-waktu-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.input-waktu-group input.flatpickr-input {
+    width: 100%;
+    padding-right: 36px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.btn-clear-waktu {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background-color 0.15s;
+    z-index: 2;
+}
+
+.btn-clear-waktu:hover {
+    color: #ef4444;
+    background-color: #f1f5f9;
+}

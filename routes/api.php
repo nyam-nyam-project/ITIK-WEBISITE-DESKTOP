@@ -56,11 +56,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
             ->name('guru.kuis.publish');
 
         Route::get('/nilai', [GuruNilaiController::class, 'index'])
-            ->name('guru.nilai.index');
+            ->name('api.guru.nilai.index');
         Route::get('/nilai/{mengerjakan}', [GuruNilaiController::class, 'show'])
-            ->name('guru.nilai.show');
+            ->name('api.guru.nilai.show');
         Route::patch('/nilai/{mengerjakan}/validasi', [GuruNilaiController::class, 'validasi'])
-            ->name('guru.nilai.validasi');
+            ->name('api.guru.nilai.validasi');
         Route::post('/nilai/{mengerjakan}/essay/{soal}', [GuruNilaiController::class, 'nilaiEssay']);
 
         Route::get('/remedial', [GuruRemedialController::class, 'index'])

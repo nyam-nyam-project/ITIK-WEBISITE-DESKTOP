@@ -61,6 +61,25 @@ class LoginNisnNipTest extends TestCase
             $table->timestamps();
             $table->foreign('dibuat_oleh')->references('id_user')->on('tm_user')->nullOnDelete();
         });
+
+        Schema::create('tm_tahun_ajaran', function (Blueprint $table) {
+            $table->string('id_tahun_ajaran', 50)->primary();
+            $table->string('nama', 20);
+            $table->boolean('is_aktif')->default(false);
+        });
+
+        Schema::create('tm_kelas', function (Blueprint $table) {
+            $table->string('id_kelas', 50)->primary();
+            $table->string('nama_kelas', 50);
+            $table->string('tingkat', 10);
+            $table->string('id_tahun_ajaran', 50);
+            $table->boolean('is_aktif')->default(true);
+        });
+
+        Schema::create('tp_anggota_kelas', function (Blueprint $table) {
+            $table->string('id_kelas', 50);
+            $table->string('id_user', 50);
+        });
     }
 
     private function seedScenario(): void
@@ -373,5 +392,35 @@ class LoginNisnNipTest extends TestCase
         $responseGuru->assertOk();
         $responseGuru->assertSee('Ganti Password');
         $responseGuru->assertSee('modalPassword');
+    }
+
+    public function test_profile_displays_the_students_new_class_from_membership_after_a_move(): void
+    {
+        DB::table('tm_tahun_ajaran')->insert([
+            'id_tahun_ajaran' => 'TA001',
+            'nama' => '2026/2027',
+            'is_aktif' => true,
+        ]);
+        DB::table('tm_kelas')->insert([
+            ['id_kelas' => 'K001', 'nama_kelas' => 'X TKJ 1', 'tingkat' => 'X', 'id_tahun_ajaran' => 'TA001'],
+            ['id_kelas' => 'K002', 'nama_kelas' => 'XI TKJ 2', 'tingkat' => 'XI', 'id_tahun_ajaran' => 'TA001'],
+        ]);
+        DB::table('tp_anggota_kelas')->insert([
+            'id_kelas' => 'K001',
+            'id_user' => $this->siswa->id_user,
+        ]);
+        $this->siswa->update(['kelas' => 'X TKJ 1']);
+
+        DB::table('tp_anggota_kelas')->where('id_user', $this->siswa->id_user)->delete();
+        DB::table('tp_anggota_kelas')->insert([
+            'id_kelas' => 'K002',
+            'id_user' => $this->siswa->id_user,
+        ]);
+
+        $response = $this->actingAs($this->siswa)->get(route('profil'));
+
+        $response->assertOk()
+            ->assertSee('XI TKJ 2')
+            ->assertDontSee('X TKJ 1');
     }
 }

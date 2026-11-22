@@ -63,7 +63,6 @@ if (kuisForm && kuisForm.dataset.kuisForm === 'create') {
     }
 
     const selectMapel = document.getElementById('id_mapel');
-    const selectMateri = document.getElementById('materi-select');
     const hintMateriKosong = document.getElementById('materi-empty-hint');
 
     function filterMateriByMapel() {
@@ -201,7 +200,14 @@ if (kuisForm && kuisForm.dataset.kuisForm === 'edit') {
     const elMulai = document.getElementById('waktu_mulai');
     const elSelesai = document.getElementById('waktu_selesai');
 
-    if (!elMulai || !elSelesai || typeof flatpickr === 'undefined') {
+    if (!elMulai || !elSelesai) {
+        return;
+    }
+
+    if (typeof flatpickr === 'undefined') {
+        // Fallback untuk browser saat offline atau CDN tidak termuat
+        if (elMulai.type === 'text') elMulai.type = 'datetime-local';
+        if (elSelesai.type === 'text') elSelesai.type = 'datetime-local';
         return;
     }
 

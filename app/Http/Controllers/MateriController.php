@@ -55,6 +55,9 @@ class MateriController extends Controller
                 if ($mapelTerpilih) {
                     $materi = Materi::where('is_aktif', true)
                         ->where('id_mapel', $idMapel)
+                        ->with(['kuis' => fn ($query) => $query
+                            ->where('is_aktif', true)
+                            ->select('tm_kuis.id_kuis', 'tm_kuis.kategori')])
                         ->orderBy('bab')
                         ->orderBy('judul')
                         ->get();
@@ -204,6 +207,10 @@ class MateriController extends Controller
                 abort(403, 'Anda tidak berhak mengakses materi di luar penugasan pengajaran Anda.');
             }
         }
+
+        $materi->load(['kuis' => fn ($query) => $query
+            ->where('is_aktif', true)
+            ->select('tm_kuis.id_kuis', 'tm_kuis.kategori')]);
 
         $pdfUrl = $materi->pdfUrl();
 

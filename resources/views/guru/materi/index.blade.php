@@ -111,12 +111,16 @@
                         <a href="{{ route('materi.show', $item->id_materi) }}" class="btn btn-secondary btn-small">
                             Lihat Dokumen
                         </a>
-                        <a href="{{ route('kuis.create', ['mapel' => $item->id_mapel, 'materi' => $item->id_materi, 'kategori' => 'post-test']) }}" class="btn btn-secondary btn-small">
-                            Buat Post-test
-                        </a>
-                        <a href="{{ route('kuis.create', ['mapel' => $item->id_mapel, 'materi' => $item->id_materi, 'kategori' => 'pre-test']) }}" class="btn btn-secondary btn-small">
-                            Buat Pre-test
-                        </a>
+                        @unless($item->kuis->contains('kategori', 'post-test'))
+                            <a href="{{ route('kuis.create', ['mapel' => $item->id_mapel, 'materi' => $item->id_materi, 'kategori' => 'post-test']) }}" class="btn btn-secondary btn-small">
+                                Buat Post-test
+                            </a>
+                        @endunless
+                        @unless($item->kuis->contains('kategori', 'pre-test'))
+                            <a href="{{ route('kuis.create', ['mapel' => $item->id_mapel, 'materi' => $item->id_materi, 'kategori' => 'pre-test']) }}" class="btn btn-secondary btn-small">
+                                Buat Pre-test
+                            </a>
+                        @endunless
                         <a href="{{ route('materi.edit', $item->id_materi) }}" class="btn btn-secondary btn-small">
                             Edit
                         </a>

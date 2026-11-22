@@ -181,7 +181,8 @@
                     <p id="materi-empty-hint" class="help u-display-none u-color-8a4d08 u-font-weight-bold">
                         ⚠️ Belum ada materi untuk mata pelajaran ini. Buat materi terlebih dahulu di menu Materi agar kuis dapat terpetakan ke bab.
                     </p>
-                    <p class="help">Gunakan Ctrl + klik untuk memilih lebih dari satu bab materi.</p>
+                    <p id="materi-multi-hint" class="help">Gunakan Ctrl + klik untuk memilih lebih dari satu bab materi.</p>
+                    <p id="materi-single-hint" class="help u-display-none">Untuk Pre-test dan Post-test, pilih tepat 1 bab materi.</p>
                 @endif
             </div>
         </div>

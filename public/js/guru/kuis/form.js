@@ -5,6 +5,9 @@ if (kuisForm && kuisForm.dataset.kuisForm === 'create') {
     const materiContainer = document.getElementById('materi-container');
     const waktuContainer = document.getElementById('waktu-container');
     const remedialContainer = document.getElementById('field-remedial');
+    const selectMateri = document.getElementById('materi-select');
+    const hintMulti = document.getElementById('materi-multi-hint');
+    const hintSingle = document.getElementById('materi-single-hint');
 
     function updateForm() {
         const value = kategori ? kategori.value : '';
@@ -20,6 +23,30 @@ if (kuisForm && kuisForm.dataset.kuisForm === 'create') {
         } else if (value === 'remedial') {
             remedialContainer.classList.remove('u-display-none');
             remedialContainer.classList.add('u-display-block');
+        }
+
+        if (selectMateri) {
+            if (value === 'pre-test' || value === 'post-test') {
+                selectMateri.removeAttribute('multiple');
+                if (hintMulti) {
+                    hintMulti.classList.remove('u-display-block');
+                    hintMulti.classList.add('u-display-none');
+                }
+                if (hintSingle) {
+                    hintSingle.classList.remove('u-display-none');
+                    hintSingle.classList.add('u-display-block');
+                }
+            } else {
+                selectMateri.setAttribute('multiple', 'multiple');
+                if (hintMulti) {
+                    hintMulti.classList.remove('u-display-none');
+                    hintMulti.classList.add('u-display-block');
+                }
+                if (hintSingle) {
+                    hintSingle.classList.remove('u-display-block');
+                    hintSingle.classList.add('u-display-none');
+                }
+            }
         }
 
         const ket = document.getElementById('waktu-keterangan');
@@ -73,14 +100,18 @@ if (kuisForm && kuisForm.dataset.kuisForm === 'edit') {
     const kategori = document.getElementById('kategori');
     const materiContainer = document.getElementById('materi-container');
     const waktuContainer = document.getElementById('waktu-container');
+    const selectMateriEdit = document.getElementById('materi-select');
+    const hintMultiEdit = document.getElementById('materi-multi-hint');
+    const hintSingleEdit = document.getElementById('materi-single-hint');
 
     function updateForm() {
         if (!kategori) return;
+        const val = kategori.value;
         if (
-            kategori.value === 'ulangan' ||
-            kategori.value === 'post-test' ||
-            kategori.value === 'pre-test' ||
-            kategori.value === 'kuis harian'
+            val === 'ulangan' ||
+            val === 'post-test' ||
+            val === 'pre-test' ||
+            val === 'kuis harian'
         ) {
             if (materiContainer) {
                 materiContainer.classList.remove('u-display-none');
@@ -90,6 +121,30 @@ if (kuisForm && kuisForm.dataset.kuisForm === 'edit') {
             if (materiContainer) {
                 materiContainer.classList.remove('u-display-block');
                 materiContainer.classList.add('u-display-none');
+            }
+        }
+
+        if (selectMateriEdit) {
+            if (val === 'pre-test' || val === 'post-test') {
+                selectMateriEdit.removeAttribute('multiple');
+                if (hintMultiEdit) {
+                    hintMultiEdit.classList.remove('u-display-block');
+                    hintMultiEdit.classList.add('u-display-none');
+                }
+                if (hintSingleEdit) {
+                    hintSingleEdit.classList.remove('u-display-none');
+                    hintSingleEdit.classList.add('u-display-block');
+                }
+            } else {
+                selectMateriEdit.setAttribute('multiple', 'multiple');
+                if (hintMultiEdit) {
+                    hintMultiEdit.classList.remove('u-display-none');
+                    hintMultiEdit.classList.add('u-display-block');
+                }
+                if (hintSingleEdit) {
+                    hintSingleEdit.classList.remove('u-display-block');
+                    hintSingleEdit.classList.add('u-display-none');
+                }
             }
         }
 

@@ -16,12 +16,16 @@
         <p>{{ $materi->bab ?? 'Materi Pembelajaran' }} &bull; Kelas {{ $materi->kelas ?? '-' }}</p>
     </div>
     <div class="actions">
-        <a href="{{ route('kuis.create', ['mapel' => $materi->id_mapel, 'materi' => $materi->id_materi, 'kategori' => 'post-test']) }}" class="btn btn-secondary">
-            Buat Post-test
-        </a>
-        <a href="{{ route('kuis.create', ['mapel' => $materi->id_mapel, 'materi' => $materi->id_materi, 'kategori' => 'pre-test']) }}" class="btn btn-secondary">
-            Buat Pre-test
-        </a>
+        @unless($materi->kuis->contains('kategori', 'post-test'))
+            <a href="{{ route('kuis.create', ['mapel' => $materi->id_mapel, 'materi' => $materi->id_materi, 'kategori' => 'post-test']) }}" class="btn btn-secondary">
+                Buat Post-test
+            </a>
+        @endunless
+        @unless($materi->kuis->contains('kategori', 'pre-test'))
+            <a href="{{ route('kuis.create', ['mapel' => $materi->id_mapel, 'materi' => $materi->id_materi, 'kategori' => 'pre-test']) }}" class="btn btn-secondary">
+                Buat Pre-test
+            </a>
+        @endunless
         <a href="{{ route('materi.edit', $materi->id_materi) }}" class="btn">
             Edit Materi
         </a>

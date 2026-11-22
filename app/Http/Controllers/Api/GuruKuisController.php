@@ -8,6 +8,7 @@ use App\Models\Materi;
 use App\Models\Remedial;
 use App\Models\Soal;
 use App\Models\TahunAjaran;
+use App\Services\KuisPrePostUnikService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,14 +33,33 @@ class GuruKuisController extends Controller
         );
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, KuisPrePostUnikService $kuisPrePostUnik): JsonResponse
     {
         $validated = $this->validatedKuis($request);
         $materi = $validated['materi'] ?? [];
         $idKuisAsal = $validated['id_kuis_asal'] ?? null;
+
+        if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)) {
+            if ($materi === []) {
+                throw ValidationException::withMessages([
+                    'materi' => ['Pre-test dan post-test wajib dihubungkan dengan minimal satu materi.'],
+                ]);
+            }
+
+            if (count($materi) > 1) {
+                throw ValidationException::withMessages([
+                    'materi' => ['Pre-test dan post-test hanya boleh dihubungkan ke tepat satu materi.'],
+                ]);
+            }
+        }
+
         unset($validated['materi'], $validated['id_kuis_asal']);
 
-        $kuis = DB::transaction(function () use ($validated, $materi, $idKuisAsal, $request): Kuis {
+        $kuis = DB::transaction(function () use ($validated, $materi, $idKuisAsal, $request, $kuisPrePostUnik): Kuis {
+            if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)) {
+                $kuisPrePostUnik->pastikanUnikUntukMateri($materi, $validated['kategori']);
+            }
+
             $kuis = Kuis::create([
                 ...$validated,
                 'id_kuis' => $this->nextKuisId(),
@@ -74,16 +94,39 @@ class GuruKuisController extends Controller
         ]);
     }
 
-    public function update(Request $request, Kuis $kuis): JsonResponse
+    public function update(Request $request, Kuis $kuis, KuisPrePostUnikService $kuisPrePostUnik): JsonResponse
     {
         abort_if($kuis->status_publikasi !== 'draft', 409, 'Kuis yang sudah terbit tidak dapat diedit.');
 
         $validated = $this->validatedKuis($request, $kuis);
         $materi = $validated['materi'] ?? [];
         $idKuisAsal = $validated['id_kuis_asal'] ?? null;
+
+        if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)) {
+            if ($materi === []) {
+                throw ValidationException::withMessages([
+                    'materi' => ['Pre-test dan post-test wajib dihubungkan dengan minimal satu materi.'],
+                ]);
+            }
+
+            if (count($materi) > 1) {
+                throw ValidationException::withMessages([
+                    'materi' => ['Pre-test dan post-test hanya boleh dihubungkan ke tepat satu materi.'],
+                ]);
+            }
+        }
+
         unset($validated['materi'], $validated['id_kuis_asal']);
 
-        DB::transaction(function () use ($kuis, $validated, $materi, $idKuisAsal): void {
+        DB::transaction(function () use ($kuis, $validated, $materi, $idKuisAsal, $kuisPrePostUnik): void {
+            if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)) {
+                $kuisPrePostUnik->pastikanUnikUntukMateri(
+                    $materi,
+                    $validated['kategori'],
+                    $kuis->id_kuis
+                );
+            }
+
             $kuis->update($validated);
 
             if ($kuis->kategori === 'remedial') {

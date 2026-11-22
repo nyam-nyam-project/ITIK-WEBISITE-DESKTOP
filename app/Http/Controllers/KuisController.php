@@ -9,6 +9,7 @@ use App\Models\Pengajaran;
 use App\Models\Remedial;
 use App\Models\TahunAjaran;
 use App\Services\KuisPenilaianService;
+use App\Services\KuisPrePostUnikService;
 use App\Support\MenghasilkanId;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -214,7 +215,7 @@ class KuisController extends Controller
         ));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, KuisPrePostUnikService $kuisPrePostUnik)
     {
         $tahunAjaran = TahunAjaran::aktif();
 
@@ -321,6 +322,22 @@ class KuisController extends Controller
         $validated['waktu_mulai'] = $request->waktu_mulai ?: null;
         $validated['waktu_selesai'] = $request->waktu_selesai ?: null;
 
+        $materiIds = array_values(array_unique($validated['materi'] ?? []));
+
+        if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)) {
+            if ($materiIds === []) {
+                throw ValidationException::withMessages([
+                    'materi' => 'Pre-test dan post-test wajib dihubungkan dengan minimal satu materi.',
+                ]);
+            }
+
+            if (count($materiIds) > 1) {
+                throw ValidationException::withMessages([
+                    'materi' => 'Pre-test dan post-test hanya boleh dihubungkan ke tepat satu materi.',
+                ]);
+            }
+        }
+
         $validated['id_kuis'] = $this->idBerikutnya('tm_kuis', 'id_kuis', 'K');
         $validated['id_tahun_ajaran'] = $tahunAjaran->id_tahun_ajaran;
 
@@ -344,57 +361,24 @@ class KuisController extends Controller
         // Default tampil_jawaban jika tidak diisi
         $validated['tampil_jawaban'] = $validated['tampil_jawaban'] ?? 'setelah_submit';
 
-        /*
-        * Simpan kuis.
-        */
-        $kuis = Kuis::create($validated);
-
-        /*
-        * Jika kategori remedial,
-        * buat relasi di tabel remedials.
-        */
-        if ($kuis->kategori === 'remedial') {
-
-            Remedial::create([
-                'id_kuis_remedial' => $kuis->id_kuis,
-                'id_kuis_asal' => $idKuisAsal,
-            ]);
-        }
-
-        /*
-        * Validasi: pre-test dan post-test maksimal 1 per materi (aktif).
-        */
-        if (in_array($kuis->kategori, ['pre-test', 'post-test'], true) && $request->filled('materi')) {
-            $labelKategori = ucfirst($kuis->kategori);
-            foreach ($request->materi as $idMateri) {
-                $materiObj = Materi::find($idMateri);
-                if (! $materiObj) {
-                    continue;
-                }
-                $konflik = $materiObj->kuis()
-                    ->where('is_aktif', true)
-                    ->whereRaw('LOWER(TRIM(kategori)) = ?', [$kuis->kategori])
-                    ->exists();
-                if ($konflik) {
-                    // Hapus kuis yang baru dibuat sebelum lempar error
-                    $kuis->delete();
-                    throw ValidationException::withMessages([
-                        'materi' => 'Materi "'.$materiObj->judul.'" sudah memiliki '.$labelKategori.' aktif. Setiap materi hanya boleh memiliki satu '.$kuis->kategori.'.',
-                    ]);
-                }
+        $kuis = DB::transaction(function () use ($validated, $materiIds, $idKuisAsal, $kuisPrePostUnik): Kuis {
+            if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)) {
+                $kuisPrePostUnik->pastikanUnikUntukMateri($materiIds, $validated['kategori']);
             }
-        }
 
-        /*
-        * Hubungkan materi untuk:
-        * post-test, pre-test, kuis harian, ulangan.
-        */
-        if (
-            $request->filled('materi') &&
-            $kuis->kategori !== 'remedial'
-        ) {
-            $kuis->materi()->sync($request->materi);
-        }
+            $kuis = Kuis::create($validated);
+
+            if ($kuis->kategori === 'remedial') {
+                Remedial::create([
+                    'id_kuis_remedial' => $kuis->id_kuis,
+                    'id_kuis_asal' => $idKuisAsal,
+                ]);
+            } elseif ($materiIds !== []) {
+                $kuis->materi()->sync($materiIds);
+            }
+
+            return $kuis;
+        });
 
         Kuis::sinkronisasiStatus();
         $kuis->refresh();
@@ -467,9 +451,9 @@ class KuisController extends Controller
         );
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, KuisPrePostUnikService $kuisPrePostUnik)
     {
-        return DB::transaction(function () use ($request, $id) {
+        return DB::transaction(function () use ($request, $id, $kuisPrePostUnik) {
             $kuis = Kuis::whereKey($id)->lockForUpdate()->firstOrFail();
             $user = Auth::user();
 
@@ -556,11 +540,42 @@ class KuisController extends Controller
             $validated['waktu_mulai'] = $request->waktu_mulai ?: null;
             $validated['waktu_selesai'] = $request->waktu_selesai ?: null;
 
+            $kategoriSebelumnyaPrePost = in_array(
+                strtolower(trim((string) $kuis->kategori)),
+                ['pre-test', 'post-test'],
+                true
+            );
+            $kategoriBaruPrePost = in_array($validated['kategori'], ['pre-test', 'post-test'], true);
+            $materiIds = $kategoriSebelumnyaPrePost
+                ? $kuis->materi()->orderBy('tm_materi.id_materi')->pluck('tm_materi.id_materi')->all()
+                : array_values(array_unique($validated['materi'] ?? []));
+
+            if ($kategoriBaruPrePost) {
+                if (! $kategoriSebelumnyaPrePost && $materiIds === []) {
+                    throw ValidationException::withMessages([
+                        'materi' => 'Pre-test dan post-test wajib dihubungkan dengan minimal satu materi.',
+                    ]);
+                }
+
+                if (count($materiIds) > 1) {
+                    throw ValidationException::withMessages([
+                        'materi' => 'Pre-test dan post-test hanya boleh dihubungkan ke tepat satu materi.',
+                    ]);
+                }
+
+                $kuisPrePostUnik->pastikanUnikUntukMateri(
+                    $materiIds,
+                    $validated['kategori'],
+                    $kuis->id_kuis
+                );
+            }
+
             unset($validated['materi'], $validated['soal']);
             $kuis->update($validated);
 
-            // Pre-test dan Post-test: materi dikunci, tidak boleh diubah saat edit
-            if (! in_array($kuis->kategori, ['pre-test', 'post-test', 'remedial'], true)) {
+            if ($kategoriBaruPrePost && ! $kategoriSebelumnyaPrePost) {
+                $kuis->materi()->sync($materiIds);
+            } elseif (! $kategoriBaruPrePost && $kuis->kategori !== 'remedial') {
                 $kuis->materi()->sync($request->materi ?? []);
             }
 

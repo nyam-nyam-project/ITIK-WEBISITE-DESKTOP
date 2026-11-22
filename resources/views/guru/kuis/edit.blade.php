@@ -128,7 +128,8 @@
                     ⚠️ Materi {{ ucfirst($kuis->kategori) }} dikunci dan tidak dapat diubah saat edit.
                 </p>
             @else
-                <p class="muted small u-margin-bottom-10px">Pilih materi yang berkaitan dengan kuis. Tahan tombol Ctrl (Windows) untuk memilih beberapa bab.</p>
+                <p id="materi-multi-hint" class="muted small u-margin-bottom-10px">Pilih materi yang berkaitan dengan kuis. Tahan tombol Ctrl (Windows) untuk memilih beberapa bab.</p>
+                <p id="materi-single-hint" class="muted small u-margin-bottom-10px u-display-none">Untuk Pre-test dan Post-test, pilih tepat 1 bab materi.</p>
                 <select class="u-height-140px u-width-100pct u-border-1px-solid-d0c8ed u-border-radius-10px u-padding-10px"
                     id="materi-select"
                     name="materi[]"

@@ -1,6 +1,6 @@
 .special-card {
-    background: #fbfafd;
-    border: 1px dashed #d0c8ed;
+    background: var(--surface-alt);
+    border: 1px dashed var(--border-dashed);
     border-radius: 14px;
     padding: 18px 20px;
     margin-bottom: 18px;
@@ -11,8 +11,8 @@
     align-items: center;
     gap: 10px;
     padding: 12px 14px;
-    background: #f8fafc;
-    border: 1px solid #cbd5e1;
+    background: var(--readonly-bg);
+    border: 1px solid var(--border-strong);
     border-radius: 8px;
     margin-top: 6px;
 }
@@ -33,7 +33,7 @@
 .input-waktu-group input.flatpickr-input {
     width: 100%;
     padding-right: 36px;
-    background-color: #fff;
+    background-color: var(--input-bg);
     cursor: pointer;
 }
 
@@ -46,7 +46,7 @@
     border: none;
     font-size: 20px;
     line-height: 1;
-    color: #94a3b8;
+    color: var(--muted);
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 6px;
@@ -58,8 +58,8 @@
 }
 
 .btn-clear-waktu:hover {
-    color: #ef4444;
-    background-color: #f1f5f9;
+    color: var(--error-ink);
+    background-color: var(--error-bg);
 }
 
 .kelas-checkbox-grid {
@@ -75,8 +75,8 @@
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
-    background: #ffffff;
-    border: 1px solid #dcd8eb;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 10px;
     cursor: pointer;
     transition: border-color 0.15s, background-color 0.15s;
@@ -84,8 +84,8 @@
 }
 
 .kelas-checkbox-item:hover {
-    background: #f8f7fd;
-    border-color: #5542dc;
+    background: var(--purple-light);
+    border-color: var(--purple);
 }
 
 .kelas-checkbox-item input[type="checkbox"] {
@@ -98,5 +98,5 @@
 .kelas-checkbox-item .kelas-nama {
     font-size: 14px;
     font-weight: 600;
-    color: #202044;
+    color: var(--ink);
 }

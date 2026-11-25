@@ -4,7 +4,7 @@
     gap: 18px;
 }
 .mapel-card {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 22px;
@@ -31,10 +31,10 @@
     margin-bottom: 12px;
 }
 .mapel-banner {
-    background: linear-gradient(135deg, #7160ef 0%, #5c4be0 100%);
+    background: linear-gradient(135deg, var(--sidebar-start) 0%, var(--sidebar-end) 100%);
     border-radius: 16px;
     padding: 22px 26px;
-    color: white;
+    color: var(--sidebar-ink);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -52,7 +52,7 @@
     font-size: 13px;
 }
 .btn-back-mapel {
-    background: white;
+    background: var(--surface);
     color: var(--purple);
     font-size: 13px;
     font-weight: 700;
@@ -71,7 +71,7 @@
     flex-wrap: wrap;
 }
 .view-btn {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     padding: 8px 16px;
     border-radius: 10px;
@@ -82,11 +82,11 @@
 }
 .view-btn.active {
     background: var(--purple);
-    color: white;
+    color: var(--sidebar-ink);
     border-color: var(--purple);
 }
 .bab-card {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 20px;
@@ -109,7 +109,7 @@
     font-size: 11px;
     font-weight: 700;
 }
-.level-pill.active-mudah { background: #dcfce7; color: #166534; }
-.level-pill.active-sedang { background: #fef3c7; color: #92400e; }
-.level-pill.active-sulit { background: #fee2e2; color: #991b1b; }
-.level-pill.inactive { background: #f3f4f6; color: #9ca3af; }
+.level-pill.active-mudah { background: var(--badge-success-bg); color: var(--badge-success-ink); }
+.level-pill.active-sedang { background: var(--badge-warning-bg); color: var(--badge-warning-ink); }
+.level-pill.active-sulit { background: var(--error-bg); color: var(--error-ink); }
+.level-pill.inactive { background: var(--badge-muted-bg); color: var(--badge-muted-ink); }

@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Login - ITIK</title>
-
-
+    <script src="{{ asset('js/theme-init.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
     <link rel="stylesheet" href="{{ asset('css/auth/login.css') }}">
     <link rel="stylesheet" href="{{ asset('css/utilities.css') }}">
 </head>
@@ -175,29 +175,6 @@
                 </button>
 
             </form>
-
-
-            <!-- AKUN DEMO -->
-
-            <div class="demo-box">
-
-                <div class="demo-title">
-                    ℹ️ Akun Demo
-                </div>
-
-                <div class="demo-row">
-                    <span class="demo-role">Guru (NIP)</span>
-                    <span class="demo-email">198001</span>
-                    <span class="demo-pass">password123</span>
-                </div>
-
-                <div class="demo-row">
-                    <span class="demo-role">Siswa (NISN)</span>
-                    <span class="demo-email">202401</span>
-                    <span class="demo-pass">password123</span>
-                </div>
-
-            </div>
 
             <!-- LINK MENUJU LOGIN ADMIN -->
             <div class="admin-portal-box">

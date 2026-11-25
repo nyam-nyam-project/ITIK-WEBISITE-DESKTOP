@@ -1,56 +1,56 @@
 /* Utilities preserve the priority of the original inline declarations. */
 .u-align-items-center { align-items: center !important; }
 .u-align-items-flex-start { align-items: flex-start !important; }
-.u-background-10b981 { background: #10b981 !important; }
-.u-background-ddd { background: #ddd !important; }
-.u-background-ede9fc { background: #ede9fc !important; }
-.u-background-eef2ff { background: #eef2ff !important; }
-.u-background-f0fdf4 { background: #f0fdf4 !important; }
-.u-background-fbfafd { background: #fbfafd !important; }
-.u-background-fde8e8 { background: #fde8e8 !important; }
-.u-background-fffdf5 { background: #fffdf5 !important; }
-.u-background-linear-gradient-180deg-2c285a-1b173d { background: linear-gradient(180deg, #2c285a, #1b173d) !important; }
-.u-background-rgba-255-255-255-0p1 { background: rgba(255,255,255,0.1) !important; }
-.u-background-rgba-255-75-75-0p18 { background: rgba(255, 75, 75, 0.18) !important; }
-.u-border-1px-solid-d0c8ed { border: 1px solid #d0c8ed !important; }
-.u-border-1px-solid-ebe6f7 { border: 1px solid #ebe6f7 !important; }
-.u-border-1px-solid-f0eff6 { border: 1px solid #f0eff6 !important; }
-.u-border-1px-solid-f8b4b4 { border: 1px solid #f8b4b4 !important; }
-.u-border-1px-solid-rgba-255-100-100-0p4 { border: 1px solid rgba(255, 100, 100, 0.4) !important; }
-.u-border-color-10b981 { border-color: #10b981 !important; }
-.u-border-color-bbf7d0 { border-color: #bbf7d0 !important; }
-.u-border-color-fca5a5 { border-color: #fca5a5 !important; }
-.u-border-color-fde8a0 { border-color: #fde8a0 !important; }
-.u-border-color-rgba-255-255-255-0p25 { border-color: rgba(255,255,255,0.25) !important; }
-.u-border-left-3px-solid-5542dc { border-left: 3px solid #5542dc !important; }
-.u-border-left-4px-solid-5542dc { border-left: 4px solid #5542dc !important; }
-.u-border-left-4px-solid-6366f1 { border-left: 4px solid #6366f1 !important; }
+.u-background-10b981 { background: var(--success-ink) !important; }
+.u-background-ddd { background: var(--border-strong) !important; }
+.u-background-ede9fc { background: var(--purple-light) !important; }
+.u-background-eef2ff { background: var(--info-bg) !important; }
+.u-background-f0fdf4 { background: var(--success-bg) !important; }
+.u-background-fbfafd { background: var(--surface-alt) !important; }
+.u-background-fde8e8 { background: var(--error-bg) !important; }
+.u-background-fffdf5 { background: var(--warning-bg) !important; }
+.u-background-linear-gradient-180deg-2c285a-1b173d { background: linear-gradient(180deg, var(--sidebar-start), var(--sidebar-end)) !important; }
+.u-background-rgba-255-255-255-0p1 { background: var(--sidebar-hover) !important; }
+.u-background-rgba-255-75-75-0p18 { background: var(--error-bg) !important; }
+.u-border-1px-solid-d0c8ed { border: 1px solid var(--border-strong) !important; }
+.u-border-1px-solid-ebe6f7 { border: 1px solid var(--border) !important; }
+.u-border-1px-solid-f0eff6 { border: 1px solid var(--border) !important; }
+.u-border-1px-solid-f8b4b4 { border: 1px solid var(--error-border) !important; }
+.u-border-1px-solid-rgba-255-100-100-0p4 { border: 1px solid var(--error-border) !important; }
+.u-border-color-10b981 { border-color: var(--success-border) !important; }
+.u-border-color-bbf7d0 { border-color: var(--success-border) !important; }
+.u-border-color-fca5a5 { border-color: var(--error-border) !important; }
+.u-border-color-fde8a0 { border-color: var(--warning-border) !important; }
+.u-border-color-rgba-255-255-255-0p25 { border-color: var(--sidebar-border) !important; }
+.u-border-left-3px-solid-5542dc { border-left: 3px solid var(--purple) !important; }
+.u-border-left-4px-solid-5542dc { border-left: 4px solid var(--purple) !important; }
+.u-border-left-4px-solid-6366f1 { border-left: 4px solid var(--purple) !important; }
 .u-border-radius-10px { border-radius: 10px !important; }
 .u-border-radius-12px { border-radius: 12px !important; }
 .u-border-radius-16px { border-radius: 16px !important; }
 .u-border-radius-8px { border-radius: 8px !important; }
 .u-border-top-1px-solid-var---border { border-top: 1px solid var(--border) !important; }
-.u-color-10b981 { color: #10b981 !important; }
-.u-color-15803d { color: #15803d !important; }
-.u-color-166534 { color: #166534 !important; }
-.u-color-202044 { color: #202044 !important; }
-.u-color-333 { color: #333 !important; }
-.u-color-3730a3 { color: #3730a3 !important; }
-.u-color-373356 { color: #373356 !important; }
-.u-color-5542dc { color: #5542dc !important; }
-.u-color-575279 { color: #575279 !important; }
-.u-color-8a4d08 { color: #8a4d08 !important; }
-.u-color-92400e { color: #92400e !important; }
-.u-color-946200 { color: #946200 !important; }
-.u-color-991b1b { color: #991b1b !important; }
-.u-color-9b1c1c { color: #9b1c1c !important; }
-.u-color-9f9ac7 { color: #9f9ac7 !important; }
-.u-color-a52a3b { color: #a52a3b !important; }
-.u-color-b91c1c { color: #b91c1c !important; }
-.u-color-c4c0e6 { color: #c4c0e6 !important; }
-.u-color-c98200 { color: #c98200 !important; }
-.u-color-e0dcf8 { color: #e0dcf8 !important; }
-.u-color-ffb8b8 { color: #ffb8b8 !important; }
+.u-color-10b981 { color: var(--success-ink) !important; }
+.u-color-15803d { color: var(--success-ink) !important; }
+.u-color-166534 { color: var(--success-ink) !important; }
+.u-color-202044 { color: var(--ink) !important; }
+.u-color-333 { color: var(--ink) !important; }
+.u-color-3730a3 { color: var(--info-ink) !important; }
+.u-color-373356 { color: var(--ink) !important; }
+.u-color-5542dc { color: var(--purple) !important; }
+.u-color-575279 { color: var(--muted) !important; }
+.u-color-8a4d08 { color: var(--warning-ink) !important; }
+.u-color-92400e { color: var(--warning-ink) !important; }
+.u-color-946200 { color: var(--warning-ink) !important; }
+.u-color-991b1b { color: var(--error-ink) !important; }
+.u-color-9b1c1c { color: var(--error-ink) !important; }
+.u-color-9f9ac7 { color: var(--muted) !important; }
+.u-color-a52a3b { color: var(--error-text) !important; }
+.u-color-b91c1c { color: var(--error-ink) !important; }
+.u-color-c4c0e6 { color: var(--sidebar-muted) !important; }
+.u-color-c98200 { color: var(--warning-ink) !important; }
+.u-color-e0dcf8 { color: var(--sidebar-ink) !important; }
+.u-color-ffb8b8 { color: var(--error-ink) !important; }
 .u-color-var---ink { color: var(--ink) !important; }
 .u-color-var---muted { color: var(--muted) !important; }
 .u-color-var---purple { color: var(--purple) !important; }

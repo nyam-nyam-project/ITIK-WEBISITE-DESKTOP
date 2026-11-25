@@ -31,7 +31,7 @@
 }
 
 .arsip-count-badge {
-    background: #f1f0fb;
+    background: var(--purple-light);
     color: var(--purple);
     font-size: 11px;
     font-weight: 700;
@@ -41,11 +41,11 @@
 
 .arsip-tab-btn.active .arsip-count-badge {
     background: var(--purple);
-    color: white;
+    color: var(--sidebar-ink);
 }
 
 .arsip-filter-card {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 16px 20px;
@@ -74,7 +74,7 @@
     padding: 8px 14px;
     border-radius: 10px;
     border: 1px solid var(--border);
-    background: #f8fafc;
+    background: var(--input-bg);
     font-size: 13px;
     font-weight: 500;
     color: var(--ink);
@@ -82,7 +82,7 @@
 
 .table-wrap {
     overflow-x: auto;
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
 }
@@ -93,7 +93,7 @@
 }
 
 .table-wrap th {
-    background: #f8fafc;
+    background: var(--surface-alt);
     padding: 12px 16px;
     font-size: 12px;
     font-weight: 700;
@@ -117,7 +117,7 @@
 }
 
 .table-wrap tr:hover td {
-    background: #fafafc;
+    background: var(--surface-hover);
 }
 
 .arsip-actions-cell {
@@ -128,9 +128,9 @@
 }
 
 .btn-restore {
-    background: #ecfdf5;
-    color: #059669;
-    border: 1px solid #a7f3d0;
+    background: var(--success-bg);
+    color: var(--success-ink);
+    border: 1px solid var(--success-border);
     padding: 6px 12px;
     border-radius: 8px;
     font-size: 12px;
@@ -140,14 +140,14 @@
 }
 
 .btn-restore:hover {
-    background: #d1fae5;
-    color: #047857;
+    background: var(--badge-success-bg);
+    color: var(--badge-success-ink);
 }
 
 .btn-force-delete {
-    background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
+    background: var(--error-bg);
+    color: var(--error-ink);
+    border: 1px solid var(--error-border);
     padding: 6px 12px;
     border-radius: 8px;
     font-size: 12px;
@@ -157,6 +157,6 @@
 }
 
 .btn-force-delete:hover {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: var(--error-hover);
+    color: var(--error-ink);
 }

@@ -6,8 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ $kuis->judul }} - ITIK</title>
-
-
+    <script src="{{ asset('js/theme-init.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
     <link rel="stylesheet" href="{{ asset('css/siswa/kuis/kerjakan.css') }}">
     <link rel="stylesheet" href="{{ asset('css/utilities.css') }}">
 </head>

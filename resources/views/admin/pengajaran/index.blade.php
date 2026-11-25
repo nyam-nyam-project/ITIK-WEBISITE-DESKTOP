@@ -94,7 +94,7 @@
     <section class="card">
         <div class="card-header">
             <h2>Daftar Pengajaran</h2>
-            <span class="badge">{{ $pengajaran->count() }} penugasan</span>
+            <span class="badge">{{ $pengajaran->total() }} penugasan</span>
         </div>
         @if($pengajaran->isNotEmpty())
             <div class="table-wrap">
@@ -112,7 +112,7 @@
                     <tbody>
                         @foreach($pengajaran as $item)
                             <tr>
-                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ ($pengajaran->firstItem() ?? 1) + $loop->index }}</td>
                                 <td class="text-break">
                                     <strong>{{ $item->guru?->nama_lengkap ?? '—' }}</strong>
                                     <span class="muted small">{{ $item->guru?->email ?? 'NIP ' . ($item->guru?->nomor_induk ?? '—') }}</span>
@@ -138,5 +138,6 @@
                 <p>Gunakan formulir di atas untuk menugaskan guru pada mata pelajaran dan kelas tertentu.</p>
             </div>
         @endif
+        @include('admin.partials.pagination', ['paginator' => $pengajaran])
     </section>
 @endsection

@@ -8,6 +8,7 @@ use App\Models\Mapel;
 use App\Models\TahunAjaran;
 use App\Models\User;
 use App\Services\KelasMigrasiService;
+use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 class KelasController extends Controller
 {
+    use MengaturPaginasi;
     use MenghasilkanId;
 
     public function index(Request $request)
@@ -30,7 +32,9 @@ class KelasController extends Controller
             ->withCount('anggota')
             ->when($idTahun, fn ($query) => $query->where('id_tahun_ajaran', $idTahun))
             ->orderBy('nama_kelas')
-            ->get();
+            ->orderBy('id_kelas')
+            ->paginate($this->batasPerHalaman($request))
+            ->withQueryString();
 
         return view('admin.kelas.index', compact('kelas', 'daftarTahun', 'idTahun'));
     }

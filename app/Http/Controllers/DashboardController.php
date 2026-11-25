@@ -5,13 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Kuis;
 use App\Models\User;
 use App\Services\DashboardKelasService;
+use App\Support\MengaturPaginasi;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use stdClass;
 
 class DashboardController extends Controller
 {
+    use MengaturPaginasi;
+
     public function __construct(
         private Request $request,
         private DashboardKelasService $dashboardKelasService
@@ -54,11 +58,24 @@ class DashboardController extends Controller
         $cari = trim($filters['cari'] ?? '');
         $idKelas = $kelasDipilih->id_kelas;
         $idMapel = $kelasDipilih->id_mapel;
-        $daftarSiswa = $this->dashboardKelasService->daftarSiswa($guru, $idKelas, $idMapel, $cari);
+        $semuaSiswa = $this->dashboardKelasService->daftarSiswa($guru, $idKelas, $idMapel, $cari);
 
-        $rataRataMateri = $daftarSiswa->isEmpty()
+        $rataRataMateri = $semuaSiswa->isEmpty()
             ? 0.0
-            : round((float) $daftarSiswa->avg('persentase_materi_dibaca'), 0);
+            : round((float) $semuaSiswa->avg('persentase_materi_dibaca'), 0);
+
+        $perPage = $this->batasPerHalaman($this->request);
+        $halamanSaatIni = LengthAwarePaginator::resolveCurrentPage();
+        $daftarSiswa = new LengthAwarePaginator(
+            $semuaSiswa->forPage($halamanSaatIni, $perPage)->values(),
+            $semuaSiswa->count(),
+            $perPage,
+            $halamanSaatIni,
+            [
+                'path' => $this->request->url(),
+                'query' => $this->request->query(),
+            ]
+        );
         $radiusCincin = 42;
         $kelilingCincin = round(2 * M_PI * $radiusCincin, 2);
         $offsetCincin = round($kelilingCincin * (1 - ($rataRataMateri / 100)), 2);

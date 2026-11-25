@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
 use App\Models\TahunAjaran;
+use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,13 +13,16 @@ use Illuminate\Validation\Rule;
 
 class TahunAjaranController extends Controller
 {
+    use MengaturPaginasi;
     use MenghasilkanId;
 
-    public function index()
+    public function index(Request $request)
     {
         $tahunAjaran = TahunAjaran::withCount('kelas')
             ->orderByDesc('nama')
-            ->get();
+            ->orderBy('id_tahun_ajaran')
+            ->paginate($this->batasPerHalaman($request))
+            ->withQueryString();
 
         return view('admin.tahun-ajaran.index', compact('tahunAjaran'));
     }

@@ -7,6 +7,7 @@ use App\Models\Kuis;
 use App\Models\Mapel;
 use App\Models\Materi;
 use App\Models\Pengajaran;
+use App\Support\MengaturPaginasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Storage;
 
 class ArsipController extends Controller
 {
+    use MengaturPaginasi;
+
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -30,25 +33,35 @@ class ArsipController extends Controller
             ->orderBy('nama_mapel')
             ->get();
 
-        $kuisArsip = Kuis::where('is_aktif', false)
+        $perPage = $this->batasPerHalaman($request);
+
+        $kuisArsipQuery = Kuis::where('is_aktif', false)
             ->when($mapelPengajaranIds->isNotEmpty(), fn ($q) => $q->whereIn('id_mapel', $mapelPengajaranIds))
             ->when($idMapel, fn ($q) => $q->where('id_mapel', $idMapel))
-            ->when($user->role === 'guru', fn ($q) => $q->where('id_user', $user->id_user))
+            ->when($user->role === 'guru', fn ($q) => $q->where('id_user', $user->id_user));
+
+        $materiArsipQuery = Materi::where('is_aktif', false)
+            ->when($mapelPengajaranIds->isNotEmpty(), fn ($q) => $q->whereIn('id_mapel', $mapelPengajaranIds))
+            ->when($idMapel, fn ($q) => $q->where('id_mapel', $idMapel))
+            ->when($user->role === 'guru', fn ($q) => $q->where('id_user', $user->id_user));
+
+        $totalKuisArsip = (clone $kuisArsipQuery)->count();
+        $totalMateriArsip = (clone $materiArsipQuery)->count();
+
+        $kuisArsip = $kuisArsipQuery
             ->with(['mapel', 'soal', 'materi'])
             ->withCount(['soal', 'mengerjakan'])
             ->orderByDesc('created_at')
-            ->get();
+            ->orderBy('id_kuis')
+            ->paginate($perPage, ['*'], 'kuis_page')
+            ->withQueryString();
 
-        $materiArsip = Materi::where('is_aktif', false)
-            ->when($mapelPengajaranIds->isNotEmpty(), fn ($q) => $q->whereIn('id_mapel', $mapelPengajaranIds))
-            ->when($idMapel, fn ($q) => $q->where('id_mapel', $idMapel))
-            ->when($user->role === 'guru', fn ($q) => $q->where('id_user', $user->id_user))
+        $materiArsip = $materiArsipQuery
             ->with('mapel')
             ->orderByDesc('created_at')
-            ->get();
-
-        $totalKuisArsip = $kuisArsip->count();
-        $totalMateriArsip = $materiArsip->count();
+            ->orderBy('id_materi')
+            ->paginate($perPage, ['*'], 'materi_page')
+            ->withQueryString();
 
         return view('guru.arsip.index', compact(
             'tab',

@@ -4,7 +4,7 @@
     <div class="page-heading"><div><h1>Tahun ajaran</h1><p>Kelola periode akademik. Hanya satu tahun ajaran dapat aktif pada satu waktu.</p></div><a class="btn" href="{{ route('admin.tahun-ajaran.create') }}">Tambah tahun ajaran</a></div>
     <div class="alert alert-info">Mengaktifkan tahun ajaran akan menonaktifkan tahun aktif sebelumnya, tanpa menghapus kelas atau riwayat nilainya.</div>
     <section class="card">
-        <div class="card-header"><h2>Daftar tahun ajaran</h2><span class="badge">{{ $tahunAjaran->count() }} periode</span></div>
+        <div class="card-header"><h2>Daftar tahun ajaran</h2><span class="badge">{{ $tahunAjaran->total() }} periode</span></div>
         @if($tahunAjaran->isNotEmpty())
             <div class="table-wrap"><table><thead><tr><th scope="col">Tahun ajaran</th><th scope="col">Tanggal mulai</th><th scope="col">Tanggal selesai</th><th scope="col" class="number">Kelas</th><th scope="col">Status</th><th scope="col">Tindakan</th></tr></thead><tbody>
                 @foreach($tahunAjaran as $item)
@@ -31,5 +31,6 @@
         @else
             <div class="empty"><h3>Belum ada tahun ajaran</h3><p>Tambahkan periode akademik pertama, kemudian gunakan tombol Aktifkan untuk menjadikannya tahun berjalan.</p><a class="btn" href="{{ route('admin.tahun-ajaran.create') }}">Tambah tahun ajaran</a></div>
         @endif
+        @include('admin.partials.pagination', ['paginator' => $tahunAjaran])
     </section>
 @endsection

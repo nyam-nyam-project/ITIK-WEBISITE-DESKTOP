@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ use Illuminate\View\View;
 
 class AdminController extends Controller
 {
+    use MengaturPaginasi;
     use MenghasilkanId;
 
     public function index(Request $request): View
@@ -36,7 +38,8 @@ class AdminController extends Controller
                 });
             })
             ->orderBy('nama_lengkap')
-            ->paginate(25)
+            ->orderBy('id_user')
+            ->paginate($this->batasPerHalaman($request))
             ->withQueryString();
 
         $jumlahAdminAktif = User::query()

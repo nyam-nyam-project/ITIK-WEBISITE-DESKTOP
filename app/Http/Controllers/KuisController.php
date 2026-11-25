@@ -10,6 +10,7 @@ use App\Models\Remedial;
 use App\Models\TahunAjaran;
 use App\Services\KuisPenilaianService;
 use App\Services\KuisPrePostUnikService;
+use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ use Illuminate\Validation\ValidationException;
 
 class KuisController extends Controller
 {
+    use MengaturPaginasi;
     use MenghasilkanId;
 
     public const KATEGORI = ['post-test', 'pre-test', 'kuis harian', 'ulangan', 'remedial'];
@@ -102,7 +104,9 @@ class KuisController extends Controller
                 ->when($idMapel, fn ($q) => $q->where('id_mapel', $idMapel))
                 ->with(['pembuat', 'mapel', 'soal', 'materi'])
                 ->latest('created_at')
-                ->get();
+                ->orderBy('id_kuis')
+                ->paginate($this->batasPerHalaman($request))
+                ->withQueryString();
 
             return view('guru.kuis.index', compact('kuis', 'mapelAktif', 'mapelTerpilih', 'daftarMateri'));
         }
@@ -128,7 +132,9 @@ class KuisController extends Controller
             ->when($idMapel, fn ($q) => $q->where('id_mapel', $idMapel))
             ->with(['pembuat', 'mapel', 'soal', 'materi'])
             ->latest('created_at')
-            ->get();
+            ->orderBy('id_kuis')
+            ->paginate($this->batasPerHalaman($request))
+            ->withQueryString();
 
         return view('guru.kuis.index', compact('kuis', 'mapelAktif', 'mapelTerpilih', 'daftarMateri'));
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Kuis;
 use App\Models\Soal;
 use App\Services\KuisPenilaianService;
+use App\Support\MengaturPaginasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -13,11 +14,14 @@ use Illuminate\Validation\ValidationException;
 
 class SoalController extends Controller
 {
-    public function index(Kuis $kuis)
+    use MengaturPaginasi;
+
+    public function index(Request $request, Kuis $kuis)
     {
         $soal = $kuis->soal()
             ->orderBy('id_soal')
-            ->get();
+            ->paginate($this->batasPerHalaman($request))
+            ->withQueryString();
 
         return view('guru.soal.index', compact('kuis', 'soal'));
     }

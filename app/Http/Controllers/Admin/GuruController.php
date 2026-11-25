@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,7 @@ use Illuminate\Validation\Rule;
 
 class GuruController extends Controller
 {
+    use MengaturPaginasi;
     use MenghasilkanId;
 
     public function index(Request $request)
@@ -31,7 +33,8 @@ class GuruController extends Controller
                 });
             })
             ->orderBy('nama_lengkap')
-            ->paginate(25)
+            ->orderBy('id_user')
+            ->paginate($this->batasPerHalaman($request))
             ->withQueryString();
 
         return view('admin.guru.index', compact('guru'));

@@ -14,6 +14,7 @@ use App\Models\RemedialSiswa;
 use App\Models\Soal;
 use App\Services\KuisEssayGradingService;
 use App\Services\RekapNilaiGuruService;
+use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Schema;
 
 class ValidasiNilaiController extends Controller
 {
+    use MengaturPaginasi;
     use MenghasilkanId;
 
     /**
@@ -259,22 +261,27 @@ class ValidasiNilaiController extends Controller
             $query->whereDate('tanggal', $tanggal);
         }
 
+        if ($kelulusan === 'lulus') {
+            $query->whereNotNull('nilai')
+                ->whereHas('kuis', function ($q) {
+                    $q->whereNotNull('kkm')
+                        ->whereColumn('tr_mengerjakan.nilai', '>=', 'tm_kuis.kkm');
+                });
+        } elseif ($kelulusan === 'tidak_lulus') {
+            $query->where(function ($sub) {
+                $sub->whereNull('nilai')
+                    ->orWhereDoesntHave('kuis', function ($q) {
+                        $q->whereNotNull('kkm')
+                            ->whereColumn('tr_mengerjakan.nilai', '>=', 'tm_kuis.kkm');
+                    });
+            });
+        }
+
         $hasil = $query->orderBy('status_validasi')
             ->orderByDesc('tanggal')
-            ->get();
-
-        if ($kelulusan) {
-            $hasil = $hasil->filter(function ($item) use ($kelulusan) {
-                $lulus = $item->nilai !== null && $item->kuis && $item->kuis->kkm !== null && $item->nilai >= $item->kuis->kkm;
-                if ($kelulusan === 'lulus') {
-                    return $lulus;
-                } elseif ($kelulusan === 'tidak_lulus') {
-                    return ! $lulus;
-                }
-
-                return true;
-            })->values();
-        }
+            ->orderBy('id_mengerjakan')
+            ->paginate($this->batasPerHalaman($request))
+            ->withQueryString();
 
         $idHasil = $hasil->pluck('id_mengerjakan');
         $sudahDitugaskanRemedial = $idHasil->isEmpty()

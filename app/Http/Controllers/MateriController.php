@@ -7,6 +7,7 @@ use App\Models\Mapel;
 use App\Models\Materi;
 use App\Models\Pengajaran;
 use App\Models\TahunAjaran;
+use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -17,6 +18,7 @@ use Illuminate\Validation\Rule;
 
 class MateriController extends Controller
 {
+    use MengaturPaginasi;
     use MenghasilkanId;
 
     public function index(Request $request)
@@ -60,7 +62,9 @@ class MateriController extends Controller
                             ->select('tm_kuis.id_kuis', 'tm_kuis.kategori')])
                         ->orderBy('bab')
                         ->orderBy('judul')
-                        ->get();
+                        ->orderBy('id_materi')
+                        ->paginate($this->batasPerHalaman($request))
+                        ->withQueryString();
                 }
             }
         } else {
@@ -80,7 +84,9 @@ class MateriController extends Controller
                         ->where('id_mapel', $idMapel)
                         ->orderBy('bab')
                         ->orderBy('judul')
-                        ->get();
+                        ->orderBy('id_materi')
+                        ->paginate($this->batasPerHalaman($request))
+                        ->withQueryString();
                 }
             }
         }

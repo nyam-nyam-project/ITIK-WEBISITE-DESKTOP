@@ -4,19 +4,23 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Mapel;
+use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class MapelController extends Controller
 {
+    use MengaturPaginasi;
     use MenghasilkanId;
 
-    public function index()
+    public function index(Request $request)
     {
         $mapel = Mapel::withCount(['kelas', 'kuis', 'materi'])
             ->orderBy('kode_mapel')
-            ->get();
+            ->orderBy('id_mapel')
+            ->paginate($this->batasPerHalaman($request))
+            ->withQueryString();
 
         return view('admin.mapel.index', compact('mapel'));
     }

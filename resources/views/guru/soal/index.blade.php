@@ -98,6 +98,7 @@
             @endif
         </div>
     @endforeach
+    @include('admin.partials.pagination', ['paginator' => $soal])
 @else
     <div class="card empty-state u-text-align-center u-padding-48px-20px">
         <div class="u-font-size-40px u-margin-bottom-12px">📝</div>

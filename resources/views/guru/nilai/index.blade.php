@@ -213,7 +213,7 @@
         <div class="card-header">
             <div>
                 <h2>Hasil Pengerjaan Kuis Siswa</h2>
-                <p class="muted" id="info-count-row">Menampilkan {{ $hasil->count() }} data pengerjaan kuis siswa</p>
+                <p class="muted" id="info-count-row">Menampilkan {{ $hasil->total() }} data pengerjaan kuis siswa</p>
             </div>
         </div>
 
@@ -247,7 +247,7 @@
                             data-lulus="{{ $lulus ? 'lulus' : 'tidak_lulus' }}"
                             data-tanggal="{{ $item->tanggal ? date('Y-m-d', strtotime($item->tanggal)) : '' }}">
 
-                            <td class="row-num number u-text-align-left">{{ $loop->iteration }}</td>
+                            <td class="row-num number u-text-align-left">{{ ($hasil->firstItem() ?? 1) + $loop->index }}</td>
 
                             <td>
                                 <strong>{{ $item->siswa->nama_lengkap ?? '-' }}</strong>
@@ -321,6 +321,7 @@
                 </tbody>
             </table>
         </div>
+        @include('admin.partials.pagination', ['paginator' => $hasil])
     </section>
 @endif
 

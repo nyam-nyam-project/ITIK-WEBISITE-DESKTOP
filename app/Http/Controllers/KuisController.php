@@ -209,9 +209,27 @@ class KuisController extends Controller
 
         $tahunAjaran = TahunAjaran::aktif();
 
+        $daftarKelasPengajaran = collect();
+        if ($user && $user->role === 'guru') {
+            $daftarKelasPengajaran = Pengajaran::query()
+                ->where('id_user', $user->id_user)
+                ->whereHas('kelas', function ($q) use ($tahunAjaran) {
+                    $q->where('is_aktif', true);
+                    if ($tahunAjaran) {
+                        $q->where('id_tahun_ajaran', $tahunAjaran->id_tahun_ajaran);
+                    }
+                })
+                ->with(['kelas' => function ($q) {
+                    $q->orderBy('nama_kelas');
+                }])
+                ->get()
+                ->unique(fn ($item) => $item->id_mapel.'-'.$item->id_kelas);
+        }
+
         return view('guru.kuis.create', compact(
             'materi', 'kuisAsal', 'mapel', 'tahunAjaran',
-            'mapelTerpilih', 'materiDipreselect', 'kategoriDipreselect'
+            'mapelTerpilih', 'materiDipreselect', 'kategoriDipreselect',
+            'daftarKelasPengajaran'
         ));
     }
 
@@ -235,6 +253,9 @@ class KuisController extends Controller
 
             'id_mapel' => $this->aturanMapel(),
 
+            'kelas' => ['required', 'array', 'min:1'],
+            'kelas.*' => ['required', 'string', 'distinct'],
+
             'tingkat_kesulitan' => ['required', Rule::in(['mudah', 'sedang', 'sulit'])],
 
             'alokasi_waktu' => 'nullable|integer|min:1|max:300',
@@ -253,9 +274,39 @@ class KuisController extends Controller
         ], [
             'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
             'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
+            'kelas.required' => 'Pilih minimal satu kelas untuk kuis ini.',
+            'kelas.min' => 'Pilih minimal satu kelas untuk kuis ini.',
             'tingkat_kesulitan.required' => 'Tingkat kesulitan wajib dipilih.',
             'soal.prohibited' => 'Gunakan endpoint soal untuk mengelola soal kuis.',
         ]);
+
+        $kelasDipilih = array_values(array_unique($request->input('kelas', [])));
+        if (empty($kelasDipilih)) {
+            throw ValidationException::withMessages([
+                'kelas' => 'Pilih minimal satu kelas untuk kuis ini.',
+            ]);
+        }
+
+        $user = Auth::user();
+        $kelasValidQuery = Pengajaran::query()
+            ->where('id_mapel', $validated['id_mapel'])
+            ->whereHas('kelas', function ($q) use ($tahunAjaran) {
+                $q->where('is_aktif', true)
+                    ->where('id_tahun_ajaran', $tahunAjaran->id_tahun_ajaran);
+            });
+
+        if ($user && $user->role === 'guru') {
+            $kelasValidQuery->where('id_user', $user->id_user);
+        }
+
+        $kelasValid = $kelasValidQuery->pluck('id_kelas')->unique()->all();
+        $kelasTidakValid = array_diff($kelasDipilih, $kelasValid);
+
+        if (! empty($kelasTidakValid)) {
+            throw ValidationException::withMessages([
+                'kelas' => 'Terdapat kelas yang tidak valid, tidak Anda ajar untuk mata pelajaran ini, atau berada di luar tahun ajaran aktif.',
+            ]);
+        }
 
         /*
         * Simpan ID kuis asal jika kategori remedial.
@@ -355,18 +406,19 @@ class KuisController extends Controller
         * id_kuis_asal bukan kolom tabel kuis,
         * jadi jangan ikut disimpan ke tabel kuis.
         */
-        unset($validated['materi'], $validated['soal']);
+        unset($validated['materi'], $validated['soal'], $validated['kelas']);
         unset($validated['id_kuis_asal']);
 
         // Default tampil_jawaban jika tidak diisi
         $validated['tampil_jawaban'] = $validated['tampil_jawaban'] ?? 'setelah_submit';
 
-        $kuis = DB::transaction(function () use ($validated, $materiIds, $idKuisAsal, $kuisPrePostUnik): Kuis {
+        $kuis = DB::transaction(function () use ($validated, $materiIds, $idKuisAsal, $kelasDipilih, $kuisPrePostUnik): Kuis {
             if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)) {
                 $kuisPrePostUnik->pastikanUnikUntukMateri($materiIds, $validated['kategori']);
             }
 
             $kuis = Kuis::create($validated);
+            $kuis->kelas()->sync($kelasDipilih);
 
             if ($kuis->kategori === 'remedial') {
                 Remedial::create([
@@ -444,10 +496,32 @@ class KuisController extends Controller
             ->toArray();
 
         $mapel = $this->pilihanMapel($kuis->id_mapel);
+        $tahunAjaran = TahunAjaran::aktif();
+
+        $daftarKelasPengajaran = collect();
+        if ($user && $user->role === 'guru') {
+            $daftarKelasPengajaran = Pengajaran::query()
+                ->where('id_user', $user->id_user)
+                ->whereHas('kelas', function ($q) use ($tahunAjaran) {
+                    $q->where('is_aktif', true);
+                    if ($tahunAjaran) {
+                        $q->where('id_tahun_ajaran', $tahunAjaran->id_tahun_ajaran);
+                    }
+                })
+                ->with(['kelas' => function ($q) {
+                    $q->orderBy('nama_kelas');
+                }])
+                ->get()
+                ->unique(fn ($item) => $item->id_mapel.'-'.$item->id_kelas);
+        }
+
+        $kelasTerpilih = $kuis->kelas()
+            ->pluck('tm_kelas.id_kelas')
+            ->toArray();
 
         return view(
             'guru.kuis.edit',
-            compact('kuis', 'materi', 'materiTerpilih', 'mapel', 'materiDikunci')
+            compact('kuis', 'materi', 'materiTerpilih', 'mapel', 'materiDikunci', 'daftarKelasPengajaran', 'kelasTerpilih')
         );
     }
 
@@ -476,6 +550,8 @@ class KuisController extends Controller
                 'deskripsi' => 'nullable|string',
                 'kategori' => ['required', Rule::in(self::KATEGORI)],
                 'id_mapel' => $this->aturanMapel($kuis->id_mapel),
+                'kelas' => ['required', 'array', 'min:1'],
+                'kelas.*' => ['required', 'string', 'distinct'],
                 'tingkat_kesulitan' => ['required', Rule::in(['mudah', 'sedang', 'sulit'])],
                 'alokasi_waktu' => 'nullable|integer|min:1|max:300',
                 'kkm' => 'nullable|numeric|min:0|max:100',
@@ -488,9 +564,45 @@ class KuisController extends Controller
             ], [
                 'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
                 'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
+                'kelas.required' => 'Pilih minimal satu kelas untuk kuis ini.',
+                'kelas.min' => 'Pilih minimal satu kelas untuk kuis ini.',
                 'tingkat_kesulitan.required' => 'Tingkat kesulitan wajib dipilih.',
                 'soal.prohibited' => 'Gunakan endpoint soal untuk mengelola soal kuis.',
             ]);
+
+            $tahunAktif = TahunAjaran::aktif();
+            if (! $tahunAktif) {
+                throw ValidationException::withMessages([
+                    'kelas' => 'Tidak ada tahun ajaran aktif.',
+                ]);
+            }
+
+            $kelasDipilih = array_values(array_unique($request->input('kelas', [])));
+            if (empty($kelasDipilih)) {
+                throw ValidationException::withMessages([
+                    'kelas' => 'Pilih minimal satu kelas untuk kuis ini.',
+                ]);
+            }
+
+            $kelasValidQuery = Pengajaran::query()
+                ->where('id_mapel', $validated['id_mapel'])
+                ->whereHas('kelas', function ($q) use ($tahunAktif) {
+                    $q->where('is_aktif', true)
+                        ->where('id_tahun_ajaran', $tahunAktif->id_tahun_ajaran);
+                });
+
+            if ($user && $user->role === 'guru') {
+                $kelasValidQuery->where('id_user', $user->id_user);
+            }
+
+            $kelasValid = $kelasValidQuery->pluck('id_kelas')->unique()->all();
+            $kelasTidakValid = array_diff($kelasDipilih, $kelasValid);
+
+            if (! empty($kelasTidakValid)) {
+                throw ValidationException::withMessages([
+                    'kelas' => 'Terdapat kelas yang tidak valid, tidak Anda ajar untuk mata pelajaran ini, atau berada di luar tahun ajaran aktif.',
+                ]);
+            }
 
             if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)
                 && $kuis->soal()->where('tipe', 'essay')->exists()) {
@@ -570,8 +682,9 @@ class KuisController extends Controller
                 );
             }
 
-            unset($validated['materi'], $validated['soal']);
+            unset($validated['materi'], $validated['soal'], $validated['kelas']);
             $kuis->update($validated);
+            $kuis->kelas()->sync($kelasDipilih);
 
             if ($kategoriBaruPrePost && ! $kategoriSebelumnyaPrePost) {
                 $kuis->materi()->sync($materiIds);

@@ -128,7 +128,14 @@
                         <div class="soal-card-title">Soal #{{ $loop->iteration }}</div>
                         <span class="badge">Essay</span>
                     </div>
-                    <div class="soal-pertanyaan">{{ $itemSoal->pertanyaan }}</div>
+                    <div class="soal-pertanyaan">
+                        <div>{{ $itemSoal->pertanyaan }}</div>
+                        @if ($itemSoal->gambar)
+                            <div class="soal-gambar-wrap">
+                                <img src="{{ asset('storage/' . $itemSoal->gambar) }}" alt="{{ Str::limit(strip_tags($itemSoal->pertanyaan), 60) }}" class="soal-gambar">
+                            </div>
+                        @endif
+                    </div>
                     <p class="essay-review-note">Soal essay dinilai oleh guru berdasarkan bobot {{ $itemSoal->bobot }}.</p>
                 </div>
                 @continue
@@ -163,7 +170,12 @@
                 </div>
 
                 <div class="soal-pertanyaan">
-                    {{ $itemSoal->pertanyaan }}
+                    <div>{{ $itemSoal->pertanyaan }}</div>
+                    @if ($itemSoal->gambar)
+                        <div class="soal-gambar-wrap">
+                            <img src="{{ asset('storage/' . $itemSoal->gambar) }}" alt="{{ Str::limit(strip_tags($itemSoal->pertanyaan), 60) }}" class="soal-gambar">
+                        </div>
+                    @endif
                 </div>
 
                 <div class="opsi-review-list">

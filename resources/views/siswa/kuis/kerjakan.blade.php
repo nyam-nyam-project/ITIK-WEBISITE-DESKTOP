@@ -98,7 +98,14 @@
 
                             <div class="soal-head">
                                 <div class="soal-no">{{ $index + 1 }}</div>
-                                <div class="soal-text">{{ $item->pertanyaan }}</div>
+                                <div class="soal-text">
+                                    <div>{{ $item->pertanyaan }}</div>
+                                    @if ($item->gambar)
+                                        <div class="soal-gambar-wrap">
+                                            <img src="{{ asset('storage/' . $item->gambar) }}" alt="{{ Str::limit(strip_tags($item->pertanyaan), 60) }}" class="soal-gambar">
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
 
                             @if ($item->tipe === 'essay')

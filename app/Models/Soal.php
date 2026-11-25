@@ -29,6 +29,11 @@ class Soal extends Model
         'jawaban',
         'bobot',
         'tingkat_kesulitan',
+        'gambar',
+    ];
+
+    protected $hidden = [
+        'gambar',
     ];
 
     protected $casts = [

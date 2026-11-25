@@ -93,6 +93,65 @@ if (kuisForm && kuisForm.dataset.kuisForm === 'create') {
         selectMapel.addEventListener('change', filterMateriByMapel);
         filterMateriByMapel();
     }
+
+    const kelasContainer = document.getElementById('kelas-container');
+    const kelasList = document.getElementById('kelas-checkbox-list');
+    const hintKelasKosong = document.getElementById('kelas-empty-hint');
+    const hintSelectMapel = document.getElementById('kelas-select-mapel-hint');
+
+    function filterKelasByMapel() {
+        if (!selectMapel || !kelasList) return;
+        const mapelId = selectMapel.value;
+        const items = Array.from(kelasList.querySelectorAll('.kelas-checkbox-item'));
+        let visibleCount = 0;
+
+        if (!mapelId) {
+            kelasList.classList.add('u-display-none');
+            if (hintSelectMapel) {
+                hintSelectMapel.classList.remove('u-display-none');
+                hintSelectMapel.classList.add('u-display-block');
+            }
+            if (hintKelasKosong) {
+                hintKelasKosong.classList.remove('u-display-block');
+                hintKelasKosong.classList.add('u-display-none');
+            }
+            items.forEach(item => {
+                item.classList.add('u-display-none');
+                const cb = item.querySelector('input[type="checkbox"]');
+                if (cb) cb.checked = false;
+            });
+            return;
+        }
+
+        if (hintSelectMapel) {
+            hintSelectMapel.classList.remove('u-display-block');
+            hintSelectMapel.classList.add('u-display-none');
+        }
+
+        kelasList.classList.remove('u-display-none');
+
+        items.forEach(item => {
+            const optMapel = item.dataset.mapel;
+            const cb = item.querySelector('input[type="checkbox"]');
+            if (optMapel === mapelId) {
+                item.classList.remove('u-display-none');
+                visibleCount++;
+            } else {
+                item.classList.add('u-display-none');
+                if (cb) cb.checked = false;
+            }
+        });
+
+        if (hintKelasKosong) {
+            hintKelasKosong.classList.toggle('u-display-block', visibleCount === 0);
+            hintKelasKosong.classList.toggle('u-display-none', visibleCount > 0);
+        }
+    }
+
+    if (selectMapel) {
+        selectMapel.addEventListener('change', filterKelasByMapel);
+        filterKelasByMapel();
+    }
 }
 
 if (kuisForm && kuisForm.dataset.kuisForm === 'edit') {
@@ -192,6 +251,65 @@ if (kuisForm && kuisForm.dataset.kuisForm === 'edit') {
     if (selectMapel) {
         selectMapel.addEventListener('change', filterMateriByMapel);
         filterMateriByMapel();
+    }
+
+    const kelasContainer = document.getElementById('kelas-container');
+    const kelasList = document.getElementById('kelas-checkbox-list');
+    const hintKelasKosong = document.getElementById('kelas-empty-hint');
+    const hintSelectMapel = document.getElementById('kelas-select-mapel-hint');
+
+    function filterKelasByMapel() {
+        if (!selectMapel || !kelasList) return;
+        const mapelId = selectMapel.value;
+        const items = Array.from(kelasList.querySelectorAll('.kelas-checkbox-item'));
+        let visibleCount = 0;
+
+        if (!mapelId) {
+            kelasList.classList.add('u-display-none');
+            if (hintSelectMapel) {
+                hintSelectMapel.classList.remove('u-display-none');
+                hintSelectMapel.classList.add('u-display-block');
+            }
+            if (hintKelasKosong) {
+                hintKelasKosong.classList.remove('u-display-block');
+                hintKelasKosong.classList.add('u-display-none');
+            }
+            items.forEach(item => {
+                item.classList.add('u-display-none');
+                const cb = item.querySelector('input[type="checkbox"]');
+                if (cb) cb.checked = false;
+            });
+            return;
+        }
+
+        if (hintSelectMapel) {
+            hintSelectMapel.classList.remove('u-display-block');
+            hintSelectMapel.classList.add('u-display-none');
+        }
+
+        kelasList.classList.remove('u-display-none');
+
+        items.forEach(item => {
+            const optMapel = item.dataset.mapel;
+            const cb = item.querySelector('input[type="checkbox"]');
+            if (optMapel === mapelId) {
+                item.classList.remove('u-display-none');
+                visibleCount++;
+            } else {
+                item.classList.add('u-display-none');
+                if (cb) cb.checked = false;
+            }
+        });
+
+        if (hintKelasKosong) {
+            hintKelasKosong.classList.toggle('u-display-block', visibleCount === 0);
+            hintKelasKosong.classList.toggle('u-display-none', visibleCount > 0);
+        }
+    }
+
+    if (selectMapel) {
+        selectMapel.addEventListener('change', filterKelasByMapel);
+        filterKelasByMapel();
     }
 }
 

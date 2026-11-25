@@ -80,6 +80,33 @@
             </div>
         </div>
 
+        <div class="field" id="kelas-container">
+            <label>Target Kelas <span class="u-color-a52a3b">*</span></label>
+            <p class="help">Pilih kelas yang akan mengikuti kuis ini.</p>
+            <div id="kelas-checkbox-list" class="kelas-checkbox-grid">
+                @foreach ($daftarKelasPengajaran as $itemPengajaran)
+                    @php
+                        $kelasItem = $itemPengajaran->kelas;
+                    @endphp
+                    @if ($kelasItem)
+                        <label class="kelas-checkbox-item" data-mapel="{{ $itemPengajaran->id_mapel }}">
+                            <input
+                                type="checkbox"
+                                name="kelas[]"
+                                value="{{ $kelasItem->id_kelas }}"
+                                @checked(in_array($kelasItem->id_kelas, old('kelas', $kelasTerpilih ?? []), true))
+                            >
+                            <span class="kelas-nama">{{ $kelasItem->nama_kelas }}</span>
+                        </label>
+                    @endif
+                @endforeach
+            </div>
+            <p id="kelas-empty-hint" class="help u-display-none">Tidak ada kelas yang Anda ajar untuk mata pelajaran ini pada tahun ajaran aktif.</p>
+            <p id="kelas-select-mapel-hint" class="help u-display-none">Silakan pilih mata pelajaran terlebih dahulu untuk melihat daftar kelas.</p>
+            @error('kelas') <div class="error">{{ $message }}</div> @enderror
+            @error('kelas.*') <div class="error">{{ $message }}</div> @enderror
+        </div>
+
         <div class="grid grid-2">
             <div class="field">
                 <label for="tingkat_kesulitan">Tingkat Kesulitan <span class="u-color-a52a3b">*</span></label>

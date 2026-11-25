@@ -1,0 +1,118 @@
+/* =========================================================
+   SPLASH SCREEN LOGIN (BAR LOADING + LAYAR BIRU + FADE-OUT)
+   ========================================================= */
+
+@keyframes splashBarProgress {
+    0% {
+        transform: scaleX(0);
+        opacity: 1;
+    }
+    80% {
+        transform: scaleX(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scaleX(1);
+        opacity: 0;
+    }
+}
+
+@keyframes splashLogoSequence {
+    0% {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    20% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    75% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+}
+
+@keyframes splashOverlayFadeOut {
+    0%,
+    74% {
+        clip-path: circle(150% at 50% 50%);
+        opacity: 1;
+        visibility: visible;
+    }
+    99% {
+        clip-path: circle(0% at 50% 50%);
+        opacity: 1;
+        visibility: visible;
+    }
+    100% {
+        clip-path: circle(0% at 50% 50%);
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.login-splash-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: linear-gradient(135deg, var(--sidebar-start) 0%, var(--sidebar-end) 100%);
+    clip-path: circle(150% at 50% 50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: splashOverlayFadeOut 2.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.login-splash-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--focus-ring);
+    transform-origin: left center;
+    animation: splashBarProgress 0.65s ease-out forwards;
+}
+
+.login-splash-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.login-splash-logo {
+    width: 128px;
+    height: auto;
+    max-width: 45vw;
+    object-fit: contain;
+    animation: splashLogoSequence 1.6s ease-in-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .login-splash-overlay,
+    .login-splash-bar,
+    .login-splash-logo {
+        animation: none !important;
+    }
+
+    .login-splash-overlay {
+        display: none !important;
+    }
+}

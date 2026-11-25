@@ -1,3 +1,14 @@
+@php
+    $tampilkanSplashLogin = (bool) session()->pull('tampilkan_splash_login', false);
+@endphp
+@if($tampilkanSplashLogin)
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset('css/splash.css') }}">
+    @endpush
+    @push('scripts')
+        <script src="{{ asset('js/splash.js') }}" defer></script>
+    @endpush
+@endif
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -11,6 +22,9 @@
     @stack('styles')
 </head>
 <body>
+    @if($tampilkanSplashLogin)
+        @include('partials.splash')
+    @endif
     <a class="skip-link" href="#main-content">Langsung ke konten</a>
 
     @php

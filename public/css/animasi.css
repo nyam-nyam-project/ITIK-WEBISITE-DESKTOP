@@ -32,6 +32,13 @@
     animation: itikBannerSoftIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Tahan animasi masuk selama splash screen login masih menutupi layar */
+body:has(#login-splash-overlay) .anim-item,
+body:has(#login-splash-overlay) .anim-banner {
+    animation: none;
+    opacity: 0;
+}
+
 /* Stagger bertahap tanpa inline style di Blade */
 .anim-stagger > .anim-item:nth-child(1) { animation-delay: 0ms; }
 .anim-stagger > .anim-item:nth-child(2) { animation-delay: 55ms; }

@@ -119,7 +119,16 @@
         });
     }
 
-    document.querySelectorAll('[data-count-up]').forEach(animateCountUp);
-    document.querySelectorAll('progress[data-progress-target]').forEach(animateProgressBar);
-    document.querySelectorAll('[data-ring-target]').forEach(animateSvgRing);
+    function jalankanSemuaAnimasi() {
+        document.querySelectorAll('[data-count-up]').forEach(animateCountUp);
+        document.querySelectorAll('progress[data-progress-target]').forEach(animateProgressBar);
+        document.querySelectorAll('[data-ring-target]').forEach(animateSvgRing);
+    }
+
+    const splashOverlay = document.getElementById('login-splash-overlay');
+    if (splashOverlay && !prefersReducedMotion) {
+        window.addEventListener('itik:splash-done', jalankanSemuaAnimasi, { once: true });
+    } else {
+        jalankanSemuaAnimasi();
+    }
 })();

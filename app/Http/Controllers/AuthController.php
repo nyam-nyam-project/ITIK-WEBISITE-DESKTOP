@@ -89,6 +89,8 @@ class AuthController extends Controller
                 ->onlyInput('nomor_induk', 'login');
         }
 
+        $request->session()->put('tampilkan_splash_login', true);
+
         if ($user->wajib_ganti_password) {
             return redirect()->route('password.wajib');
         }
@@ -151,6 +153,8 @@ class AuthController extends Controller
                 ])
                 ->onlyInput('login', 'email');
         }
+
+        $request->session()->put('tampilkan_splash_login', true);
 
         if ($user->wajib_ganti_password) {
             return redirect()->route('password.wajib');

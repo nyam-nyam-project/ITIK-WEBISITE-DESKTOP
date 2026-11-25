@@ -134,6 +134,7 @@
                 </tbody>
             </table>
         </div>
+        @include('admin.partials.pagination', ['paginator' => $kuisArsip])
     @endif
 
 {{-- KONTEN TAB MATERI --}}
@@ -201,6 +202,7 @@
                 </tbody>
             </table>
         </div>
+        @include('admin.partials.pagination', ['paginator' => $materiArsip])
     @endif
 @endif
 

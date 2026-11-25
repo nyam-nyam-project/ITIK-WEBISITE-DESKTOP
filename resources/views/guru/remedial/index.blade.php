@@ -91,6 +91,7 @@
             </table>
         </div>
     @endif
+    @include('admin.partials.pagination', ['paginator' => $remedials])
 </section>
 
 @endsection

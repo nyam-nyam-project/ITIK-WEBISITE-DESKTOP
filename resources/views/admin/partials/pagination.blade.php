@@ -1,6 +1,30 @@
 @if($paginator->total() > 0)
+    @php
+        $perPageSaatIni = (int) $paginator->perPage();
+        $parameterLain = collect(request()->except(['per_page', 'page']))->all();
+    @endphp
     <div class="pagination">
-        <span class="muted small">Menampilkan {{ $paginator->firstItem() ?? 0 }}–{{ $paginator->lastItem() ?? 0 }} dari {{ $paginator->total() }} data</span>
+        <span class="muted small">menampilkan {{ $paginator->firstItem() ?? 0 }} sampai {{ $paginator->lastItem() ?? 0 }} dari {{ $paginator->total() }} data</span>
+
+        <form method="GET" action="{{ url()->current() }}" class="actions">
+            @foreach($parameterLain as $namaParam => $nilaiParam)
+                @if(is_array($nilaiParam))
+                    @foreach($nilaiParam as $itemNilai)
+                        <input type="hidden" name="{{ $namaParam }}[]" value="{{ $itemNilai }}">
+                    @endforeach
+                @elseif($nilaiParam !== null && $nilaiParam !== '')
+                    <input type="hidden" name="{{ $namaParam }}" value="{{ $nilaiParam }}">
+                @endif
+            @endforeach
+            <label for="per-page-select" class="muted small">Per halaman</label>
+            <select id="per-page-select" name="per_page">
+                <option value="10" @selected($perPageSaatIni === 10)>10</option>
+                <option value="25" @selected($perPageSaatIni === 25)>25</option>
+                <option value="50" @selected($perPageSaatIni === 50)>50</option>
+            </select>
+            <button type="submit" class="btn btn-secondary btn-small">Terapkan</button>
+        </form>
+
         @if($paginator->hasPages())
             @php
                 $halamanPusat = min($paginator->lastPage(), $paginator->currentPage());

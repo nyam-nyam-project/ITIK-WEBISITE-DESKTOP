@@ -6,6 +6,7 @@ use App\Models\Kuis;
 use App\Models\Mengerjakan;
 use App\Models\Remedial;
 use App\Models\RemedialSiswa;
+use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,12 +14,13 @@ use Illuminate\Support\Facades\DB;
 
 class RemedialController extends Controller
 {
+    use MengaturPaginasi;
     use MenghasilkanId;
 
     /**
      * Menampilkan daftar kuis remedial.
      */
-    public function index()
+    public function index(Request $request)
     {
         $remedials = Remedial::with([
             'kuisRemedial.soal',
@@ -28,7 +30,8 @@ class RemedialController extends Controller
                 $q->whereRaw('LOWER(TRIM(kategori)) = ?', ['ulangan']);
             })
             ->latest('id_remedial')
-            ->get();
+            ->paginate($this->batasPerHalaman($request))
+            ->withQueryString();
 
         return view(
             'guru.remedial.index',

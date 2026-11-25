@@ -91,7 +91,7 @@
                 <div class="materi-row-foto2">
                     <div class="materi-main-info">
                         <div class="materi-num-badge">
-                            {{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }}
+                            {{ str_pad(($materi->firstItem() ?? 1) + $idx, 2, '0', STR_PAD_LEFT) }}
                         </div>
                         <div class="materi-text-wrap">
                             <h3 class="materi-row-title">{{ $item->judul }}</h3>
@@ -139,6 +139,7 @@
                 </div>
             @endforeach
         </div>
+        @include('admin.partials.pagination', ['paginator' => $materi])
     @endif
 
 @endif

@@ -188,6 +188,7 @@
                 <p>Tidak ada siswa yang cocok dengan pencarian di kelas ini.</p>
             </div>
         @endif
+        @include('admin.partials.pagination', ['paginator' => $daftarSiswa])
     </section>
 
     @if($detailSiswa)

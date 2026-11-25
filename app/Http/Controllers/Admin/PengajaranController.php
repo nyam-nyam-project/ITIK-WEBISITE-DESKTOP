@@ -8,6 +8,7 @@ use App\Models\Mapel;
 use App\Models\Pengajaran;
 use App\Models\TahunAjaran;
 use App\Models\User;
+use App\Support\MengaturPaginasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -15,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class PengajaranController extends Controller
 {
+    use MengaturPaginasi;
+
     public function index(Request $request)
     {
         $request->validate([
@@ -30,7 +33,9 @@ class PengajaranController extends Controller
             ->when($idTahun, function ($query) use ($idTahun) {
                 $query->whereHas('kelas', fn ($q) => $q->where('id_tahun_ajaran', $idTahun));
             })
-            ->get();
+            ->orderByDesc('id_pengajaran')
+            ->paginate($this->batasPerHalaman($request))
+            ->withQueryString();
 
         // Guru aktif untuk form penugasan
         $daftarGuru = User::guru()->aktif()->orderBy('nama_lengkap')->get();

@@ -63,7 +63,7 @@
     <div class="mapel-banner">
         <div>
             <h3>{{ $mapelTerpilih->nama_mapel }}</h3>
-            <p>{{ $kuis->count() }} kuis tersedia &bull; Kode: {{ $mapelTerpilih->id_mapel }}</p>
+            <p>{{ $kuis->total() }} kuis tersedia &bull; Kode: {{ $mapelTerpilih->id_mapel }}</p>
         </div>
         <a href="{{ route('kuis.index') }}" class="btn-back-mapel">
             ← Ganti Mata Pelajaran
@@ -333,6 +333,7 @@
                 </div>
             @endif
         </section>
+        @include('admin.partials.pagination', ['paginator' => $kuis])
     </div>
 @endif
 

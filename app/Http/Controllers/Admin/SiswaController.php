@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kelas;
 use App\Models\TahunAjaran;
 use App\Models\User;
+use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,7 @@ use Illuminate\Validation\Rule;
 
 class SiswaController extends Controller
 {
+    use MengaturPaginasi;
     use MenghasilkanId;
 
     public function index(Request $request)
@@ -53,7 +55,8 @@ class SiswaController extends Controller
                 });
             })
             ->orderBy('nama_lengkap')
-            ->paginate(25)
+            ->orderBy('id_user')
+            ->paginate($this->batasPerHalaman($request))
             ->withQueryString();
 
         return view('admin.siswa.index', compact('siswa', 'daftarKelas', 'daftarTahun', 'idTahun'));

@@ -3,7 +3,7 @@
 @section('content')
     <div class="page-heading"><div><h1>Mata pelajaran</h1><p>Kelola katalog mata pelajaran dan status ketersediaannya.</p></div><a class="btn" href="{{ route('admin.mapel.create') }}">Tambah mata pelajaran</a></div>
     <section class="card">
-        <div class="card-header"><h2>Daftar mata pelajaran</h2><span class="badge">{{ $mapel->count() }} mata pelajaran</span></div>
+        <div class="card-header"><h2>Daftar mata pelajaran</h2><span class="badge">{{ $mapel->total() }} mata pelajaran</span></div>
         @if($mapel->isNotEmpty())
             <div class="table-wrap"><table><thead><tr><th scope="col">Kode</th><th scope="col">Mata pelajaran</th><th scope="col" class="number">Kelas</th><th scope="col" class="number">Materi</th><th scope="col" class="number">Kuis</th><th scope="col">Status</th><th scope="col">Tindakan</th></tr></thead><tbody>
                 @foreach($mapel as $item)
@@ -19,6 +19,7 @@
         @else
             <div class="empty"><h3>Belum ada mata pelajaran</h3><p>Tambahkan mata pelajaran agar dapat dipasangkan ke kelas.</p><a class="btn" href="{{ route('admin.mapel.create') }}">Tambah mata pelajaran</a></div>
         @endif
+        @include('admin.partials.pagination', ['paginator' => $mapel])
     </section>
     <div class="alert alert-info">Mata pelajaran tidak dihapus melalui halaman ini. Ubah status menjadi nonaktif jika tidak lagi digunakan; data materi dan kuis tetap tersimpan.</div>
 @endsection

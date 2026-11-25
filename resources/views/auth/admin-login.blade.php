@@ -113,18 +113,6 @@
                 </button>
             </form>
 
-            <!-- AKUN DEMO ADMINISTRATOR -->
-            <div class="demo-box">
-                <div class="demo-title">
-                    ℹ️ Akun Demo Administrator
-                </div>
-                <div class="demo-row">
-                    <span class="demo-role">Admin</span>
-                    <span class="demo-email">andi@sekolah.sch.id</span>
-                    <span class="demo-pass">password123</span>
-                </div>
-            </div>
-
             <!-- LINK KEMBALI KE LOGIN SISWA & GURU -->
             <div class="back-link-box">
                 <a href="{{ route('login') }}" class="btn-back-user">

@@ -169,14 +169,14 @@ body {
     border: none;
     cursor: pointer;
     font-size: 16px;
-    color: #777394;
+    color: var(--muted);
 }
 
 .btn-login {
     width: 100%;
     padding: 14px;
-    background: linear-gradient(135deg, #3d348b, #252055);
-    color: white;
+    background: linear-gradient(135deg, var(--sidebar-start), var(--sidebar-end));
+    color: var(--sidebar-ink);
     border: none;
     border-radius: 14px;
     font-size: 16px;
@@ -193,54 +193,13 @@ body {
 }
 
 .alert-error {
-    background: #ffe5e5;
-    color: #c93434;
+    background: var(--error-bg);
+    color: var(--error-ink);
     padding: 12px 16px;
     border-radius: 12px;
     font-size: 13px;
     margin-bottom: 20px;
-    border-left: 4px solid #d64545;
-}
-
-/* AKUN DEMO */
-.demo-box {
-    background: #f8f7fd;
-    border: 1px dashed #cfcae8;
-    border-radius: 14px;
-    padding: 14px 18px;
-    margin-top: 25px;
-}
-
-.demo-title {
-    font-size: 12px;
-    font-weight: bold;
-    color: #4a3f9e;
-    margin-bottom: 8px;
-}
-
-.demo-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-}
-
-.demo-role {
-    font-weight: bold;
-    color: #3d348b;
-}
-
-.demo-email {
-    color: #55516e;
-}
-
-.demo-pass {
-    font-family: Consolas, monospace;
-    background: #eceaf9;
-    color: #4a3f9e;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 12px;
+    border-left: 4px solid var(--error-border);
 }
 
 /* BACK LINK */
@@ -253,7 +212,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #7160ef;
+    color: var(--purple);
     text-decoration: none;
     font-size: 14px;
     font-weight: bold;
@@ -261,7 +220,7 @@ body {
 }
 
 .btn-back-user:hover {
-    color: #4738be;
+    color: var(--purple-dark);
     text-decoration: underline;
 }
 

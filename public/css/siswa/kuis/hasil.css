@@ -120,6 +120,6 @@
     color: var(--badge-success-ink);
 }
 .opsi-status-text.jawaban-kamu {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--error-bg);
+    color: var(--error-ink);
 }

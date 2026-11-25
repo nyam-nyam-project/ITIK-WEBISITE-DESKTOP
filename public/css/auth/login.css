@@ -125,7 +125,7 @@ body {
 
 .decoration span:first-child {
     width: 65px;
-    background: white;
+    background: var(--sidebar-ink);
 }
 
 /* =========================
@@ -169,10 +169,10 @@ body {
 }
 
 .alert-error {
-    background: #fff0f0;
-    color: #d64545;
+    background: var(--error-bg);
+    color: var(--error-ink);
 
-    border: 1px solid #ffd0d0;
+    border: 1px solid var(--error-border);
 }
 
 /* =========================
@@ -191,7 +191,7 @@ body {
     font-size: 14px;
     font-weight: bold;
 
-    color: #393653;
+    color: var(--ink);
 }
 
 .input-wrapper {
@@ -206,7 +206,7 @@ body {
 
     transform: translateY(-50%);
 
-    color: #9996aa;
+    color: var(--muted);
 
     font-size: 16px;
 
@@ -218,13 +218,13 @@ body {
 
     padding: 14px 16px 14px 45px;
 
-    border: 1px solid #e6e4ef;
+    border: 1px solid var(--input-border);
 
     border-radius: 13px;
 
-    background: #faf9ff;
+    background: var(--input-bg);
 
-    color: #29274a;
+    color: var(--ink);
 
     font-size: 14px;
 
@@ -234,15 +234,15 @@ body {
 }
 
 .form-control:focus {
-    border-color: #6553e8;
+    border-color: var(--purple);
 
-    background: white;
+    background: var(--surface);
 
     box-shadow: 0 0 0 4px rgba(101, 83, 232, .08);
 }
 
 .form-control::placeholder {
-    color: #aaa7b8;
+    color: var(--muted);
 }
 
 /* =========================
@@ -264,7 +264,7 @@ body {
     border: none;
     background: transparent;
 
-    color: #9996aa;
+    color: var(--muted);
 
     font-size: 17px;
 
@@ -280,7 +280,7 @@ body {
 }
 
 .toggle-password:hover {
-    color: #6553e8;
+    color: var(--purple);
 }
 
 /* =========================
@@ -295,8 +295,8 @@ body {
     border: none;
     border-radius: 13px;
 
-    background: #6553e8;
-    color: white;
+    background: var(--purple);
+    color: var(--sidebar-ink);
 
     font-size: 15px;
     font-weight: bold;
@@ -309,70 +309,11 @@ body {
 }
 
 .btn-login:hover {
-    background: #5543d5;
+    background: var(--purple-dark);
 
     transform: translateY(-1px);
 
     box-shadow: 0 8px 20px rgba(101, 83, 232, .2);
-}
-
-/* =========================
-   AKUN DEMO
-========================= */
-
-.demo-box {
-    margin-top: 22px;
-    padding: 16px 18px;
-
-    border: 1px dashed #cfc9ee;
-    border-radius: 13px;
-
-    background: #f7f6fe;
-
-    font-size: 13px;
-}
-
-.demo-title {
-    font-weight: bold;
-    color: #393653;
-
-    margin-bottom: 10px;
-}
-
-.demo-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px 10px;
-
-    padding: 7px 0;
-
-    border-top: 1px solid #eceaf7;
-}
-
-.demo-row:first-of-type {
-    border-top: none;
-}
-
-.demo-role {
-    font-weight: bold;
-    color: #6553e8;
-}
-
-.demo-email {
-    color: #55516e;
-}
-
-.demo-pass {
-    font-family: Consolas, monospace;
-    font-size: 12px;
-
-    background: #eceaf9;
-    color: #4a3f9e;
-
-    padding: 1px 7px;
-    border-radius: 6px;
 }
 
 /* =========================

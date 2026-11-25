@@ -5,8 +5,8 @@
     margin-bottom: 24px;
 }
 .meta-item {
-    background: #fbfafd;
-    border: 1px solid #ebe6f7;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 14px 18px;
 }
@@ -15,11 +15,11 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .05em;
-    color: #777394;
+    color: var(--muted);
     margin-bottom: 4px;
 }
 .meta-val {
     font-size: 15px;
     font-weight: 700;
-    color: #202044;
+    color: var(--ink);
 }

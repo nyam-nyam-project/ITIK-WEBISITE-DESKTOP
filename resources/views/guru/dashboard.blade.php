@@ -201,13 +201,13 @@
                     <h3>Cakupan materi</h3>
                     <svg class="dashboard-detail-ring" viewBox="0 0 120 120" role="img" aria-labelledby="cakupan-materi-title">
                         <title id="cakupan-materi-title">Cakupan materi {{ number_format($detailSiswa['persentase_materi'], 1) }} persen</title>
-                        <circle cx="60" cy="60" r="42" fill="none" stroke="#e8e4f1" stroke-width="12" />
+                        <circle cx="60" cy="60" r="42" fill="none" class="dashboard-detail-ring__bg" stroke-width="12" />
                         <circle
                             cx="60"
                             cy="60"
                             r="42"
                             fill="none"
-                            stroke="#5c4be0"
+                            class="dashboard-detail-ring__val"
                             stroke-width="12"
                             stroke-linecap="round"
                             stroke-dasharray="{{ $detailSiswa['keliling_cincin'] }}"
@@ -259,7 +259,7 @@
                                     x2="{{ $detailSiswa['grafik_nilai']['lebar'] - 20 }}"
                                     y1="{{ $tick['y'] }}"
                                     y2="{{ $tick['y'] }}"
-                                    stroke="#e5e2ef"
+                                    class="dashboard-detail-chart__grid"
                                     stroke-width="1"
                                 />
                                 <text x="{{ $detailSiswa['grafik_nilai']['kiri'] - 10 }}" y="{{ $tick['y'] + 4 }}" text-anchor="end">
@@ -271,7 +271,7 @@
                                 x2="{{ $detailSiswa['grafik_nilai']['lebar'] - 20 }}"
                                 y1="{{ $detailSiswa['grafik_nilai']['dasar'] }}"
                                 y2="{{ $detailSiswa['grafik_nilai']['dasar'] }}"
-                                stroke="#8b8798"
+                                class="dashboard-detail-chart__axis"
                                 stroke-width="1.5"
                             />
                             @foreach($detailSiswa['grafik_nilai']['points'] as $point)
@@ -296,7 +296,7 @@
                                             x2="{{ $point['x'] + 51 }}"
                                             y1="{{ $point['kkm_y'] }}"
                                             y2="{{ $point['kkm_y'] }}"
-                                            stroke="#1f2937"
+                                            class="dashboard-detail-chart__kkm"
                                             stroke-width="3"
                                             stroke-linecap="round"
                                             data-kkm="{{ $point['kkm_display'] }}"

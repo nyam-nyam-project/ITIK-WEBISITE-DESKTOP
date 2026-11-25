@@ -1,7 +1,7 @@
 .pdf-viewer-container {
     border: 1px solid var(--border);
     border-radius: 12px;
-    background: #f8fafc;
+    background: var(--surface-alt);
     overflow: hidden;
     margin-top: 16px;
 }
@@ -11,7 +11,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 16px;
-    background: white;
+    background: var(--surface);
     border-bottom: 1px solid var(--border);
     gap: 12px;
     flex-wrap: wrap;
@@ -30,15 +30,15 @@
     padding: 20px 16px;
     max-height: 800px;
     overflow-y: auto;
-    background: #eef1f5;
+    background: var(--canvas-stage);
 }
 
 #pdf-canvas,
 .pdf-page-canvas {
     max-width: 100%;
     height: auto;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    background: #ffffff;
+    box-shadow: var(--canvas-shadow);
     border-radius: 4px;
     display: block;
 }
@@ -48,7 +48,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 16px;
-    background: white;
+    background: var(--surface);
     border-top: 1px solid var(--border);
     gap: 12px;
 }
@@ -66,6 +66,6 @@
 .pdf-loading {
     padding: 40px;
     text-align: center;
-    color: #94a3b8;
+    color: var(--muted);
     font-size: 14px;
 }

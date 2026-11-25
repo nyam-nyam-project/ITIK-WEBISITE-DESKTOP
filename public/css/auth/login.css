@@ -7,8 +7,8 @@
 body {
     font-family: Arial, sans-serif;
     min-height: 100vh;
-    background: #f5f4fc;
-    color: #202044;
+    background: var(--bg);
+    color: var(--ink);
 
     display: flex;
     align-items: center;
@@ -26,7 +26,8 @@ body {
     max-width: 1000px;
     min-height: 600px;
 
-    background: white;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 28px;
 
     overflow: hidden;
@@ -34,7 +35,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
 
-    box-shadow: 0 15px 50px rgba(70, 60, 130, .12);
+    box-shadow: var(--shadow-elevated);
 }
 
 /* =========================
@@ -44,11 +45,11 @@ body {
 .login-left {
     background: linear-gradient(
         180deg,
-        #7160ef,
-        #5948dd
+        var(--sidebar-start),
+        var(--sidebar-end)
     );
 
-    color: white;
+    color: var(--sidebar-ink);
 
     padding: 55px;
 
@@ -149,7 +150,7 @@ body {
 }
 
 .login-title p {
-    color: #777394;
+    color: var(--muted);
     font-size: 15px;
 }
 
@@ -389,20 +390,20 @@ body {
     gap: 8px;
     width: 100%;
     padding: 11px 16px;
-    background: #f7f6fd;
-    color: #4a3f9e;
+    background: var(--surface-alt);
+    color: var(--ink);
     text-decoration: none;
     border-radius: 12px;
     font-size: 13px;
     font-weight: bold;
-    border: 1px dashed #cfcae8;
+    border: 1px dashed var(--border-strong);
     transition: all .2s;
 }
 
 .btn-admin-portal:hover {
-    background: #eeeaff;
-    color: #3b308e;
-    border-color: #7160ef;
+    background: var(--purple-light);
+    color: var(--purple);
+    border-color: var(--purple);
     transform: translateY(-1px);
 }
 
@@ -415,7 +416,7 @@ body {
 
     margin-top: 28px;
 
-    color: #aaa7b8;
+    color: var(--muted);
 
     font-size: 12px;
 }

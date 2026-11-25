@@ -2,7 +2,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(41, 38, 61, .55);
+    background: var(--overlay-bg);
     z-index: 999;
     place-items: center;
     padding: 20px;
@@ -11,12 +11,14 @@
     display: grid;
 }
 .modal-card {
-    background: white;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 24px;
     max-width: 480px;
     width: 100%;
-    box-shadow: 0 10px 40px rgba(0,0,0,.15);
+    box-shadow: var(--shadow-elevated);
 }
 .modal-header {
     display: flex;

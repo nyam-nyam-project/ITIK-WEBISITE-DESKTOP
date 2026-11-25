@@ -7,8 +7,8 @@
 
 body {
     min-height: 100vh;
-    background: #f0eff8;
-    color: #202044;
+    background: var(--bg);
+    color: var(--ink);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -19,18 +19,19 @@ body {
     width: 100%;
     max-width: 1000px;
     min-height: 600px;
-    background: white;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 28px;
     overflow: hidden;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    box-shadow: 0 15px 50px rgba(45, 35, 95, .15);
+    box-shadow: var(--shadow-elevated);
 }
 
 /* BAGIAN KIRI */
 .login-left {
-    background: linear-gradient(180deg, #3d348b, #201b4d);
-    color: white;
+    background: linear-gradient(180deg, var(--sidebar-start), var(--sidebar-end));
+    color: var(--sidebar-ink);
     padding: 55px;
     display: flex;
     flex-direction: column;
@@ -108,11 +109,11 @@ body {
 .login-title h2 {
     font-size: 28px;
     margin-bottom: 8px;
-    color: #202044;
+    color: var(--ink);
 }
 
 .login-title p {
-    color: #777394;
+    color: var(--muted);
     font-size: 14px;
 }
 
@@ -125,7 +126,7 @@ body {
     font-size: 13px;
     font-weight: bold;
     margin-bottom: 8px;
-    color: #3b3955;
+    color: var(--ink);
 }
 
 .input-wrapper {
@@ -137,25 +138,26 @@ body {
     left: 16px;
     top: 50%;
     transform: translateY(-50%);
-    color: #9c98b3;
+    color: var(--muted);
     font-size: 16px;
 }
 
 .form-control {
     width: 100%;
     padding: 13px 18px 13px 45px;
-    border: 1px solid #dfddec;
+    border: 1px solid var(--input-border);
     border-radius: 14px;
     font-size: 15px;
-    background: #faf9ff;
+    background: var(--input-bg);
+    color: var(--ink);
     transition: all .2s;
 }
 
 .form-control:focus {
     outline: none;
-    border-color: #3d348b;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(61, 52, 139, .15);
+    border-color: var(--purple);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px var(--purple-light);
 }
 
 .toggle-password {

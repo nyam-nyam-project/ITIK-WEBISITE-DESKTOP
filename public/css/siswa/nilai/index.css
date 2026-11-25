@@ -24,7 +24,7 @@
     gap: 20px;
 }
 .mapel-card {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 24px;
@@ -61,7 +61,7 @@
 .mapel-stats {
     display: flex;
     justify-content: space-between;
-    background: #f8f7fc;
+    background: var(--surface-alt);
     padding: 12px 14px;
     border-radius: 12px;
     margin-bottom: 16px;
@@ -94,7 +94,7 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 20px 24px;
@@ -108,8 +108,8 @@
     text-decoration: none;
 }
 .bab-num-badge {
-    background: #111827;
-    color: white;
+    background: var(--purple);
+    color: var(--sidebar-ink);
     font-size: 16px;
     font-weight: 800;
     width: 54px;
@@ -128,7 +128,7 @@
 .bab-card-title {
     font-size: 17px;
     font-weight: 700;
-    color: #111827;
+    color: var(--ink);
     margin: 0 0 6px;
 }
 .bab-card-subtitle {
@@ -137,7 +137,7 @@
     margin: 0;
 }
 .bab-card-arrow {
-    color: #9ca3af;
+    color: var(--muted);
     transition: transform .2s ease, color .2s ease;
     flex-shrink: 0;
 }
@@ -147,7 +147,7 @@
 }
 
 /* TINGKAT & SCORE */
-.score-val.pass { color: #166534; font-weight: 700; }
+.score-val.pass { color: var(--success-ink); font-weight: 700; }
 .score-val.fail { color: #991b1b; font-weight: 700; }
 .badge-tingkat {
     display: inline-block;

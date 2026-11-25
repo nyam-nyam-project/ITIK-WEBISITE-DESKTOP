@@ -12,10 +12,10 @@
     font-weight: 600;
 }
 .mapel-banner {
-    background: linear-gradient(135deg, #7160ef 0%, #5c4be0 100%);
+    background: linear-gradient(135deg, var(--sidebar-start) 0%, var(--sidebar-end) 100%);
     border-radius: 16px;
     padding: 24px 28px;
-    color: white;
+    color: var(--sidebar-ink);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -47,7 +47,7 @@
     font-size: 13px;
 }
 .btn-back-mapel {
-    background: white;
+    background: var(--surface);
     color: var(--purple);
     font-size: 13px;
     font-weight: 700;
@@ -67,7 +67,7 @@
     gap: 18px;
 }
 .mapel-card-s {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 22px;
@@ -122,7 +122,7 @@
     gap: 18px;
 }
 .bab-card-siswa {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 22px;
@@ -193,7 +193,7 @@
     gap: 18px;
 }
 .kuis-item {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 22px;
@@ -204,7 +204,7 @@
 }
 .kuis-item.terkunci {
     opacity: .75;
-    background: #fbfbfd;
+    background: var(--surface-alt);
 }
 .kuis-item h3 {
     font-size: 17px;
@@ -220,7 +220,7 @@
 .kuis-meta {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    background: #f8f7fc;
+    background: var(--surface-alt);
     padding: 10px;
     border-radius: 12px;
     text-align: center;

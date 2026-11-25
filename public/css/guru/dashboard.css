@@ -42,18 +42,18 @@
 }
 
 .dashboard-status--perlu-dibantu {
-    background: #fff0f2;
-    color: #96293b;
+    background: var(--error-bg);
+    color: var(--error-ink);
 }
 
 .dashboard-status--belum-mulai {
-    background: #fff7e8;
-    color: #8a4d08;
+    background: var(--warning-bg);
+    color: var(--warning-ink);
 }
 
 .dashboard-status--lancar {
-    background: #e8f5ed;
-    color: #24603e;
+    background: var(--badge-success-bg);
+    color: var(--badge-success-ink);
 }
 
 .dashboard-category-list {
@@ -78,7 +78,7 @@
     height: 12px;
     overflow: hidden;
     border-radius: 999px;
-    background: #f0eff4;
+    background: var(--surface-muted);
 }
 
 .dashboard-bar progress {
@@ -141,11 +141,11 @@
 }
 
 .dashboard-bar--completion progress::-webkit-progress-value {
-    background: #15803d;
+    background: var(--success-ink);
 }
 
 .dashboard-bar--completion progress::-moz-progress-bar {
-    background: #15803d;
+    background: var(--success-ink);
 }
 
 .dashboard-remedial .card-header {
@@ -194,6 +194,14 @@
     font-weight: 700;
 }
 
+.dashboard-detail-ring__bg {
+    stroke: var(--purple-light);
+}
+
+.dashboard-detail-ring__val {
+    stroke: var(--purple);
+}
+
 .dashboard-detail-material p,
 .dashboard-detail-category p {
     margin-bottom: 0;
@@ -234,6 +242,18 @@
     fill: var(--muted);
 }
 
+.dashboard-detail-chart__grid {
+    stroke: var(--border);
+}
+
+.dashboard-detail-chart__axis {
+    stroke: var(--muted);
+}
+
+.dashboard-detail-chart__kkm {
+    stroke: var(--ink);
+}
+
 @media (max-width: 760px) {
     .dashboard-heading__filters {
         width: 100%;
@@ -269,12 +289,12 @@
 
 /* Card Progres Kelas (Harmonis dengan Tema Putih & Ungu ITIK) */
 .dashboard-progres-card {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 24px 28px;
     color: var(--ink);
-    box-shadow: 0 4px 20px #29263d04;
+    box-shadow: var(--shadow-card);
     margin-bottom: 22px;
 }
 
@@ -356,17 +376,17 @@
 }
 
 .dashboard-progres-row__numbers .text-lulus {
-    color: #15803d;
+    color: var(--success-ink);
     font-weight: 600;
 }
 
 .dashboard-progres-row__numbers .text-menunggu {
-    color: #b45309;
+    color: var(--warning-ink);
     font-weight: 600;
 }
 
 .dashboard-progres-row__numbers .text-belum {
-    color: #b91c1c;
+    color: var(--error-ink);
     font-weight: 600;
 }
 
@@ -374,7 +394,7 @@
     height: 8px;
     border-radius: 999px;
     overflow: hidden;
-    background: #f0eff4;
+    background: var(--surface-muted);
 }
 
 .dashboard-progres-track progress {

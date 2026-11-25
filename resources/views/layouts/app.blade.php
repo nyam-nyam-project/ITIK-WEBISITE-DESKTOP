@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'ITIK') | ITIK</title>
+    <script src="{{ asset('js/theme-init.js') }}"></script>
     @include('partials.styles')
     @stack('styles')
 </head>
@@ -107,10 +108,22 @@
         <main class="content" id="main-content" tabindex="-1">
             <header class="topbar">
                 <span class="eyebrow">{{ $eyebrow }}</span>
-                <a class="profile-mini" href="{{ $profileUrl }}">
-                    <span class="avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($user?->nama_lengkap ?? 'U', 0, 1)) }}</span>
-                    <span><strong>{{ $user?->nama_lengkap ?? 'Pengguna' }}</strong><small>{{ $profileRole }}</small></span>
-                </a>
+                <div class="topbar-actions">
+                    <button type="button" class="theme-toggle" id="theme-toggle" aria-pressed="false" aria-label="Aktifkan mode gelap">
+                        <svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4" />
+                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                        </svg>
+                        <svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                        </svg>
+                        <span class="theme-toggle-label">Mode Gelap</span>
+                    </button>
+                    <a class="profile-mini" href="{{ $profileUrl }}">
+                        <span class="avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($user?->nama_lengkap ?? 'U', 0, 1)) }}</span>
+                        <span><strong>{{ $user?->nama_lengkap ?? 'Pengguna' }}</strong><small>{{ $profileRole }}</small></span>
+                    </a>
+                </div>
             </header>
 
             @if(session('success'))
@@ -138,6 +151,7 @@
         </main>
     </div>
 
+    <script src="{{ asset('js/theme.js') }}" defer></script>
     <script src="{{ asset('js/app.js') }}" defer></script>
     @stack('scripts')
 </body>

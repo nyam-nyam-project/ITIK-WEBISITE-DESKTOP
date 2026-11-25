@@ -278,7 +278,10 @@ class MateriController extends Controller
         ], [
             'id_mapel.required' => 'Mata pelajaran wajib dipilih.',
             'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
+            'judul.required' => 'Judul materi wajib diisi.',
+            'judul.max' => 'Judul materi maksimal 150 karakter.',
             'kelas.in' => 'Kelas yang dipilih tidak tersedia.',
+            'link_youtube.url' => 'Link YouTube harus berupa URL yang valid.',
             'file_pdf.mimes' => 'File materi harus berformat PDF.',
             'file_pdf.max' => 'Ukuran file PDF maksimal 10 MB.',
         ]);

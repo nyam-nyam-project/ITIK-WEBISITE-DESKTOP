@@ -88,6 +88,17 @@ class RemedialController extends Controller
                 'min:0',
                 'max:100',
             ],
+        ], [
+            'judul.required' => 'Judul kuis remedial wajib diisi.',
+            'judul.max' => 'Judul kuis remedial tidak boleh lebih dari 150 karakter.',
+            'id_kuis_asal.required' => 'Kuis asal (ulangan) wajib dipilih.',
+            'id_kuis_asal.exists' => 'Kuis asal yang dipilih tidak ditemukan.',
+            'alokasi_waktu.integer' => 'Alokasi waktu harus berupa angka menit.',
+            'alokasi_waktu.min' => 'Alokasi waktu minimal 1 menit.',
+            'alokasi_waktu.max' => 'Alokasi waktu maksimal 300 menit.',
+            'kkm.numeric' => 'Nilai KKM harus berupa angka.',
+            'kkm.min' => 'Nilai KKM minimal 0.',
+            'kkm.max' => 'Nilai KKM maksimal 100.',
         ]);
 
         /*
@@ -276,6 +287,12 @@ class RemedialController extends Controller
         $request->validate([
             'id_mengerjakan' => 'required|array|min:1',
             'id_mengerjakan.*' => 'required|integer|exists:tr_mengerjakan,id_mengerjakan',
+        ], [
+            'id_mengerjakan.required' => 'Pilih minimal satu siswa untuk diberikan tugas remedial.',
+            'id_mengerjakan.min' => 'Pilih minimal satu siswa untuk diberikan tugas remedial.',
+            'id_mengerjakan.array' => 'Data siswa tidak valid.',
+            'id_mengerjakan.*.integer' => 'Data hasil pengerjaan siswa tidak valid.',
+            'id_mengerjakan.*.exists' => 'Hasil pengerjaan siswa tidak ditemukan.',
         ]);
 
         DB::transaction(function () use ($request, $remedial) {

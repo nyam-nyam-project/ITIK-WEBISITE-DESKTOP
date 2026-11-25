@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'ITIK') | ITIK</title>
     <script src="{{ asset('js/theme-init.js') }}"></script>
+    <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     @include('partials.styles')
     @stack('styles')
 </head>
@@ -151,7 +152,21 @@
         </main>
     </div>
 
+    @php
+        $sedangDiHalamanUjian = request()->routeIs('login*', 'admin.login*', 'password.*', 'siswa.kuis.kerjakan', 'siswa.kuis.mulai');
+        $hasilBelumSelesai = request()->routeIs('siswa.kuis.hasil') && (! isset($hasil) || ($hasil->status_pengerjaan ?? null) !== 'final');
+        $dibukaDariSesiUjian = session('sedang_ujian', false)
+            || request()->boolean('ujian')
+            || str_contains((string) request()->headers->get('referer'), '/kerjakan');
+        $tampilkanTombolAksesibilitas = ! ($sedangDiHalamanUjian || $hasilBelumSelesai || $dibukaDariSesiUjian);
+    @endphp
+
+    @if($tampilkanTombolAksesibilitas)
+        @include('partials.aksesibilitas')
+    @endif
+
     <script src="{{ asset('js/theme.js') }}" defer></script>
+    <script src="{{ asset('js/aksesibilitas.js') }}" defer></script>
     <script src="{{ asset('js/app.js') }}" defer></script>
     @stack('scripts')
 </body>

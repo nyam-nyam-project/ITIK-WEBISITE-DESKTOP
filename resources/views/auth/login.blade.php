@@ -7,6 +7,7 @@
 
     <title>Login - ITIK</title>
     <script src="{{ asset('js/theme-init.js') }}"></script>
+    <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
     <link rel="stylesheet" href="{{ asset('css/auth/login.css') }}">
     <link rel="stylesheet" href="{{ asset('css/utilities.css') }}">

@@ -192,7 +192,7 @@ body {
 }
 
 .soal-text {
-    font-size: 18px;
+    font-size: calc(18px * var(--text-scale, 1));
     font-weight: bold;
     line-height: 1.5;
     padding-top: 6px;
@@ -211,7 +211,7 @@ body {
     border: 1px solid var(--input-border);
     background: var(--input-bg);
     border-radius: 16px;
-    font-size: 16px;
+    font-size: calc(16px * var(--text-scale, 1));
     line-height: 1.6;
     color: var(--ink);
 }
@@ -245,7 +245,7 @@ body {
     border-radius: 16px;
     cursor: pointer;
     line-height: 1.5;
-    font-size: 16px;
+    font-size: calc(16px * var(--text-scale, 1));
 }
 
 .opsi:hover {

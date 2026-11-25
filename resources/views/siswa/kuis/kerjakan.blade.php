@@ -7,9 +7,11 @@
 
     <title>{{ $kuis->judul }} - ITIK</title>
     <script src="{{ asset('js/theme-init.js') }}"></script>
+    <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
     <link rel="stylesheet" href="{{ asset('css/siswa/kuis/kerjakan.css') }}">
     <link rel="stylesheet" href="{{ asset('css/utilities.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/aksesibilitas.css') }}">
 </head>
 
 <body>
@@ -106,6 +108,22 @@
                                         </div>
                                     @endif
                                 </div>
+                            </div>
+
+                            <div class="soal-toolbar">
+                                <button
+                                    type="button"
+                                    class="btn-bacakan-soal"
+                                    data-soal-id="{{ $item->id_soal }}"
+                                    aria-pressed="false"
+                                >
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                                    </svg>
+                                    <span class="btn-bacakan-soal-label">Bacakan soal</span>
+                                </button>
                             </div>
 
                             @if ($item->tipe === 'essay')
@@ -283,6 +301,7 @@
 </div>
 
 
+<script defer src="{{ asset('js/aksesibilitas.js') }}"></script>
 <script defer src="{{ asset('js/siswa/kuis/kerjakan.js') }}"></script>
 
 </body>

@@ -565,3 +565,16 @@ button:focus-visible {
 .is-cbt-hidden {
     display: none !important;
 }
+
+.soal-gambar-wrap {
+    margin-top: 14px;
+}
+
+.soal-gambar {
+    max-width: 100%;
+    max-height: 380px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    display: block;
+    object-fit: contain;
+}

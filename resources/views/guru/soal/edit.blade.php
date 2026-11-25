@@ -31,7 +31,7 @@
         </div>
     </div>
 
-    <form action="{{ route('kuis.soal.update', [$kuis->id_kuis, $soal->id_soal]) }}" method="POST">
+    <form action="{{ route('kuis.soal.update', [$kuis->id_kuis, $soal->id_soal]) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
@@ -57,6 +57,27 @@
                 required
             >{{ old('pertanyaan', $soal->pertanyaan) }}</textarea>
             @error('pertanyaan') <div class="error">{{ $message }}</div> @enderror
+        </div>
+
+        <div class="field">
+            <label for="gambar">Gambar Pendukung Soal <span class="muted small">(Opsional)</span></label>
+            @if ($soal->gambar)
+                <div class="soal-preview-wrap">
+                    <img src="{{ asset('storage/' . $soal->gambar) }}" alt="{{ Str::limit(strip_tags($soal->pertanyaan), 60) }}" class="soal-preview-img">
+                    <label class="hapus-gambar-label">
+                        <input type="checkbox" name="hapus_gambar" value="1" {{ old('hapus_gambar') ? 'checked' : '' }}>
+                        <span>Hapus gambar saat ini</span>
+                    </label>
+                </div>
+            @endif
+            <input
+                type="file"
+                id="gambar"
+                name="gambar"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            >
+            <p class="muted small">Pilih file baru jika ingin mengganti gambar. Format: JPG, JPEG, PNG, WEBP. Maksimal ukuran: 2 MB.</p>
+            @error('gambar') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="options-entry" data-jawaban="{{ old('jawaban', $soal->jawaban) }}" data-pg-only @if($isEssay) hidden @endif>

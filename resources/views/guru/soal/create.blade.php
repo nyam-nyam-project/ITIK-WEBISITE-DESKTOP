@@ -31,7 +31,7 @@
         </div>
     </div>
 
-    <form action="{{ route('kuis.soal.store', $kuis->id_kuis) }}" method="POST">
+    <form action="{{ route('kuis.soal.store', $kuis->id_kuis) }}" method="POST" enctype="multipart/form-data">
         @csrf
 
         <div class="field">
@@ -56,6 +56,18 @@
                 required
             >{{ old('pertanyaan') }}</textarea>
             @error('pertanyaan') <div class="error">{{ $message }}</div> @enderror
+        </div>
+
+        <div class="field">
+            <label for="gambar">Gambar Pendukung Soal <span class="muted small">(Opsional)</span></label>
+            <input
+                type="file"
+                id="gambar"
+                name="gambar"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            >
+            <p class="muted small">Format: JPG, JPEG, PNG, WEBP. Maksimal ukuran: 2 MB.</p>
+            @error('gambar') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="options-entry" data-jawaban="{{ old('jawaban') }}" data-pg-only @if($isEssay) hidden @endif>

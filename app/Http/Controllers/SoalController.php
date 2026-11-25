@@ -7,6 +7,7 @@ use App\Models\Soal;
 use App\Services\KuisPenilaianService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -81,7 +82,7 @@ class SoalController extends Controller
              * mempunyai opsi.
              */
             if ($validated['tipe'] === 'pilihan_ganda') {
-                $opsiJawaban = 'opsi_' . strtolower($validated['jawaban']);
+                $opsiJawaban = 'opsi_'.strtolower($validated['jawaban']);
 
                 if (empty(trim($validated[$opsiJawaban] ?? ''))) {
                     return back()
@@ -98,7 +99,7 @@ class SoalController extends Controller
              */
             $jumlahSoal = $kuis->soal()->count();
 
-            $idSoal = 'S' . str_pad(
+            $idSoal = 'S'.str_pad(
                 $jumlahSoal + 1,
                 3,
                 '0',
@@ -111,7 +112,7 @@ class SoalController extends Controller
             while (Soal::where('id_soal', $idSoal)->exists()) {
                 $jumlahSoal++;
 
-                $idSoal = 'S' . str_pad(
+                $idSoal = 'S'.str_pad(
                     $jumlahSoal + 1,
                     3,
                     '0',
@@ -122,6 +123,11 @@ class SoalController extends Controller
             /*
              * Simpan soal. Tingkat kesulitan default mengikuti tingkat kesulitan kuis.
              */
+            $gambarPath = null;
+            if ($request->hasFile('gambar')) {
+                $gambarPath = $request->file('gambar')->store('soal', 'public');
+            }
+
             $kuis->soal()->create([
                 'id_soal' => $idSoal,
                 'tipe' => $validated['tipe'],
@@ -134,6 +140,7 @@ class SoalController extends Controller
                 'jawaban' => $validated['jawaban'],
                 'bobot' => 1,
                 'tingkat_kesulitan' => $validated['tingkat_kesulitan'] ?? $kuis->tingkat_kesulitan ?? 'mudah',
+                'gambar' => $gambarPath,
             ]);
 
             // Seimbangkan bobot seluruh soal secara otomatis (skala 100 dibagi rata)
@@ -215,7 +222,7 @@ class SoalController extends Controller
              * Pastikan jawaban yang dipilih mempunyai opsi.
              */
             if ($validated['tipe'] === 'pilihan_ganda') {
-                $opsiJawaban = 'opsi_' . strtolower($validated['jawaban']);
+                $opsiJawaban = 'opsi_'.strtolower($validated['jawaban']);
 
                 if (empty(trim($validated[$opsiJawaban] ?? ''))) {
                     return back()
@@ -230,6 +237,21 @@ class SoalController extends Controller
             /*
              * Update soal. Bobot diseimbangkan otomatis.
              */
+            $gambarPath = $soal->gambar;
+            $gambarLamaUntukDihapus = null;
+
+            if ($request->hasFile('gambar')) {
+                $gambarPath = $request->file('gambar')->store('soal', 'public');
+                if ($soal->gambar) {
+                    $gambarLamaUntukDihapus = $soal->gambar;
+                }
+            } elseif ($request->boolean('hapus_gambar')) {
+                if ($soal->gambar) {
+                    $gambarLamaUntukDihapus = $soal->gambar;
+                }
+                $gambarPath = null;
+            }
+
             $soal->update([
                 'tipe' => $validated['tipe'],
                 'pertanyaan' => $validated['pertanyaan'],
@@ -239,9 +261,13 @@ class SoalController extends Controller
                 'opsi_d' => $validated['opsi_d'],
                 'opsi_e' => $validated['opsi_e'] ?? null,
                 'jawaban' => $validated['jawaban'],
-                'tingkat_kesulitan' =>
-                    $validated['tingkat_kesulitan'] ?? $soal->tingkat_kesulitan ?? $kuis->tingkat_kesulitan ?? 'mudah',
+                'tingkat_kesulitan' => $validated['tingkat_kesulitan'] ?? $soal->tingkat_kesulitan ?? $kuis->tingkat_kesulitan ?? 'mudah',
+                'gambar' => $gambarPath,
             ]);
+
+            if ($gambarLamaUntukDihapus && Storage::disk('public')->exists($gambarLamaUntukDihapus)) {
+                Storage::disk('public')->delete($gambarLamaUntukDihapus);
+            }
 
             $this->seimbangkanBobot($kuis);
 
@@ -268,7 +294,12 @@ class SoalController extends Controller
                     );
             }
 
+            $gambarPath = $soal->gambar;
             $soal->delete();
+
+            if ($gambarPath && Storage::disk('public')->exists($gambarPath)) {
+                Storage::disk('public')->delete($gambarPath);
+            }
 
             $this->seimbangkanBobot($kuis);
 
@@ -300,6 +331,11 @@ class SoalController extends Controller
                 'nullable',
                 Rule::in(['mudah', 'sedang', 'sulit']),
             ],
+            'gambar' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ], [
+            'gambar.image' => 'Berkas soal harus berupa gambar.',
+            'gambar.mimes' => 'Format gambar harus jpg, jpeg, png, atau webp.',
+            'gambar.max' => 'Ukuran gambar tidak boleh lebih dari 2 MB.',
         ]);
 
         $validated['tipe'] = $validated['tipe'] ?? $tipeDefault;

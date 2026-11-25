@@ -38,3 +38,14 @@
     background: #166534;
     color: white;
 }
+.soal-gambar-wrap {
+    margin-top: 14px;
+}
+.soal-gambar {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 8px;
+    border: 1px solid #ebe6f7;
+    display: block;
+    object-fit: contain;
+}

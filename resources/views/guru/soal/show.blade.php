@@ -41,6 +41,11 @@
     <div class="soal-display">
         <strong>Soal:</strong>
         <p class="u-margin-top-8px u-white-space-pre-line">{{ $soal->pertanyaan }}</p>
+        @if ($soal->gambar)
+            <div class="soal-gambar-wrap">
+                <img src="{{ asset('storage/' . $soal->gambar) }}" alt="{{ Str::limit(strip_tags($soal->pertanyaan), 60) }}" class="soal-gambar">
+            </div>
+        @endif
     </div>
 
     <h3 class="u-font-size-15px u-margin-bottom-12px u-color-202044">Alternatif Pilihan Jawaban:</h3>

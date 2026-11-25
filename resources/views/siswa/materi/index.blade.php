@@ -3,6 +3,7 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/siswa/materi/index.css') }}">
+<link rel="stylesheet" href="{{ asset('css/animasi.css') }}">
 @endpush
 
 @section('content')
@@ -34,9 +35,9 @@
             </div>
         @endif
     @else
-        <div class="mapel-grid-siswa">
+        <div class="mapel-grid-siswa anim-stagger">
             @foreach($mapelAktif as $mp)
-                <a href="{{ route('siswa.materi.index', ['mapel' => $mp->id_mapel]) }}" class="mapel-card-s">
+                <a href="{{ route('siswa.materi.index', ['mapel' => $mp->id_mapel]) }}" class="mapel-card-s anim-item">
                     <div class="mapel-icon-s">📚</div>
                     <div>
                         <div class="mapel-code-s">{{ $mp->kode_mapel }}</div>

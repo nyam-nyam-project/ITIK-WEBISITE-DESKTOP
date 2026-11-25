@@ -3,6 +3,7 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/siswa/kuis/index.css') }}">
+<link rel="stylesheet" href="{{ asset('css/animasi.css') }}">
 @endpush
 
 @section('content')
@@ -40,9 +41,9 @@
                 </div>
             @endif
         @else
-            <div class="mapel-grid-siswa">
+            <div class="mapel-grid-siswa anim-stagger">
                 @foreach ($mapelAktif as $mapel)
-                    <a href="{{ url('/siswa/kuis?mapel=' . $mapel->id_mapel) }}" class="mapel-card-s">
+                    <a href="{{ url('/siswa/kuis?mapel=' . $mapel->id_mapel) }}" class="mapel-card-s anim-item">
                         <div>
                             <div class="mapel-icon-s">📖</div>
                             <div class="mapel-nama">{{ $mapel->nama_mapel }}</div>
@@ -115,7 +116,7 @@
                     <p>Materi pembelajaran untuk mata pelajaran ini belum tersedia.</p>
                 </div>
             @else
-                <div class="bab-grid-siswa">
+                <div class="bab-grid-siswa anim-stagger">
                     @foreach ($daftarMateri as $materiItem)
                         @php
                             $kuisDiBab = $materiItem->kuis->where('status_publikasi', 'terbit')->where('is_aktif', true);
@@ -124,7 +125,7 @@
                             $hasSulit = $kuisDiBab->contains(fn ($k) => $k->tingkat_kesulitan === 'sulit');
                         @endphp
 
-                        <a href="{{ url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel . '&materi=' . $materiItem->id_materi) }}" class="bab-card-siswa">
+                        <a href="{{ url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel . '&materi=' . $materiItem->id_materi) }}" class="bab-card-siswa anim-item">
                             <div>
                                 <div class="bab-card-header">
                                     <div class="bab-card-icon">📖</div>
@@ -177,7 +178,7 @@
                     </div>
                 </div>
 
-                <div class="kuis-grid">
+                <div class="kuis-grid anim-stagger">
                     @foreach ($kuisTanpaBab as $item)
                         @php
                             $status = $statusKuis[$item->id_kuis] ?? [];
@@ -190,7 +191,7 @@
                             $bisaUlang = in_array($katItem, ['kuis harian', 'pre-test', 'post-test']);
                         @endphp
 
-                        <div class="kuis-item {{ $terkunci ? 'terkunci' : '' }}">
+                        <div class="kuis-item anim-item {{ $terkunci ? 'terkunci' : '' }}">
                             <div>
                                 <h3>{{ $item->judul }}</h3>
                                 <div class="badges-row">
@@ -288,7 +289,7 @@
                     <p>Kuis untuk bab materi ini belum dipublikasikan oleh guru.</p>
                 </div>
             @else
-                <div class="kuis-grid">
+                <div class="kuis-grid anim-stagger">
                     @foreach ($kuisBabTerpilih as $item)
                         @php
                             $status = $statusKuis[$item->id_kuis] ?? [];
@@ -301,7 +302,7 @@
                             $bisaBabUlang = in_array($katBabItem, ['kuis harian', 'pre-test', 'post-test']);
                         @endphp
 
-                        <div class="kuis-item {{ $terkunci ? 'terkunci' : '' }}">
+                        <div class="kuis-item anim-item {{ $terkunci ? 'terkunci' : '' }}">
                             <div>
                                 <h3>{{ $item->judul }}</h3>
                                 <div class="badges-row">

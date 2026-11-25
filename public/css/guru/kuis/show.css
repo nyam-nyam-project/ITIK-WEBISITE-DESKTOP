@@ -5,8 +5,8 @@
     margin-bottom: 24px;
 }
 .meta-item {
-    background: #fbfafd;
-    border: 1px solid #ebe6f7;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 14px 18px;
 }
@@ -15,20 +15,20 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .05em;
-    color: #777394;
+    color: var(--muted);
     margin-bottom: 4px;
 }
 .meta-val {
     font-size: 15px;
     font-weight: 700;
-    color: #202044;
+    color: var(--ink);
 }
 .soal-item {
     display: flex;
     gap: 14px;
     align-items: flex-start;
     padding: 14px 16px;
-    border-bottom: 1px solid #f0eff6;
+    border-bottom: 1px solid var(--border);
 }
 .soal-item:last-child {
     border-bottom: none;
@@ -37,8 +37,8 @@
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background: #ede9fc;
-    color: #5542dc;
+    background: var(--purple-light);
+    color: var(--purple);
     display: flex;
     align-items: center;
     justify-content: center;

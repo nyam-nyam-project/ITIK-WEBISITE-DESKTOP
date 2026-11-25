@@ -1,10 +1,10 @@
 .soal-card-item {
-    background: #ffffff;
-    border: 1px solid #ebe6f7;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 14px;
     padding: 22px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    box-shadow: var(--shadow-card);
 }
 .soal-head {
     display: flex;
@@ -17,8 +17,8 @@
     width: 34px;
     height: 34px;
     border-radius: 10px;
-    background: #5542dc;
-    color: #fff;
+    background: var(--purple);
+    color: var(--sidebar-ink);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -35,14 +35,14 @@
 .option-box {
     padding: 12px 16px;
     border-radius: 10px;
-    background: #fbfafd;
-    border: 1px solid #ebe6f7;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
     font-size: 14px;
-    color: #373356;
+    color: var(--ink);
 }
 .option-box.is-correct {
-    background: #f0fdf4;
-    border-color: #86efac;
-    color: #166534;
+    background: var(--success-bg);
+    border-color: var(--success-border);
+    color: var(--success-ink);
     font-weight: 600;
 }

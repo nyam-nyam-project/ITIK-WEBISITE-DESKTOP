@@ -7,6 +7,7 @@
 
     <title>Login Administrator - ITIK</title>
     <script src="{{ asset('js/theme-init.js') }}"></script>
+    <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
     <link rel="stylesheet" href="{{ asset('css/auth/admin-login.css') }}">
     <link rel="stylesheet" href="{{ asset('css/utilities.css') }}">
@@ -112,18 +113,6 @@
                     Masuk sebagai Administrator
                 </button>
             </form>
-
-            <!-- AKUN DEMO ADMINISTRATOR -->
-            <div class="demo-box">
-                <div class="demo-title">
-                    ℹ️ Akun Demo Administrator
-                </div>
-                <div class="demo-row">
-                    <span class="demo-role">Admin</span>
-                    <span class="demo-email">andi@sekolah.sch.id</span>
-                    <span class="demo-pass">password123</span>
-                </div>
-            </div>
 
             <!-- LINK KEMBALI KE LOGIN SISWA & GURU -->
             <div class="back-link-box">

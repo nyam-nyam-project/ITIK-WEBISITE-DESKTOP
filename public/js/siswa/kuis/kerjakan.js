@@ -215,6 +215,11 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
             if (data.autoSubmitted) {
                 sudahSubmit = true;
                 formSubmitted = true;
+            try {
+                window.sessionStorage.removeItem('itik-sedang-ujian');
+            } catch (err) {
+                // Abaikan jika sessionStorage tidak tersedia
+            }
                 if (hasilUrl) {
                     window.location.href = hasilUrl;
                 } else {
@@ -245,6 +250,11 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
                 return;
             }
             formSubmitted = true;
+            try {
+                window.sessionStorage.removeItem('itik-sedang-ujian');
+            } catch (err) {
+                // Abaikan jika sessionStorage tidak tersedia
+            }
         });
     }
 

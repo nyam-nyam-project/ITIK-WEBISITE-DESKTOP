@@ -1,3 +1,14 @@
+@php
+    $tampilkanSplashLogin = (bool) session()->pull('tampilkan_splash_login', false);
+@endphp
+@if($tampilkanSplashLogin)
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset('css/splash.css') }}">
+    @endpush
+    @push('scripts')
+        <script src="{{ asset('js/splash.js') }}" defer></script>
+    @endpush
+@endif
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -6,10 +17,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'ITIK') | ITIK</title>
     <script src="{{ asset('js/theme-init.js') }}"></script>
+    <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     @include('partials.styles')
     @stack('styles')
 </head>
 <body>
+    @if($tampilkanSplashLogin)
+        @include('partials.splash')
+    @endif
     <a class="skip-link" href="#main-content">Langsung ke konten</a>
 
     @php
@@ -151,7 +166,21 @@
         </main>
     </div>
 
+    @php
+        $sedangDiHalamanUjian = request()->routeIs('login*', 'admin.login*', 'password.*', 'siswa.kuis.kerjakan', 'siswa.kuis.mulai');
+        $hasilBelumSelesai = request()->routeIs('siswa.kuis.hasil') && (! isset($hasil) || ($hasil->status_pengerjaan ?? null) !== 'final');
+        $dibukaDariSesiUjian = session('sedang_ujian', false)
+            || request()->boolean('ujian')
+            || str_contains((string) request()->headers->get('referer'), '/kerjakan');
+        $tampilkanTombolAksesibilitas = ! ($sedangDiHalamanUjian || $hasilBelumSelesai || $dibukaDariSesiUjian);
+    @endphp
+
+    @if($tampilkanTombolAksesibilitas)
+        @include('partials.aksesibilitas')
+    @endif
+
     <script src="{{ asset('js/theme.js') }}" defer></script>
+    <script src="{{ asset('js/aksesibilitas.js') }}" defer></script>
     <script src="{{ asset('js/app.js') }}" defer></script>
     @stack('scripts')
 </body>

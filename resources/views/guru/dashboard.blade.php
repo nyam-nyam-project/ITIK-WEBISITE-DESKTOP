@@ -2,6 +2,7 @@
 @section('title', 'Dashboard Guru')
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/guru/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/animasi.css') }}">
 @endpush
 @section('content')
 
@@ -44,22 +45,22 @@
         </div>
     </section>
 @else
-    <div class="stats dashboard-kelas-stats">
-        <div class="stat">
+    <div class="stats dashboard-kelas-stats anim-stagger">
+        <div class="stat anim-item">
             <span class="label">Siswa aktif</span>
-            <span class="value">{{ $ringkasan['jumlah_siswa'] }}</span>
+            <span class="value" data-count-up="{{ $ringkasan['jumlah_siswa'] }}">{{ $ringkasan['jumlah_siswa'] }}</span>
         </div>
-        <div class="stat">
+        <div class="stat anim-item">
             <span class="label">Rata-rata kelas</span>
-            <span class="value">{{ $ringkasan['rata_rata_nilai'] === null ? '—' : number_format($ringkasan['rata_rata_nilai'], 1) }}</span>
+            <span class="value" @if($ringkasan['rata_rata_nilai'] !== null) data-count-up="{{ number_format($ringkasan['rata_rata_nilai'], 1, '.', '') }}" data-decimals="1" @endif>{{ $ringkasan['rata_rata_nilai'] === null ? '—' : number_format($ringkasan['rata_rata_nilai'], 1) }}</span>
         </div>
-        <div class="stat">
+        <div class="stat anim-item">
             <span class="label">Perlu dibantu</span>
-            <span class="value">{{ $ringkasan['jumlah_perlu_dibantu'] }}</span>
+            <span class="value" data-count-up="{{ $ringkasan['jumlah_perlu_dibantu'] }}">{{ $ringkasan['jumlah_perlu_dibantu'] }}</span>
         </div>
     </div>
 
-    <section class="card dashboard-progres-card">
+    <section class="card dashboard-progres-card anim-item">
         <div class="dashboard-progres-card__body">
             <div class="dashboard-progres-card__circle">
                 <svg class="dashboard-progres-ring" viewBox="0 0 120 120" role="img" aria-labelledby="progres-materi-title">
@@ -75,9 +76,10 @@
                         stroke-linecap="round"
                         stroke-dasharray="{{ $progresKelas['keliling_cincin'] }}"
                         stroke-dashoffset="{{ $progresKelas['offset_cincin'] }}"
+                        data-ring-target="{{ $progresKelas['offset_cincin'] }}"
                         transform="rotate(-90 60 60)"
                     />
-                    <text x="60" y="66" text-anchor="middle" class="dashboard-progres-ring__text">
+                    <text x="60" y="66" text-anchor="middle" class="dashboard-progres-ring__text" data-count-up="{{ number_format($progresKelas['persentase_materi'], 0, '.', '') }}" data-suffix="%">
                         {{ number_format($progresKelas['persentase_materi'], 0) }}%
                     </text>
                 </svg>
@@ -108,6 +110,7 @@
                                 <progress
                                     max="{{ max(1, $kategori->jumlah_peluang) }}"
                                     value="{{ $kategori->jumlah_dikerjakan }}"
+                                    data-progress-target="{{ $kategori->jumlah_dikerjakan }}"
                                     aria-label="Progres pengerjaan {{ $kategori->kategori }}"
                                 >
                                     {{ $kategori->jumlah_dikerjakan }} dari {{ $kategori->jumlah_peluang }}
@@ -326,7 +329,7 @@
         </section>
     @endif
 
-    <section class="card dashboard-remedial">
+    <section class="card dashboard-remedial anim-item">
         <div class="card-header">
             <div>
                 <h2>Remedial</h2>
@@ -341,3 +344,7 @@
 @endif
 
 @endsection
+
+@push('scripts')
+    <script src="{{ asset('js/animasi.js') }}" defer></script>
+@endpush

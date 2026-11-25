@@ -1,0 +1,75 @@
+/* =========================================================
+   ANIMASI DASHBOARD & KOMPONEN (DURASI < 1 DETIK, NON-LOOP)
+   ========================================================= */
+
+@keyframes itikFadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes itikBannerSoftIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.anim-item {
+    animation: itikFadeSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-banner {
+    animation: itikBannerSoftIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Tahan animasi masuk selama splash screen login masih menutupi layar */
+body:has(#login-splash-overlay) .anim-item,
+body:has(#login-splash-overlay) .anim-banner {
+    animation: none;
+    opacity: 0;
+}
+
+/* Stagger bertahap tanpa inline style di Blade */
+.anim-stagger > .anim-item:nth-child(1) { animation-delay: 0ms; }
+.anim-stagger > .anim-item:nth-child(2) { animation-delay: 55ms; }
+.anim-stagger > .anim-item:nth-child(3) { animation-delay: 110ms; }
+.anim-stagger > .anim-item:nth-child(4) { animation-delay: 165ms; }
+.anim-stagger > .anim-item:nth-child(5) { animation-delay: 220ms; }
+.anim-stagger > .anim-item:nth-child(6) { animation-delay: 275ms; }
+.anim-stagger > .anim-item:nth-child(7) { animation-delay: 330ms; }
+.anim-stagger > .anim-item:nth-child(8) { animation-delay: 385ms; }
+.anim-stagger > .anim-item:nth-child(9) { animation-delay: 440ms; }
+.anim-stagger > .anim-item:nth-child(10) { animation-delay: 495ms; }
+.anim-stagger > .anim-item:nth-child(11) { animation-delay: 550ms; }
+.anim-stagger > .anim-item:nth-child(12) { animation-delay: 605ms; }
+
+/* Cincin cakupan materi SVG */
+[data-ring-target] {
+    transition: stroke-dashoffset 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Hormati pengaturan aksesibilitas sistem */
+@media (prefers-reduced-motion: reduce) {
+    .anim-item,
+    .anim-banner,
+    .anim-stagger > .anim-item {
+        animation: none !important;
+        transition: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    [data-ring-target] {
+        transition: none !important;
+    }
+}

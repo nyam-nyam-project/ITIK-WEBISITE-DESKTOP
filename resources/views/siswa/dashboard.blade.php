@@ -1,5 +1,8 @@
 @extends('layouts.siswa')
 @section('title', 'Dashboard')
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/animasi.css') }}">
+@endpush
 @section('content')
 
 <div class="page-heading">
@@ -12,7 +15,7 @@
 
 {{-- Peringatan remedial --}}
 @if(isset($remedialAktif) && $remedialAktif->isNotEmpty())
-    <div class="alert alert-warning" role="alert">
+    <div class="alert alert-warning anim-banner" role="alert">
         <strong>Kamu memiliki {{ $remedialAktif->count() }} tugas remedial yang belum dikerjakan.</strong>
         <p class="u-margin-bottom-10px">Selesaikan tugas remedial agar nilaimu dapat meningkat.</p>
         <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning btn-small">Lihat Tugas Remedial</a>
@@ -20,25 +23,25 @@
 @endif
 
 {{-- Statistik --}}
-<div class="stats">
-    <div class="stat">
+<div class="stats anim-stagger">
+    <div class="stat anim-item">
         <span class="label">Materi Tersedia</span>
-        <span class="value">{{ $totalMateri ?? 0 }}</span>
+        <span class="value" data-count-up="{{ $totalMateri ?? 0 }}">{{ $totalMateri ?? 0 }}</span>
         <small><a href="{{ route('siswa.materi.index') }}">Lihat materi</a></small>
     </div>
-    <div class="stat">
+    <div class="stat anim-item">
         <span class="label">Materi Selesai</span>
-        <span class="value">{{ $materiSelesai ?? 0 }}</span>
+        <span class="value" data-count-up="{{ $materiSelesai ?? 0 }}">{{ $materiSelesai ?? 0 }}</span>
         <small>dari {{ $totalMateri ?? 0 }} materi</small>
     </div>
-    <div class="stat">
+    <div class="stat anim-item">
         <span class="label">Kuis Tersedia</span>
-        <span class="value">{{ $kuisTersedia ?? 0 }}</span>
+        <span class="value" data-count-up="{{ $kuisTersedia ?? 0 }}">{{ $kuisTersedia ?? 0 }}</span>
         <small><a href="{{ route('siswa.kuis.index') }}">Kerjakan kuis</a></small>
     </div>
-    <div class="stat">
+    <div class="stat anim-item">
         <span class="label">Rata-rata Nilai</span>
-        <span class="value">{{ isset($rataNilai) && $rataNilai ? number_format($rataNilai, 0) : '—' }}</span>
+        <span class="value" @if(isset($rataNilai) && $rataNilai) data-count-up="{{ number_format($rataNilai, 0, '.', '') }}" @endif>{{ isset($rataNilai) && $rataNilai ? number_format($rataNilai, 0) : '—' }}</span>
         <small><a href="{{ route('siswa.nilai.index') }}">Lihat nilai</a></small>
     </div>
 </div>
@@ -51,7 +54,7 @@
 @endphp
 
 @if($adaPengingat)
-    <div class="alert alert-warning banner-pengingat" role="alert">
+    <div class="alert alert-warning banner-pengingat anim-banner" role="alert">
         <div class="banner-pengingat-content">
             <span class="banner-pengingat-icon">📌</span>
             <div>
@@ -79,11 +82,11 @@
     </div>
 @endif
 
-<div class="grid grid-2">
+<div class="grid grid-2 anim-stagger">
 
     {{-- Materi Terbaru --}}
     @isset($materiTerbaru)
-        <section class="card">
+        <section class="card anim-item">
             <div class="card-header">
                 <div>
                     <h2>Materi Terbaru</h2>
@@ -138,7 +141,7 @@
 
     {{-- Kuis Terbaru --}}
     @isset($kuisTerbaru)
-        <section class="card">
+        <section class="card anim-item">
             <div class="card-header">
                 <div>
                     <h2>Kuis Terbaru</h2>
@@ -187,3 +190,7 @@
 </div>
 
 @endsection
+
+@push('scripts')
+    <script src="{{ asset('js/animasi.js') }}" defer></script>
+@endpush

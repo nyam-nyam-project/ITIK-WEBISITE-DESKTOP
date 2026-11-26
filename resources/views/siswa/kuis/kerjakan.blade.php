@@ -48,6 +48,28 @@
     </div>
 </div>
 
+<!-- OVERLAY KONFIRMASI KUMPULKAN KUIS -->
+<div id="konfirmasiSubmitOverlay" class="fullscreen-modal-overlay is-cbt-hidden" role="dialog" aria-modal="true" aria-labelledby="konfirmasiSubmitJudul">
+    <div class="fullscreen-modal-card">
+        <div class="fullscreen-modal-icon">@include('partials.icon', ['name' => 'circle-check'])</div>
+        <h2 id="konfirmasiSubmitJudul">Yakin ingin mengumpulkan kuis?</h2>
+        <p>
+            Pastikan Anda sudah yakin dengan seluruh jawaban. Setelah dikumpulkan, jawaban tidak dapat diubah lagi.
+        </p>
+        <p class="konfirmasi-submit-ringkasan">
+            <strong id="konfirmasiTerjawab">0</strong> dari <strong>{{ $soal->count() }}</strong> soal telah terjawab.
+        </p>
+        <div class="konfirmasi-submit-actions">
+            <button type="button" id="btnBatalKumpul" class="btn-konfirmasi-batal">
+                Periksa Lagi
+            </button>
+            <button type="button" id="btnYaKumpul" class="btn-konfirmasi-ya">
+                Ya, Kumpulkan
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="layout is-cbt-hidden" id="cbtLayout">
 
     <!-- CONTENT -->

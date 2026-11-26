@@ -584,3 +584,54 @@ button:focus-visible {
     display: block;
     object-fit: contain;
 }
+
+/* ========================================================
+   OVERLAY KONFIRMASI KUMPULKAN KUIS
+   ======================================================== */
+.konfirmasi-submit-ringkasan {
+    font-size: 14px;
+    color: var(--purple);
+    background: var(--purple-light);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 24px;
+}
+
+.konfirmasi-submit-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.btn-konfirmasi-batal,
+.btn-konfirmasi-ya {
+    width: 100%;
+    padding: 13px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.btn-konfirmasi-batal {
+    background: var(--surface-alt);
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+}
+
+.btn-konfirmasi-batal:hover {
+    background: var(--surface-muted);
+}
+
+.btn-konfirmasi-ya {
+    background: linear-gradient(135deg, var(--sidebar-start), var(--sidebar-end));
+    color: var(--sidebar-ink);
+    border: none;
+}
+
+.btn-konfirmasi-ya:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card);
+}

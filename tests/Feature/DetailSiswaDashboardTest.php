@@ -153,7 +153,7 @@ class DetailSiswaDashboardTest extends TestCase
         $this->addStudent('S002', 'Budi', '223344', 'K002');
 
         $this->actingAs($this->guru())
-            ->get(route('dashboard', [
+            ->get(route('guru.siswa.progres', [
                 'kelas' => 'K001',
                 'mapel' => 'MP001',
                 'siswa' => 'S002',
@@ -200,17 +200,15 @@ class DetailSiswaDashboardTest extends TestCase
             ->get($this->detailUrl())
             ->assertOk();
 
-        $quizWithLowerKkm = $this->quizSvgGroup($response->getContent(), 'Q001');
-        $quizWithHigherKkm = $this->quizSvgGroup($response->getContent(), 'Q002');
+        $quizWithLowerKkm = $this->quizRow($response->getContent(), 'Q001');
+        $quizWithHigherKkm = $this->quizRow($response->getContent(), 'Q002');
 
         $this->assertStringContainsString('data-kkm="50"', $quizWithLowerKkm);
         $this->assertStringContainsString('data-lulus="true"', $quizWithLowerKkm);
-        $this->assertStringContainsString('y1="100"', $quizWithLowerKkm);
-        $this->assertStringContainsString('fill="#15803d"', $quizWithLowerKkm);
+        $this->assertStringContainsString('progres-badge--lulus', $quizWithLowerKkm);
         $this->assertStringContainsString('data-kkm="70"', $quizWithHigherKkm);
         $this->assertStringContainsString('data-lulus="false"', $quizWithHigherKkm);
-        $this->assertStringContainsString('y1="68"', $quizWithHigherKkm);
-        $this->assertStringContainsString('fill="#dc2626"', $quizWithHigherKkm);
+        $this->assertStringContainsString('progres-badge--gagal', $quizWithHigherKkm);
         $response
             ->assertSee('2 dari 2 dikerjakan')
             ->assertSee('1 lulus')
@@ -326,17 +324,17 @@ class DetailSiswaDashboardTest extends TestCase
 
     private function detailUrl(): string
     {
-        return route('dashboard', [
+        return route('guru.siswa.progres', [
             'kelas' => 'K001',
             'mapel' => 'MP001',
             'siswa' => 'S001',
         ]);
     }
 
-    private function quizSvgGroup(string $html, string $quizId): string
+    private function quizRow(string $html, string $quizId): string
     {
         preg_match(
-            '/<g\s+data-quiz-id="'.preg_quote($quizId, '/').'".*?<\/g>/s',
+            '/<tr\s+data-quiz-id="'.preg_quote($quizId, '/').'".*?<\/tr>/s',
             $html,
             $matches
         );

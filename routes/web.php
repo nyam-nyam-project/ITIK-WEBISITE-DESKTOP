@@ -42,6 +42,10 @@ Route::get('/dashboard', function () {
 
     return app(DashboardController::class)->index();
 })->middleware('auth')->name('dashboard');
+
+Route::get('/guru/siswa/{siswa}/progres', function (string $siswa) {
+    return app(DashboardController::class)->progresSiswa($siswa);
+})->middleware(['auth', 'role:guru'])->name('guru.siswa.progres');
 Route::get('/profil', function () {
     if (auth()->user()->role === 'admin') {
         return redirect()->route('admin.profil');

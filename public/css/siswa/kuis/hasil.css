@@ -1,13 +1,14 @@
 .score-card {
     text-align: center;
-    padding: 30px;
+    padding: 28px 24px;
 }
 .score-number {
-    font-size: 58px;
+    font-size: 56px;
     font-weight: 800;
     color: var(--success-ink);
     line-height: 1.1;
-    margin: 10px 0;
+    margin: 10px 0 12px;
+    font-variant-numeric: tabular-nums;
 }
 .score-number.gagal {
     color: var(--error-ink);
@@ -19,45 +20,80 @@
     color: var(--muted);
     font-size: 14px;
     line-height: 1.6;
+    margin-top: 8px;
 }
+
 .eval-stats {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
-    margin-top: 24px;
+    margin-top: 22px;
     padding-top: 20px;
     border-top: 1px solid var(--border);
 }
 .eval-stat-box {
     background: var(--surface-alt);
-    padding: 12px;
+    border: 1px solid var(--border);
+    padding: 14px 10px;
     border-radius: 12px;
+}
+.eval-stat-box--benar {
+    border-top: 3px solid var(--success-ink);
+}
+.eval-stat-box--salah {
+    border-top: 3px solid var(--error-ink);
+}
+.eval-stat-box--total {
+    border-top: 3px solid var(--purple);
 }
 .eval-stat-num {
     font-size: 24px;
-    font-weight: 700;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+.eval-stat-num--benar {
+    color: var(--success-ink);
+}
+.eval-stat-num--salah {
+    color: var(--error-ink);
+}
+.eval-stat-num--total {
+    color: var(--purple);
 }
 .eval-stat-label {
     font-size: 11px;
+    font-weight: 600;
     color: var(--muted);
+    margin-top: 3px;
 }
+
 .soal-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 18px 20px;
+    border-radius: 14px;
+    padding: 20px 22px;
     margin-bottom: 16px;
     border-left: 5px solid var(--border-strong);
 }
-.soal-card.benar { border-left-color: var(--success-ink); }
-.soal-card.salah { border-left-color: var(--error-ink); }
+.soal-card:last-child {
+    margin-bottom: 0;
+}
+.soal-card.benar {
+    border-left-color: var(--success-ink);
+}
+.soal-card.salah {
+    border-left-color: var(--error-ink);
+}
+.soal-card.essay-review {
+    border-left-color: var(--purple);
+}
 .soal-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 .soal-card-title {
     font-size: 14px;
@@ -65,9 +101,10 @@
     color: var(--ink);
 }
 .soal-pertanyaan {
-    font-size: 14px;
-    line-height: 1.6;
-    margin-bottom: 12px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--ink);
+    margin-bottom: 14px;
 }
 .soal-gambar-wrap {
     margin-top: 12px;
@@ -76,11 +113,12 @@
 .soal-gambar {
     max-width: 100%;
     max-height: 360px;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid var(--border);
     display: block;
     object-fit: contain;
 }
+
 .opsi-review-list {
     display: grid;
     gap: 8px;
@@ -88,12 +126,14 @@
 .opsi-review-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 8px;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
     background: var(--surface-alt);
     border: 1px solid var(--border);
-    font-size: 13px;
+    font-size: 14px;
+    line-height: 1.5;
 }
 .opsi-review-item.kunci {
     background: var(--success-bg);
@@ -106,14 +146,18 @@
 }
 .opsi-label {
     font-weight: 700;
-    width: 20px;
+    min-width: 20px;
 }
 .opsi-status-text {
     margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 11px;
     font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 10px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
 }
 .opsi-status-text.kunci {
     background: var(--badge-success-bg);
@@ -122,4 +166,14 @@
 .opsi-status-text.jawaban-kamu {
     background: var(--error-bg);
     color: var(--error-ink);
+}
+
+@media (max-width: 640px) {
+    .eval-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .soal-card {
+        padding: 16px;
+    }
 }

@@ -98,6 +98,12 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
             // Submit otomatis (hanya sekali)
             if (!sudahSubmit) {
                 sudahSubmit = true;
+                formSubmitted = true;
+                try {
+                    window.sessionStorage.removeItem('itik-sedang-ujian');
+                } catch (err) {
+                    // Abaikan jika sessionStorage tidak tersedia
+                }
                 document.getElementById('form-kuis').submit();
             }
 
@@ -241,20 +247,60 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
         });
     }
 
-    // 1. Tangani submit resmi kuis
+    // 1. Tangani submit resmi kuis dengan overlay konfirmasi (tanpa native confirm)
     const formKuisSubmit = document.getElementById('form-kuis');
+    const overlayKonfirmasi = document.getElementById('konfirmasiSubmitOverlay');
+    const konfirmasiTerjawab = document.getElementById('konfirmasiTerjawab');
+    const btnBatalKumpul = document.getElementById('btnBatalKumpul');
+    const btnYaKumpul = document.getElementById('btnYaKumpul');
+    let konfirmasiSubmitDiterima = false;
+
     if (formKuisSubmit) {
         formKuisSubmit.addEventListener('submit', function (e) {
-            if (!confirm('Yakin ingin mengumpulkan kuis? Jawaban tidak dapat diubah lagi.')) {
+            if (!konfirmasiSubmitDiterima) {
                 e.preventDefault();
+                if (konfirmasiTerjawab) {
+                    const jumlahEl = document.getElementById('jumlahTerjawab');
+                    konfirmasiTerjawab.textContent = jumlahEl ? jumlahEl.textContent : '0';
+                }
+                if (overlayKonfirmasi) {
+                    overlayKonfirmasi.classList.remove('is-cbt-hidden');
+                }
+                if (btnBatalKumpul) {
+                    btnBatalKumpul.focus();
+                }
                 return;
             }
+
             formSubmitted = true;
             try {
                 window.sessionStorage.removeItem('itik-sedang-ujian');
             } catch (err) {
                 // Abaikan jika sessionStorage tidak tersedia
             }
+        });
+    }
+
+    if (btnBatalKumpul && overlayKonfirmasi) {
+        btnBatalKumpul.addEventListener('click', function () {
+            overlayKonfirmasi.classList.add('is-cbt-hidden');
+        });
+    }
+
+    if (btnYaKumpul && formKuisSubmit) {
+        btnYaKumpul.addEventListener('click', function () {
+            konfirmasiSubmitDiterima = true;
+            formSubmitted = true;
+            sudahSubmit = true;
+            if (overlayKonfirmasi) {
+                overlayKonfirmasi.classList.add('is-cbt-hidden');
+            }
+            try {
+                window.sessionStorage.removeItem('itik-sedang-ujian');
+            } catch (err) {
+                // Abaikan jika sessionStorage tidak tersedia
+            }
+            formKuisSubmit.submit();
         });
     }
 

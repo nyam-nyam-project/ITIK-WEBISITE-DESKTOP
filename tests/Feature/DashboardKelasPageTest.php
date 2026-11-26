@@ -177,7 +177,7 @@ class DashboardKelasPageTest extends TestCase
             ->assertSee('css/guru/dashboard.css')
             ->assertDontSee('<style', false)
             ->assertDontSee('<script>', false)
-            ->assertSee(e(route('dashboard', [
+            ->assertSee(e(route('guru.siswa.progres', [
                 'kelas' => 'K001',
                 'mapel' => 'MP001',
                 'siswa' => 'S001',

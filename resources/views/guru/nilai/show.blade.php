@@ -41,29 +41,18 @@
         <div class="card-header">
             <h2>Data Siswa</h2>
         </div>
+        <div class="siswa-summary-head">
+            <span class="siswa-summary-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($mengerjakan->siswa->nama_lengkap ?? 'S', 0, 1)) }}</span>
+            <div>
+                <div class="siswa-summary-name">{{ $mengerjakan->siswa->nama_lengkap ?? '-' }}</div>
+                <div class="muted small">NISN: {{ $mengerjakan->siswa->nomor_induk ?? '-' }}</div>
+            </div>
+        </div>
         <dl class="identity">
-            <div>
-                <dt>Nama Lengkap</dt>
-                <dd>{{ $mengerjakan->siswa->nama_lengkap ?? '-' }}</dd>
-            </div>
-            <div>
-                <dt>NISN</dt>
-                <dd>{{ $mengerjakan->siswa->nomor_induk ?? '-' }}</dd>
-            </div>
             <div>
                 <dt>Kelas</dt>
                 <dd>{{ $mengerjakan->siswa->kelas ?? '-' }}</dd>
             </div>
-        </dl>
-    </section>
-
-    {{-- DATA KUIS --}}
-    <section class="card">
-        <div class="card-header">
-            <h2>Data Kuis</h2>
-            <span class="badge">{{ ucfirst($mengerjakan->kuis->kategori ?? '-') }}</span>
-        </div>
-        <dl class="identity">
             <div>
                 <dt>Judul Kuis</dt>
                 <dd>{{ $mengerjakan->kuis->judul ?? '-' }}</dd>
@@ -72,35 +61,38 @@
                 <dt>Percobaan</dt>
                 <dd>Ke-{{ $mengerjakan->percobaan_ke }}</dd>
             </div>
-            <div>
-                <dt>Nilai Akhir</dt>
-                <dd>
-                    @if($menungguPenilaian)
-                        <span class="badge badge-muted">Menunggu penilaian</span>
-                    @else
-                        <strong class="u-font-size-20px u-color-var---purple">{{ $mengerjakan->nilai !== null ? number_format($mengerjakan->nilai, 1) : '-' }}</strong>
-                    @endif
-                </dd>
-            </div>
-            <div>
-                <dt>KKM Kuis</dt>
-                <dd>{{ $mengerjakan->kuis->kkm !== null ? number_format($mengerjakan->kuis->kkm, 1) : '-' }}</dd>
-            </div>
-            <div>
-                <dt>Status Kelulusan</dt>
-                <dd>
-                    @if($menungguPenilaian)
-                        <span class="badge badge-muted">Menunggu penilaian</span>
-                    @elseif($mengerjakan->nilai === null)
-                        —
-                    @elseif($mengerjakan->kuis->kkm !== null && $mengerjakan->nilai >= $mengerjakan->kuis->kkm)
-                        <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Lulus</span>
-                    @else
-                        <span class="badge badge-warning">@include('partials.icon', ['name' => 'alert-triangle']) Tidak Lulus</span>
-                    @endif
-                </dd>
-            </div>
         </dl>
+    </section>
+
+    {{-- DATA KUIS & NILAI --}}
+    @php
+        $guruLulus = !$menungguPenilaian && $mengerjakan->nilai !== null && $mengerjakan->kuis->kkm !== null && $mengerjakan->nilai >= $mengerjakan->kuis->kkm;
+        $guruNilaiClass = $menungguPenilaian || $mengerjakan->nilai === null
+            ? 'pending'
+            : ($guruLulus ? 'lulus' : 'gagal');
+    @endphp
+    <section class="card guru-score-card">
+        <div class="card-header">
+            <h2>Hasil &amp; Kelulusan</h2>
+            <span class="badge">{{ ucfirst($mengerjakan->kuis->kategori ?? '-') }}</span>
+        </div>
+        <div class="guru-score-hero">
+            <div class="guru-score-number {{ $guruNilaiClass }}">
+                {{ $menungguPenilaian ? '—' : ($mengerjakan->nilai !== null ? number_format($mengerjakan->nilai, 1) : '-') }}
+            </div>
+            <div class="guru-score-meta">
+                @if($menungguPenilaian)
+                    <span class="badge badge-muted">Menunggu penilaian</span>
+                @elseif($mengerjakan->nilai === null)
+                    <span class="badge badge-muted">Belum ada nilai</span>
+                @elseif($guruLulus)
+                    <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Lulus</span>
+                @else
+                    <span class="badge badge-warning">@include('partials.icon', ['name' => 'alert-triangle']) Tidak Lulus</span>
+                @endif
+                <span class="muted small">KKM Kuis: <strong>{{ $mengerjakan->kuis->kkm !== null ? number_format($mengerjakan->kuis->kkm, 1) : '-' }}</strong></span>
+            </div>
+        </div>
     </section>
 </div>
 
@@ -156,16 +148,16 @@
         </div>
 
         <div class="eval-stats-guru">
-            <div class="eval-stat-guru-box">
-                <div class="eval-stat-guru-num u-color-166534">{{ $totalBenar ?? 0 }}</div>
+            <div class="eval-stat-guru-box eval-stat-guru-box--benar">
+                <div class="eval-stat-guru-num eval-stat-guru-num--benar">{{ $totalBenar ?? 0 }}</div>
                 <div class="eval-stat-guru-label">{{ $soalEssay->isNotEmpty() ? 'Jawaban PG Benar' : 'Jawaban Benar' }}</div>
             </div>
-            <div class="eval-stat-guru-box">
-                <div class="eval-stat-guru-num u-color-991b1b">{{ $totalSalah ?? 0 }}</div>
+            <div class="eval-stat-guru-box eval-stat-guru-box--salah">
+                <div class="eval-stat-guru-num eval-stat-guru-num--salah">{{ $totalSalah ?? 0 }}</div>
                 <div class="eval-stat-guru-label">{{ $soalEssay->isNotEmpty() ? 'Jawaban PG Salah' : 'Jawaban Salah' }}</div>
             </div>
-            <div class="eval-stat-guru-box">
-                <div class="eval-stat-guru-num u-color-var---purple">{{ count($soal) }}</div>
+            <div class="eval-stat-guru-box eval-stat-guru-box--total">
+                <div class="eval-stat-guru-num eval-stat-guru-num--total">{{ count($soal) }}</div>
                 <div class="eval-stat-guru-label">Total Butir Soal</div>
             </div>
         </div>
@@ -185,7 +177,14 @@
                         </strong>
                         <span class="badge badge-muted">{{ $nilaiTersimpan === null ? 'Belum dinilai' : 'Sudah dinilai' }}</span>
                     </div>
-                    <div class="essay-question">{{ $itemSoal->pertanyaan }}</div>
+                    <div class="essay-question">
+                        <div>{{ $itemSoal->pertanyaan }}</div>
+                        @if($itemSoal->gambar)
+                            <div class="soal-guru-gambar-wrap">
+                                <img src="{{ asset('storage/' . $itemSoal->gambar) }}" alt="{{ Str::limit(strip_tags($itemSoal->pertanyaan), 60) }}" class="soal-guru-gambar">
+                            </div>
+                        @endif
+                    </div>
                     <h3 class="essay-label">Jawaban Siswa</h3>
                     @if(!$penilaianEssay)
                         <p class="muted">Snapshot jawaban percobaan ini tidak tersedia.</p>
@@ -255,8 +254,13 @@
                     @endif
                 </div>
 
-                <div class="u-font-size-14px u-line-height-1p6 u-margin-bottom-12px">
-                    {{ $itemSoal->pertanyaan }}
+                <div class="soal-guru-pertanyaan">
+                    <div>{{ $itemSoal->pertanyaan }}</div>
+                    @if($itemSoal->gambar)
+                        <div class="soal-guru-gambar-wrap">
+                            <img src="{{ asset('storage/' . $itemSoal->gambar) }}" alt="{{ Str::limit(strip_tags($itemSoal->pertanyaan), 60) }}" class="soal-guru-gambar">
+                        </div>
+                    @endif
                 </div>
 
                 <div class="opsi-guru-list">

@@ -13,9 +13,6 @@
 
 <div class="page-heading">
     <div>
-        <a href="{{ route('siswa.kuis.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            @include('partials.icon', ['name' => 'arrow-left']) Kembali
-        </a>
         <h1>Hasil Kuis</h1>
         <p>{{ $kuis->judul }}</p>
     </div>
@@ -40,7 +37,7 @@
             </a>
         @endif
         <a href="{{ route('siswa.kuis.index') }}" class="btn btn-secondary">
-            Daftar Kuis
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
     </div>
 </div>
@@ -66,16 +63,16 @@
 
         @if($tampilDetail ?? false)
         <div class="eval-stats">
-            <div class="eval-stat-box">
-                <div class="eval-stat-num u-color-166534">{{ $totalBenar ?? 0 }}</div>
+            <div class="eval-stat-box eval-stat-box--benar">
+                <div class="eval-stat-num eval-stat-num--benar">{{ $totalBenar ?? 0 }}</div>
                 <div class="eval-stat-label">Jawaban Benar</div>
             </div>
-            <div class="eval-stat-box">
-                <div class="eval-stat-num u-color-991b1b">{{ $totalSalah ?? 0 }}</div>
+            <div class="eval-stat-box eval-stat-box--salah">
+                <div class="eval-stat-num eval-stat-num--salah">{{ $totalSalah ?? 0 }}</div>
                 <div class="eval-stat-label">Jawaban Salah</div>
             </div>
-            <div class="eval-stat-box">
-                <div class="eval-stat-num u-color-var---purple">{{ count($soal ?? []) }}</div>
+            <div class="eval-stat-box eval-stat-box--total">
+                <div class="eval-stat-num eval-stat-num--total">{{ count($soal ?? []) }}</div>
                 <div class="eval-stat-label">Total Butir Soal</div>
             </div>
         </div>

@@ -8,9 +8,7 @@
         <h1>Tugas Remedial</h1>
         <p>Perbaiki nilai kuis yang belum mencapai KKM.</p>
     </div>
-    <a href="{{ route('siswa.kuis.index') }}" class="btn btn-secondary">
-        @include('partials.icon', ['name' => 'arrow-left']) Ke Daftar Kuis
-    </a>
+    <x-tombol-kembali :fallback="route('siswa.kuis.index')" label="Ke Daftar Kuis" />
 </div>
 
 @include('siswa.remedial._tabel')

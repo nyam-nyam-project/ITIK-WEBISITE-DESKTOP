@@ -9,9 +9,7 @@
 
 <div class="page-heading">
     <div>
-        <a href="{{ route('kuis.show', $kuis->id_kuis) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            @include('partials.icon', ['name' => 'arrow-left']) Kembali
-        </a>
+        <x-tombol-kembali :fallback="route('kuis.show', $kuis->id_kuis)" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px" />
         <h1>Kelola Bank Soal</h1>
         <p>Kuis: <strong>{{ $kuis->judul }}</strong> &bull; Total: {{ $soal->count() }} Soal</p>
     </div>

@@ -11,13 +11,9 @@
 <div class="page-heading">
     <div>
         @if($materiDipreselect)
-            <a href="{{ route('materi.show', $materiDipreselect->id_materi) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-6px">
-                @include('partials.icon', ['name' => 'arrow-left']) Kembali
-            </a>
+            <x-tombol-kembali :fallback="route('materi.show', $materiDipreselect->id_materi)" class="btn btn-secondary u-display-inline-block u-margin-bottom-6px" />
         @else
-            <a href="{{ route('kuis.index', $mapelTerpilih ? ['mapel' => $mapelTerpilih] : []) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-6px">
-                @include('partials.icon', ['name' => 'arrow-left']) Kembali
-            </a>
+            <x-tombol-kembali :fallback="route('kuis.index', $mapelTerpilih ? ['mapel' => $mapelTerpilih] : [])" class="btn btn-secondary u-display-inline-block u-margin-bottom-6px" />
         @endif
         <h1>Tambah Kuis Baru</h1>
         <p>Atur parameter penilaian, tingkat kesulitan, alokasi waktu, dan jadwal kuis.</p>

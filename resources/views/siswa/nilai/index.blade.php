@@ -96,9 +96,7 @@
                 <h2>Daftar Bab Materi — {{ $mapelTerpilih->nama_mapel }}</h2>
                 <p class="muted">Klik bab materi di bawah untuk melihat rincian riwayat kuis dan evaluasi butir soal</p>
             </div>
-            <a href="{{ url('/siswa/nilai') }}" class="btn btn-secondary btn-small">
-                @include('partials.icon', ['name' => 'arrow-left']) Kembali
-            </a>
+            <x-tombol-kembali :fallback="url('/siswa/nilai')" class="btn btn-secondary btn-small" />
         </div>
 
         @if ($daftarMateri->isEmpty())
@@ -209,9 +207,7 @@
                 <h2>Hasil Kuis — {{ $materiTerpilih->judul }}</h2>
                 <p class="muted">Daftar riwayat pengerjaan dan hasil evaluasi butir kuis pada bab ini</p>
             </div>
-            <a href="{{ url('/siswa/nilai?mapel=' . $mapelTerpilih->id_mapel) }}" class="btn btn-secondary btn-small">
-                @include('partials.icon', ['name' => 'arrow-left']) Kembali
-            </a>
+            <x-tombol-kembali :fallback="url('/siswa/nilai?mapel=' . $mapelTerpilih->id_mapel)" class="btn btn-secondary btn-small" />
         </div>
 
         @if ($hasil->isEmpty())

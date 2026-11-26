@@ -35,7 +35,6 @@ class DashboardController extends Controller
             'kelas' => ['sometimes', 'nullable', 'string', 'max:50'],
             'mapel' => ['sometimes', 'nullable', 'string', 'max:50'],
             'cari' => ['sometimes', 'nullable', 'string', 'max:100'],
-            'siswa' => ['sometimes', 'nullable', 'string', 'max:50'],
         ]);
         $kelasUntukGuru = $this->dashboardKelasService->kelasUntukGuru($guru);
         $kelasDipilih = $this->pilihPengajaran(
@@ -43,15 +42,11 @@ class DashboardController extends Controller
             $filters['kelas'] ?? null,
             $filters['mapel'] ?? null
         );
-        $requestedStudentId = $filters['siswa'] ?? null;
 
         if ($kelasDipilih === null) {
-            abort_if($requestedStudentId !== null && $requestedStudentId !== '', 403);
-
             return view('guru.dashboard', [
                 'kelasUntukGuru' => $kelasUntukGuru,
                 'kelasDipilih' => null,
-                'detailSiswa' => null,
             ]);
         }
 
@@ -96,20 +91,6 @@ class DashboardController extends Controller
                     ? 0.0
                     : round(($kategori->jumlah_dikerjakan / $kategori->jumlah_peluang) * 100, 1);
             });
-        $detailSiswa = null;
-
-        if ($requestedStudentId !== null && $requestedStudentId !== '') {
-            $detailSiswaRaw = $this->dashboardKelasService->detailSiswa(
-                $guru,
-                $idKelas,
-                $idMapel,
-                $requestedStudentId
-            );
-
-            abort_if($detailSiswaRaw === null, 403);
-
-            $detailSiswa = $this->siapkanDetailSiswa($detailSiswaRaw);
-        }
 
         return view('guru.dashboard', [
             'kelasUntukGuru' => $kelasUntukGuru,
@@ -121,6 +102,45 @@ class DashboardController extends Controller
             'progresKelas' => $progresKelas,
             'kategoriKelulusan' => $kategoriKelulusan,
             'remedial' => $this->dashboardKelasService->remedialKelas($guru, $idKelas, $idMapel),
+        ]);
+    }
+
+    public function progresSiswa(string $idSiswa): View
+    {
+        $guru = $this->request->user();
+
+        if (! $guru instanceof User) {
+            abort(403);
+        }
+
+        $filters = $this->request->validate([
+            'kelas' => ['required', 'string', 'max:50'],
+            'mapel' => ['required', 'string', 'max:50'],
+        ]);
+
+        $idKelas = $filters['kelas'];
+        $idMapel = $filters['mapel'];
+
+        $kelasUntukGuru = $this->dashboardKelasService->kelasUntukGuru($guru);
+        $kelasDipilih = $kelasUntukGuru->first(
+            fn (stdClass $row): bool => $row->id_kelas === $idKelas && $row->id_mapel === $idMapel
+        );
+
+        abort_if($kelasDipilih === null, 403);
+
+        $detailSiswaRaw = $this->dashboardKelasService->detailSiswa(
+            $guru,
+            $idKelas,
+            $idMapel,
+            $idSiswa
+        );
+
+        abort_if($detailSiswaRaw === null, 403);
+
+        $detailSiswa = $this->siapkanDetailSiswa($detailSiswaRaw);
+
+        return view('guru.siswa-progres', [
+            'kelasDipilih' => $kelasDipilih,
             'detailSiswa' => $detailSiswa,
         ]);
     }

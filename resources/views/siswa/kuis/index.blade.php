@@ -90,13 +90,9 @@
         </div>
 
         @if ($materiTerpilih)
-            <a href="{{ url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel) }}" class="btn-back-mapel">
-                @include('partials.icon', ['name' => 'arrow-left']) Kembali
-            </a>
+            <x-tombol-kembali :fallback="url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel)" class="btn-back-mapel" />
         @else
-            <a href="{{ url('/siswa/kuis') }}" class="btn-back-mapel">
-                @include('partials.icon', ['name' => 'arrow-left']) Kembali
-            </a>
+            <x-tombol-kembali :fallback="url('/siswa/kuis')" class="btn-back-mapel" />
         @endif
     </div>
 
@@ -282,9 +278,7 @@
                     <h2>Kuis {{ $materiTerpilih->bab ? $materiTerpilih->bab . ': ' : '' }}{{ $materiTerpilih->judul }}</h2>
                     <p class="muted">Selesaikan kuis secara berurutan: <strong>Mudah</strong> → <strong>Sedang</strong> → <strong>Sulit</strong></p>
                 </div>
-                <a href="{{ url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel) }}" class="btn btn-secondary btn-small">
-                    @include('partials.icon', ['name' => 'arrow-left']) Pilih Bab Lain
-                </a>
+                <x-tombol-kembali :fallback="url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel)" label="Pilih Bab Lain" class="btn btn-secondary btn-small" />
             </div>
 
             @if ($kuisBabTerpilih->isEmpty())

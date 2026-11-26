@@ -9,9 +9,7 @@
 
 <div class="page-heading">
     <div>
-        <a href="{{ route('materi.index', ['mapel' => $materi->id_mapel]) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            @include('partials.icon', ['name' => 'arrow-left']) Kembali
-        </a>
+        <x-tombol-kembali :fallback="route('materi.index', ['mapel' => $materi->id_mapel])" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px" />
         <h1>{{ $materi->judul }}</h1>
         <p>{{ $materi->bab ?? 'Materi Pembelajaran' }} &bull; Kelas {{ $materi->kelas ?? '-' }}</p>
     </div>

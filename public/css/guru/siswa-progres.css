@@ -1,0 +1,338 @@
+/* =========================================================
+   HALAMAN PROGRES SISWA — guru/siswa-progres
+   ========================================================= */
+
+/* Profil siswa */
+.progres-profil {
+    display: flex;
+    align-items: center;
+    padding: 20px 24px;
+}
+
+.progres-profil__info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.progres-profil__avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--purple);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.progres-profil__nama {
+    font-size: 20px;
+    margin: 0 0 2px;
+}
+
+.progres-profil__nisn {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Ringkasan: 2 kolom */
+.progres-ringkasan {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.6fr) minmax(0, 1.4fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.progres-ringkasan__materi {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px 20px;
+}
+
+.progres-ringkasan__materi h3,
+.progres-ringkasan__kategori h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 18px;
+}
+
+.progres-ring-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.progres-ring {
+    display: block;
+    width: 140px;
+    height: 140px;
+}
+
+.progres-ring__bg {
+    stroke: var(--purple-light);
+}
+
+.progres-ring__val {
+    stroke: var(--purple);
+    transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progres-ring__persen {
+    fill: var(--purple);
+    font-size: 22px;
+    font-weight: 700;
+    font-family: inherit;
+}
+
+.progres-ringkasan__keterangan {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Kategori list */
+.progres-ringkasan__kategori {
+    padding: 24px;
+}
+
+.progres-kategori-list {
+    display: grid;
+    gap: 16px;
+}
+
+.progres-kategori-item__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.progres-kategori-item__angka {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+}
+
+.progres-kategori-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--surface-muted);
+    overflow: hidden;
+}
+
+.progres-kategori-bar {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--purple);
+    width: 0;
+    transition: width 0.5s ease;
+}
+
+.progres-kategori-item__detail {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+    font-size: 12px;
+    flex-wrap: wrap;
+}
+
+.progres-label--lulus {
+    color: var(--success-ink);
+    font-weight: 600;
+}
+
+.progres-label--menunggu {
+    color: var(--warning-ink);
+    font-weight: 600;
+}
+
+.progres-label--belum {
+    color: var(--error-ink);
+    font-weight: 600;
+}
+
+/* Grafik — tabel */
+.progres-grafik {
+    padding: 24px;
+}
+
+.progres-grafik h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 12px;
+}
+
+.progres-grafik__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 16px;
+    font-size: 12px;
+}
+
+.progres-grafik__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.progres-grafik__legend-item::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.progres-grafik__legend--lulus::before {
+    background: var(--success-ink);
+}
+
+.progres-grafik__legend--gagal::before {
+    background: var(--error-ink);
+}
+
+.progres-grafik__legend--na::before {
+    background: var(--muted);
+}
+
+.progres-grafik__legend--kkm::before {
+    display: none;
+}
+
+.progres-grafik__table-wrap {
+    overflow-x: auto;
+}
+
+.progres-grafik__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.progres-grafik__table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+}
+
+.progres-grafik__table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.progres-grafik__table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.progres-grafik__judul {
+    font-weight: 600;
+    min-width: 150px;
+    max-width: 260px;
+}
+
+.progres-grafik__nilai {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
+.progres-grafik__kkm {
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+}
+
+/* Badge status */
+.progres-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.progres-badge--lulus {
+    background: var(--badge-success-bg);
+    color: var(--badge-success-ink);
+}
+
+.progres-badge--gagal {
+    background: var(--error-bg);
+    color: var(--error-ink);
+}
+
+.progres-badge--na {
+    background: var(--badge-muted-bg);
+    color: var(--badge-muted-ink);
+}
+
+/* Inline bar di tabel */
+.progres-grafik__bar-cell {
+    min-width: 180px;
+    width: 35%;
+}
+
+.progres-bar-inline {
+    position: relative;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--surface-muted);
+    overflow: visible;
+}
+
+.progres-bar-inline__fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: 999px;
+    width: 0;
+    transition: width 0.5s ease;
+}
+
+.progres-bar-inline__fill.progres-badge--lulus {
+    background: var(--success-ink);
+}
+
+.progres-bar-inline__fill.progres-badge--gagal {
+    background: var(--error-ink);
+}
+
+.progres-bar-inline__fill.progres-badge--na {
+    background: var(--muted);
+}
+
+.progres-bar-inline__kkm {
+    position: absolute;
+    top: -4px;
+    width: 2px;
+    height: 18px;
+    background: var(--ink);
+    border-radius: 1px;
+    z-index: 1;
+    left: 0;
+    transition: left 0.5s ease;
+}
+
+/* Responsif */
+@media (max-width: 760px) {
+    .progres-ringkasan {
+        grid-template-columns: 1fr;
+    }
+
+    .progres-grafik__bar-cell {
+        min-width: 120px;
+    }
+}

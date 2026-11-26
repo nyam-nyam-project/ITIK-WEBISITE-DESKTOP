@@ -5,4 +5,4 @@
 </div>
 <div class="field"><label for="deskripsi">Deskripsi</label><textarea id="deskripsi" name="deskripsi" rows="4" aria-invalid="{{ $errors->has('deskripsi') ? 'true' : 'false' }}">{{ old('deskripsi', $mapel->deskripsi ?? '') }}</textarea>@error('deskripsi')<p class="error">{{ $message }}</p>@enderror</div>
 <div class="field"><input type="hidden" name="is_aktif" value="0"><label class="check" for="is_aktif"><input id="is_aktif" name="is_aktif" type="checkbox" value="1" @checked(old('is_aktif', $mapel->is_aktif ?? true))><span>Mata pelajaran aktif<small>Tersedia untuk pemilihan pada kelas dan filter mata pelajaran.</small></span></label>@error('is_aktif')<p class="error">{{ $message }}</p>@enderror</div>
-<div class="form-actions"><button class="btn" type="submit">{{ isset($mapel) ? 'Simpan perubahan' : 'Simpan mata pelajaran' }}</button><a class="btn btn-secondary" href="{{ route('admin.mapel.index') }}">Batal</a></div>
+<div class="form-actions"><button class="btn" type="submit">{{ isset($mapel) ? 'Simpan perubahan' : 'Simpan mata pelajaran' }}</button><x-tombol-kembali :fallback="route('admin.mapel.index')" label="Batal" :dengan-ikon="false" /></div>

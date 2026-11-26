@@ -65,9 +65,7 @@
             <h3>{{ $mapelTerpilih->nama_mapel }}</h3>
             <p>{{ $kuis->total() }} kuis tersedia &bull; Kode: {{ $mapelTerpilih->id_mapel }}</p>
         </div>
-        <a href="{{ route('kuis.index') }}" class="btn-back-mapel">
-            @include('partials.icon', ['name' => 'arrow-left']) Ganti Mata Pelajaran
-        </a>
+        <x-tombol-kembali :fallback="route('kuis.index')" label="Ganti Mata Pelajaran" class="btn-back-mapel" />
     </div>
 
     {{-- TOGGLE VIEW --}}

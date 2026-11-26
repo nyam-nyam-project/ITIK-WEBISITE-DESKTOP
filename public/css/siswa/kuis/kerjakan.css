@@ -339,23 +339,119 @@ body {
     gap: 8px;
 }
 
-.nav-grid a {
+.nav-grid a,
+.nav-soal-btn {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 3px;
     height: 42px;
     border-radius: 12px;
     text-decoration: none;
-    font-size: 15px;
+    font-size: 14px;
+    font-weight: 600;
     background: var(--surface-alt);
     color: var(--muted);
     border: 1px solid var(--border);
+    cursor: pointer;
+    position: relative;
 }
 
-.nav-grid a.answered {
+.nav-soal-ikon {
+    display: none;
+    line-height: 1;
+}
+
+.nav-soal-ikon .ui-icon {
+    width: 13px;
+    height: 13px;
+}
+
+.nav-grid a.answered,
+.nav-soal-btn.answered {
     background: var(--purple);
     border-color: var(--purple);
     color: var(--sidebar-ink);
+}
+
+.nav-soal-btn.answered .nav-soal-ikon {
+    display: inline-flex;
+    align-items: center;
+}
+
+.nav-soal-btn.active {
+    outline: 2px solid var(--purple);
+    outline-offset: 2px;
+    color: var(--purple);
+    border-color: var(--purple);
+}
+
+.nav-soal-btn.answered.active {
+    color: var(--sidebar-ink);
+}
+
+.cbt-status-banner {
+    background: var(--warning-bg);
+    color: var(--warning-ink);
+    border: 1px solid var(--warning-border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.soal-nav-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 26px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.soal-nav-indikator {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.btn-soal-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-alt);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-soal-nav:hover:not(:disabled) {
+    background: var(--purple-light);
+    border-color: var(--purple);
+    color: var(--purple);
+}
+
+.btn-soal-nav:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.soal-text:focus {
+    outline: none;
+}
+
+.soal-text:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 4px;
+    border-radius: 8px;
 }
 
 .btn {
@@ -583,4 +679,55 @@ button:focus-visible {
     border: 1px solid var(--border);
     display: block;
     object-fit: contain;
+}
+
+/* ========================================================
+   OVERLAY KONFIRMASI KUMPULKAN KUIS
+   ======================================================== */
+.konfirmasi-submit-ringkasan {
+    font-size: 14px;
+    color: var(--purple);
+    background: var(--purple-light);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 24px;
+}
+
+.konfirmasi-submit-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.btn-konfirmasi-batal,
+.btn-konfirmasi-ya {
+    width: 100%;
+    padding: 13px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.btn-konfirmasi-batal {
+    background: var(--surface-alt);
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+}
+
+.btn-konfirmasi-batal:hover {
+    background: var(--surface-muted);
+}
+
+.btn-konfirmasi-ya {
+    background: linear-gradient(135deg, var(--sidebar-start), var(--sidebar-end));
+    color: var(--sidebar-ink);
+    border: none;
+}
+
+.btn-konfirmasi-ya:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card);
 }

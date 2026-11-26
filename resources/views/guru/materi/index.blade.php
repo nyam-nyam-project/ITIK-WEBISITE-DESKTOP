@@ -61,9 +61,7 @@
 
     <div class="page-heading">
         <div>
-            <a href="{{ route('materi.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-                @include('partials.icon', ['name' => 'arrow-left']) Kembali
-            </a>
+            <x-tombol-kembali :fallback="route('materi.index')" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px" />
             <h1>{{ $mapelTerpilih->nama_mapel }}</h1>
             <p>{{ $materi->count() }} materi pembelajaran tersedia untuk mata pelajaran ini.</p>
         </div>

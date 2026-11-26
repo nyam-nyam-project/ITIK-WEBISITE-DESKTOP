@@ -10,7 +10,7 @@
 <div class="page-heading">
     <div>
         <a href="{{ route('guru.remedial.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>Tugaskan Siswa Remedial</h1>
         <p>Pilih siswa yang berhak mengikuti kuis remedial ini berdasarkan nilai ulangan asal.</p>
@@ -44,7 +44,7 @@
 
     @if($hasilSiswa->isEmpty())
         <div class="empty-state u-padding-48px-20px u-text-align-center">
-            <div class="u-font-size-40px u-margin-bottom-12px">🎉</div>
+            <div class="u-font-size-40px u-margin-bottom-12px">@include('partials.icon', ['name' => 'award'])</div>
             <h3 class="u-margin-bottom-6px">Tidak Ada Siswa di Bawah KKM</h3>
             <p class="muted">Semua siswa yang telah mengumpulkan ulangan ini berhasil mencapai nilai &ge; KKM ({{ number_format($kuisAsal->kkm, 1) }}), atau belum ada siswa yang mengerjakan.</p>
         </div>
@@ -74,7 +74,7 @@
                             <tr>
                                 <td class="u-text-align-center">
                                     @if($sudah)
-                                        <span class="u-color-10b981 u-font-weight-bold u-font-size-16px">✓</span>
+                                        <span class="u-color-10b981 u-font-weight-bold u-font-size-16px" role="img" aria-label="Sudah ditugaskan" title="Sudah ditugaskan">@include('partials.icon', ['name' => 'check'])</span>
                                     @else
                                         <input class="u-width-18px u-height-18px u-cursor-pointer" type="checkbox" name="id_mengerjakan[]" value="{{ $hasil->id_mengerjakan }}">
                                     @endif
@@ -93,7 +93,7 @@
                                 <td>Percobaan {{ $hasil->percobaan_ke }}</td>
                                 <td>
                                     @if($sudah)
-                                        <span class="badge badge-success">✓ Sudah Ditugaskan</span>
+                                        <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Sudah Ditugaskan</span>
                                     @else
                                         <span class="badge badge-warning">Belum Ditugaskan</span>
                                     @endif

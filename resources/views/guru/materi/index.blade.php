@@ -18,7 +18,7 @@
         </div>
         <div class="actions">
             <a href="{{ route('guru.arsip.index', ['tab' => 'materi']) }}" class="btn btn-secondary">
-                📁 Kotak Arsip
+                @include('partials.icon', ['name' => 'folder']) Kotak Arsip
             </a>
         </div>
     </div>
@@ -36,14 +36,14 @@
     @else
         <div class="mapel-grid">
             @foreach($mapelAktif as $mp)
-                <a href="{{ route('materi.index', ['mapel' => $mp->id_mapel]) }}" class="mapel-card">
-                    <div class="mapel-icon">📚</div>
+                <a href="{{ route('materi.index', ['mapel' => $mp->id_mapel]) }}" class="mapel-card" data-reveal>
+                    <div class="mapel-icon">@include('partials.icon', ['name' => 'book-open'])</div>
                     <div>
                         <div class="mapel-code">{{ $mp->kode_mapel }}</div>
                         <h3 class="mapel-title">{{ $mp->nama_mapel }}</h3>
                         <div class="mapel-count">{{ $mp->materi_count ?? 0 }} Materi Pembelajaran</div>
                     </div>
-                    <div class="mapel-arrow">→</div>
+                    <div class="mapel-arrow">@include('partials.icon', ['name' => 'arrow-right'])</div>
                 </a>
             @endforeach
         </div>
@@ -55,24 +55,24 @@
     {{-- ============================================================ --}}
     <div class="breadcrumb">
         <a href="{{ route('materi.index') }}">Materi</a>
-        <span class="sep">›</span>
+        <span class="sep">@include('partials.icon', ['name' => 'chevron-right'])</span>
         <span class="current">{{ $mapelTerpilih->nama_mapel }}</span>
     </div>
 
     <div class="page-heading">
         <div>
             <a href="{{ route('materi.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-                ← Kembali
+                @include('partials.icon', ['name' => 'arrow-left']) Kembali
             </a>
             <h1>{{ $mapelTerpilih->nama_mapel }}</h1>
             <p>{{ $materi->count() }} materi pembelajaran tersedia untuk mata pelajaran ini.</p>
         </div>
         <div class="actions">
             <a href="{{ route('guru.arsip.index', ['tab' => 'materi', 'mapel' => $mapelTerpilih->id_mapel]) }}" class="btn btn-secondary">
-                📁 Kotak Arsip
+                @include('partials.icon', ['name' => 'folder']) Kotak Arsip
             </a>
             <a href="{{ route('materi.create', ['mapel' => $mapelTerpilih->id_mapel]) }}" class="btn">
-                + Tambah Materi
+                @include('partials.icon', ['name' => 'plus']) Tambah Materi
             </a>
         </div>
     </div>
@@ -82,13 +82,13 @@
             <h3>Belum Ada Materi untuk Mata Pelajaran Ini</h3>
             <p>Silakan tambahkan materi pembelajaran pertama untuk siswa.</p>
             <a href="{{ route('materi.create', ['mapel' => $mapelTerpilih->id_mapel]) }}" class="btn u-margin-top-14px">
-                + Tambah Materi Pertama
+                @include('partials.icon', ['name' => 'plus']) Tambah Materi Pertama
             </a>
         </div>
     @else
         <div class="materi-list-foto2">
             @foreach($materi as $idx => $item)
-                <div class="materi-row-foto2">
+                <div class="materi-row-foto2" data-reveal>
                     <div class="materi-main-info">
                         <div class="materi-num-badge">
                             {{ str_pad(($materi->firstItem() ?? 1) + $idx, 2, '0', STR_PAD_LEFT) }}

@@ -9,6 +9,7 @@
     <script src="{{ asset('js/theme-init.js') }}"></script>
     <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/icons.css') }}">
     <link rel="stylesheet" href="{{ asset('css/auth/login.css') }}">
     <link rel="stylesheet" href="{{ asset('css/utilities.css') }}">
 </head>
@@ -26,7 +27,7 @@
             <div class="logo">
 
                 <div class="logo-icon">
-                    IT
+                    <img src="{{ asset('images/logo-itik.png') }}" alt="Logo ITIK" class="logo-itik-img">
                 </div>
 
                 <div class="logo-text">
@@ -50,7 +51,7 @@
 
             </div>
 
-            <div class="decoration">
+            <div class="decoration" aria-hidden="true">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -80,7 +81,7 @@
 
             @if ($errors->any())
 
-                <div class="alert alert-error">
+                <div class="alert alert-error" role="alert">
                     {{ $errors->first() }}
                 </div>
 
@@ -106,7 +107,7 @@
                     <div class="input-wrapper">
 
                         <span class="input-icon">
-                            👤
+                            @include('partials.icon', ['name' => 'user'])
                         </span>
 
                         <input
@@ -115,6 +116,7 @@
                             name="nomor_induk"
                             class="form-control"
                             placeholder="Masukkan NISN (Siswa) atau NIP (Guru)"
+                            autocomplete="username"
                             value="{{ old('nomor_induk', old('login', old('email'))) }}"
                             required
                             autofocus
@@ -136,7 +138,7 @@
                     <div class="input-wrapper">
 
                         <span class="input-icon">
-                            🔒
+                            @include('partials.icon', ['name' => 'lock'])
                         </span>
 
                         <input
@@ -145,6 +147,7 @@
                             name="password"
                             class="form-control password-input"
                             placeholder="Masukkan password"
+                            autocomplete="current-password"
                             required
                         >
 
@@ -152,13 +155,13 @@
                             type="button"
                             class="toggle-password"
                             data-password-toggle="password"
-                            data-password-visible-icon="&#128584;"
-                            data-password-hidden-icon="&#128065;"
                             data-password-visible-label="Sembunyikan password"
                             data-password-hidden-label="Tampilkan password"
                             aria-label="Tampilkan password"
+                            aria-pressed="false"
                         >
-                            👁
+                            <span data-password-icon="hidden">@include('partials.icon', ['name' => 'eye'])</span>
+                            <span data-password-icon="visible" hidden>@include('partials.icon', ['name' => 'eye-off'])</span>
                         </button>
 
                     </div>
@@ -180,7 +183,7 @@
             <!-- LINK MENUJU LOGIN ADMIN -->
             <div class="admin-portal-box">
                 <a href="{{ route('admin.login') }}" class="btn-admin-portal">
-                    🛡️ &nbsp; Login sebagai Administrator
+                    @include('partials.icon', ['name' => 'shield']) &nbsp; Login sebagai Administrator
                 </a>
             </div>
 

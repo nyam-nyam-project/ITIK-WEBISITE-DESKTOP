@@ -10,21 +10,21 @@
 <div class="page-heading">
     <div>
         <a href="{{ route('kuis.show', $kuis->id_kuis) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>Kelola Bank Soal</h1>
         <p>Kuis: <strong>{{ $kuis->judul }}</strong> &bull; Total: {{ $soal->count() }} Soal</p>
     </div>
     <div class="u-display-flex u-gap-10px">
         <a href="{{ route('kuis.soal.create', $kuis->id_kuis) }}" class="btn btn-primary">
-            + Tambah Soal
+            @include('partials.icon', ['name' => 'plus']) Tambah Soal
         </a>
     </div>
 </div>
 
 @if ($soal->count() > 0)
     @foreach ($soal as $index => $item)
-        <div class="soal-card-item">
+        <div class="soal-card-item" data-reveal>
             <div class="soal-head">
                 <div class="u-display-flex u-gap-14px u-align-items-flex-start">
                     <div class="soal-badge-num">{{ $index + 1 }}</div>
@@ -69,24 +69,24 @@
             <div class="options-grid">
                 <div class="option-box {{ $item->jawaban === 'A' ? 'is-correct' : '' }}">
                     <strong>A.</strong> {{ $item->opsi_a }}
-                    @if ($item->jawaban === 'A') <span class="u-float-right">✓ Benar</span> @endif
+                    @if ($item->jawaban === 'A') <span class="u-float-right">@include('partials.icon', ['name' => 'check']) Benar</span> @endif
                 </div>
                 <div class="option-box {{ $item->jawaban === 'B' ? 'is-correct' : '' }}">
                     <strong>B.</strong> {{ $item->opsi_b }}
-                    @if ($item->jawaban === 'B') <span class="u-float-right">✓ Benar</span> @endif
+                    @if ($item->jawaban === 'B') <span class="u-float-right">@include('partials.icon', ['name' => 'check']) Benar</span> @endif
                 </div>
                 <div class="option-box {{ $item->jawaban === 'C' ? 'is-correct' : '' }}">
                     <strong>C.</strong> {{ $item->opsi_c }}
-                    @if ($item->jawaban === 'C') <span class="u-float-right">✓ Benar</span> @endif
+                    @if ($item->jawaban === 'C') <span class="u-float-right">@include('partials.icon', ['name' => 'check']) Benar</span> @endif
                 </div>
                 <div class="option-box {{ $item->jawaban === 'D' ? 'is-correct' : '' }}">
                     <strong>D.</strong> {{ $item->opsi_d }}
-                    @if ($item->jawaban === 'D') <span class="u-float-right">✓ Benar</span> @endif
+                    @if ($item->jawaban === 'D') <span class="u-float-right">@include('partials.icon', ['name' => 'check']) Benar</span> @endif
                 </div>
                 @if ($item->opsi_e)
                     <div class="option-box {{ $item->jawaban === 'E' ? 'is-correct' : '' }}">
                         <strong>E.</strong> {{ $item->opsi_e }}
-                        @if ($item->jawaban === 'E') <span class="u-float-right">✓ Benar</span> @endif
+                        @if ($item->jawaban === 'E') <span class="u-float-right">@include('partials.icon', ['name' => 'check']) Benar</span> @endif
                     </div>
                 @endif
             </div>
@@ -101,11 +101,11 @@
     @include('admin.partials.pagination', ['paginator' => $soal])
 @else
     <div class="card empty-state u-text-align-center u-padding-48px-20px">
-        <div class="u-font-size-40px u-margin-bottom-12px">📝</div>
+        <div class="u-font-size-40px u-margin-bottom-12px">@include('partials.icon', ['name' => 'file-text'])</div>
         <h3 class="u-margin-bottom-6px">Belum Ada Butir Soal</h3>
         <p class="muted u-margin-bottom-20px">Kuis ini belum memiliki soal. Klik tombol di bawah untuk menambahkan soal pilihan ganda.</p>
         <a href="{{ route('kuis.soal.create', $kuis->id_kuis) }}" class="btn btn-primary">
-            + Tambah Soal Pertama
+            @include('partials.icon', ['name' => 'plus']) Tambah Soal Pertama
         </a>
     </div>
 @endif

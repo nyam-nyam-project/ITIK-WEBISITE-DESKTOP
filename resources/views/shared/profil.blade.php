@@ -49,11 +49,11 @@
 
     <div class="form-actions actions">
         <button type="button" class="btn" id="buka-password">
-            🔑 Ganti Password
+            @include('partials.icon', ['name' => 'key']) Ganti Password
         </button>
         <a class="btn btn-secondary"
             href="{{ $pengguna?->role === 'siswa' ? route('siswa.dashboard') : route('dashboard') }}">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
     </div>
 </section>
@@ -64,7 +64,7 @@
     <div class="modal-card">
         <div class="modal-header">
             <h2>Ganti Password</h2>
-            <button type="button" class="btn-close" data-close-password>&times;</button>
+            <button type="button" class="btn-close" data-close-password aria-label="Tutup dialog ganti password">@include('partials.icon', ['name' => 'x'])</button>
         </div>
 
         @if ($errors->has('password_lama') || $errors->has('password_baru'))

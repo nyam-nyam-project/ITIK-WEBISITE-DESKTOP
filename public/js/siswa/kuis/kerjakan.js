@@ -230,7 +230,7 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
 
             const pesanEl = document.getElementById('pelanggaranPesan');
             if (pesanEl) {
-                pesanEl.textContent = '⚠️ PERINGATAN (' + data.jumlah + '/' + data.batas + '): Anda terdeteksi keluar dari layar penuh atau berpindah jendela. Segera kembali ke mode layar penuh.';
+                pesanEl.textContent = 'PERINGATAN (' + data.jumlah + '/' + data.batas + '): Anda terdeteksi keluar dari layar penuh atau berpindah jendela. Segera kembali ke mode layar penuh.';
             }
             if (overlayPelanggaran) {
                 overlayPelanggaran.classList.remove('is-cbt-hidden');
@@ -271,7 +271,7 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
     history.pushState(null, document.title, location.href);
     window.addEventListener('popstate', function () {
         history.pushState(null, document.title, location.href);
-        alert('⚠️ PERINGATAN: Navigasi browser dinonaktifkan selama ujian berlangsung. Harap selesaikan kuis dan klik tombol "Kumpulkan kuis".');
+        alert('PERINGATAN: Navigasi browser dinonaktifkan selama ujian berlangsung. Harap selesaikan kuis dan klik tombol "Kumpulkan kuis".');
     });
 
     // 4. Blokir tombol refresh keyboard (F5, Ctrl+R, Alt+Left) dan tombol sistem (Alt, Windows/Meta)
@@ -280,7 +280,7 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
         // dan hanya bisa dicegah sebagian oleh browser web.
         if (e.key === 'Alt' || e.key === 'Meta' || e.key === 'OS') {
             e.preventDefault();
-            alert('⚠️ PERINGATAN: Anda terdeteksi mencoba keluar dari halaman ujian! Harap tetap berada di halaman kuis hingga selesai.');
+            alert('PERINGATAN: Anda terdeteksi mencoba keluar dari halaman ujian! Harap tetap berada di halaman kuis hingga selesai.');
             return false;
         }
 
@@ -290,7 +290,7 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
             (e.altKey && e.key === 'ArrowLeft')
         ) {
             e.preventDefault();
-            alert('⚠️ Tombol refresh dan navigasi kembali dinonaktifkan selama ujian.');
+            alert('Tombol refresh dan navigasi kembali dinonaktifkan selama ujian.');
             return false;
         }
     });

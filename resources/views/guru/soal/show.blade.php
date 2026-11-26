@@ -10,14 +10,14 @@
 <div class="page-heading">
     <div>
         <a href="{{ route('kuis.soal.index', $kuis->id_kuis) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-6px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>Detail Butir Soal</h1>
         <p>Kuis: <strong>{{ $kuis->judul }}</strong></p>
     </div>
     <div class="u-display-flex u-gap-10px">
         <a href="{{ route('kuis.soal.edit', [$kuis->id_kuis, $soal->id_soal]) }}" class="btn btn-primary">
-            ✎ Edit Soal
+            @include('partials.icon', ['name' => 'edit']) Edit Soal
         </a>
     </div>
 </div>
@@ -58,7 +58,7 @@
                     {{ $opsi }}
                 </div>
                 @if ($soal->jawaban === $huruf)
-                    <span class="badge badge-success u-font-size-12px">✓ Kunci Benar</span>
+                    <span class="badge badge-success u-font-size-12px">@include('partials.icon', ['name' => 'check']) Kunci Benar</span>
                 @endif
             </div>
         @endif

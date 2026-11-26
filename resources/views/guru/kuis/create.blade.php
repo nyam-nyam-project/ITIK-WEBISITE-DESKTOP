@@ -12,11 +12,11 @@
     <div>
         @if($materiDipreselect)
             <a href="{{ route('materi.show', $materiDipreselect->id_materi) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-6px">
-                ← Kembali
+                @include('partials.icon', ['name' => 'arrow-left']) Kembali
             </a>
         @else
             <a href="{{ route('kuis.index', $mapelTerpilih ? ['mapel' => $mapelTerpilih] : []) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-6px">
-                ← Kembali
+                @include('partials.icon', ['name' => 'arrow-left']) Kembali
             </a>
         @endif
         <h1>Tambah Kuis Baru</h1>
@@ -206,7 +206,7 @@
                         @endforeach
                     </select>
                     <p id="materi-empty-hint" class="help u-display-none u-color-8a4d08 u-font-weight-bold">
-                        ⚠️ Belum ada materi untuk mata pelajaran ini. Buat materi terlebih dahulu di menu Materi agar kuis dapat terpetakan ke bab.
+                        @include('partials.icon', ['name' => 'alert-triangle']) Belum ada materi untuk mata pelajaran ini. Buat materi terlebih dahulu di menu Materi agar kuis dapat terpetakan ke bab.
                     </p>
                     <p id="materi-multi-hint" class="help">Gunakan Ctrl + klik untuk memilih lebih dari satu bab materi.</p>
                     <p id="materi-single-hint" class="help u-display-none">Untuk Pre-test dan Post-test, pilih tepat 1 bab materi.</p>
@@ -246,7 +246,7 @@
 
         {{-- JADWAL TERBIT & DRAFT OTOMATIS --}}
         <div id="waktu-container" class="special-card">
-            <h3 class="u-font-size-15px u-margin-bottom-6px">📅 Jadwal Terbit &amp; Selesai Otomatis</h3>
+            <h3 class="u-font-size-15px u-margin-bottom-6px">@include('partials.icon', ['name' => 'calendar']) Jadwal Terbit &amp; Selesai Otomatis</h3>
             <p class="muted small u-margin-bottom-12px" id="waktu-keterangan">
                 Tentukan tanggal dan jam untuk menerbitkan kuis secara otomatis, dan/atau mengembalikannya ke draft saat waktu berakhir. (Wajib untuk kategori Ulangan, opsional untuk kategori lainnya).
             </p>
@@ -262,7 +262,7 @@
                             placeholder="Pilih tanggal &amp; waktu..."
                             autocomplete="off"
                         >
-                        <button type="button" class="btn-clear-waktu" id="btn-clear-mulai" title="Hapus jadwal">×</button>
+                        <button type="button" class="btn-clear-waktu" id="btn-clear-mulai" title="Hapus jadwal" aria-label="Hapus jadwal">@include('partials.icon', ['name' => 'x'])</button>
                     </div>
                     <p class="help">Kuis otomatis berstatus "Terbit" saat waktu ini tiba.</p>
                     @error('waktu_mulai') <div class="error">{{ $message }}</div> @enderror
@@ -278,7 +278,7 @@
                             placeholder="Pilih tanggal &amp; waktu..."
                             autocomplete="off"
                         >
-                        <button type="button" class="btn-clear-waktu" id="btn-clear-selesai" title="Hapus jadwal">×</button>
+                        <button type="button" class="btn-clear-waktu" id="btn-clear-selesai" title="Hapus jadwal" aria-label="Hapus jadwal">@include('partials.icon', ['name' => 'x'])</button>
                     </div>
                     <p class="help">Kuis otomatis kembali ke "Draft" saat waktu ini lewat.</p>
                     @error('waktu_selesai') <div class="error">{{ $message }}</div> @enderror

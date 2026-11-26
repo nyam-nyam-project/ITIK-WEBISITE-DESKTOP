@@ -6,7 +6,7 @@
 <div class="page-heading">
     <div>
         <a href="{{ route('materi.index', ['mapel' => $materi->id_mapel]) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>Edit Materi</h1>
         <p>Perbarui informasi dan dokumen materi pembelajaran.</p>

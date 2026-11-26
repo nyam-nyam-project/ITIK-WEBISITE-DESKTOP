@@ -10,12 +10,11 @@
         <h1>Selamat datang, {{ Auth::user()->nama_lengkap }}!</h1>
         <p>Pantau progress belajar dan kerjakan kuis yang tersedia.</p>
     </div>
-    <a class="btn" href="{{ route('siswa.kuis.index') }}">Lihat semua kuis</a>
 </div>
 
 {{-- Peringatan remedial --}}
 @if(isset($remedialAktif) && $remedialAktif->isNotEmpty())
-    <div class="alert alert-warning anim-banner" role="alert">
+    <div class="alert alert-warning" role="alert">
         <strong>Kamu memiliki {{ $remedialAktif->count() }} tugas remedial yang belum dikerjakan.</strong>
         <p class="u-margin-bottom-10px">Selesaikan tugas remedial agar nilaimu dapat meningkat.</p>
         <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning btn-small">Lihat Tugas Remedial</a>
@@ -23,23 +22,23 @@
 @endif
 
 {{-- Statistik --}}
-<div class="stats anim-stagger">
-    <div class="stat anim-item">
+<div class="stats">
+    <div class="stat" data-reveal>
         <span class="label">Materi Tersedia</span>
         <span class="value" data-count-up="{{ $totalMateri ?? 0 }}">{{ $totalMateri ?? 0 }}</span>
         <small><a href="{{ route('siswa.materi.index') }}">Lihat materi</a></small>
     </div>
-    <div class="stat anim-item">
+    <div class="stat" data-reveal>
         <span class="label">Materi Selesai</span>
         <span class="value" data-count-up="{{ $materiSelesai ?? 0 }}">{{ $materiSelesai ?? 0 }}</span>
         <small>dari {{ $totalMateri ?? 0 }} materi</small>
     </div>
-    <div class="stat anim-item">
+    <div class="stat" data-reveal>
         <span class="label">Kuis Tersedia</span>
         <span class="value" data-count-up="{{ $kuisTersedia ?? 0 }}">{{ $kuisTersedia ?? 0 }}</span>
         <small><a href="{{ route('siswa.kuis.index') }}">Kerjakan kuis</a></small>
     </div>
-    <div class="stat anim-item">
+    <div class="stat" data-reveal>
         <span class="label">Rata-rata Nilai</span>
         <span class="value" @if(isset($rataNilai) && $rataNilai) data-count-up="{{ number_format($rataNilai, 0, '.', '') }}" @endif>{{ isset($rataNilai) && $rataNilai ? number_format($rataNilai, 0) : '—' }}</span>
         <small><a href="{{ route('siswa.nilai.index') }}">Lihat nilai</a></small>
@@ -54,9 +53,9 @@
 @endphp
 
 @if($adaPengingat)
-    <div class="alert alert-warning banner-pengingat anim-banner" role="alert">
+    <div class="alert alert-warning banner-pengingat" role="alert">
         <div class="banner-pengingat-content">
-            <span class="banner-pengingat-icon">📌</span>
+            <span class="banner-pengingat-icon">@include('partials.icon', ['name' => 'bell'])</span>
             <div>
                 <strong>Pengingat Belajar:</strong>
                 <span>
@@ -82,11 +81,11 @@
     </div>
 @endif
 
-<div class="grid grid-2 anim-stagger">
+<div class="grid grid-2">
 
     {{-- Materi Terbaru --}}
     @isset($materiTerbaru)
-        <section class="card anim-item">
+        <section class="card">
             <div class="card-header">
                 <div>
                     <h2>Materi Terbaru</h2>
@@ -106,7 +105,7 @@
                         <tbody>
                             @foreach($materiTerbaru as $materi)
                                 @php $progress = $materi->progress->first(); @endphp
-                                <tr>
+                                <tr data-reveal>
                                     <td>
                                         <strong>
                                             <a href="{{ route('siswa.materi.show', $materi->id_materi) }}">{{ $materi->judul }}</a>
@@ -130,7 +129,7 @@
             @else
                 <div class="empty">
                     @if(($totalMateri ?? 0) > 0 && ($materiSelesai ?? 0) >= ($totalMateri ?? 0))
-                        <p>🎉 Luar biasa! Semua materi pembelajaran sudah selesai dibaca.</p>
+                        <p>@include('partials.icon', ['name' => 'circle-check']) Luar biasa! Semua materi pembelajaran sudah selesai dibaca.</p>
                     @else
                         <p>Belum ada materi yang perlu dipelajari saat ini.</p>
                     @endif
@@ -141,7 +140,7 @@
 
     {{-- Kuis Terbaru --}}
     @isset($kuisTerbaru)
-        <section class="card anim-item">
+        <section class="card">
             <div class="card-header">
                 <div>
                     <h2>Kuis Terbaru</h2>
@@ -161,7 +160,7 @@
                         </thead>
                         <tbody>
                             @foreach($kuisTerbaru as $kuis)
-                                <tr>
+                                <tr data-reveal>
                                     <td>
                                         <strong>{{ $kuis->judul }}</strong>
                                         <span class="muted small">{{ $kuis->alokasi_waktu }} menit &middot; KKM {{ $kuis->kkm }}</span>
@@ -178,7 +177,7 @@
             @else
                 <div class="empty">
                     @if(($kuisTersedia ?? 0) > 0)
-                        <p>🎉 Hebat! Semua kuis yang tersedia sudah kamu kerjakan.</p>
+                        <p>@include('partials.icon', ['name' => 'circle-check']) Hebat! Semua kuis yang tersedia sudah kamu kerjakan.</p>
                     @else
                         <p>Belum ada kuis yang tersedia saat ini.</p>
                     @endif

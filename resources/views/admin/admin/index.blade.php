@@ -51,7 +51,7 @@
                     </thead>
                     <tbody>
                         @foreach($admins as $item)
-                            <tr>
+                            <tr data-reveal>
                                 <td class="nowrap">{{ $item->nomor_induk ?? '—' }}</td>
                                 <td class="text-break"><strong>{{ $item->nama_lengkap }}</strong></td>
                                 <td>

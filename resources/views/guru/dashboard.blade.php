@@ -45,22 +45,22 @@
         </div>
     </section>
 @else
-    <div class="stats dashboard-kelas-stats anim-stagger">
-        <div class="stat anim-item">
+    <div class="stats dashboard-kelas-stats">
+        <div class="stat" data-reveal>
             <span class="label">Siswa aktif</span>
             <span class="value" data-count-up="{{ $ringkasan['jumlah_siswa'] }}">{{ $ringkasan['jumlah_siswa'] }}</span>
         </div>
-        <div class="stat anim-item">
+        <div class="stat" data-reveal>
             <span class="label">Rata-rata kelas</span>
             <span class="value" @if($ringkasan['rata_rata_nilai'] !== null) data-count-up="{{ number_format($ringkasan['rata_rata_nilai'], 1, '.', '') }}" data-decimals="1" @endif>{{ $ringkasan['rata_rata_nilai'] === null ? '—' : number_format($ringkasan['rata_rata_nilai'], 1) }}</span>
         </div>
-        <div class="stat anim-item">
+        <div class="stat" data-reveal>
             <span class="label">Perlu dibantu</span>
             <span class="value" data-count-up="{{ $ringkasan['jumlah_perlu_dibantu'] }}">{{ $ringkasan['jumlah_perlu_dibantu'] }}</span>
         </div>
     </div>
 
-    <section class="card dashboard-progres-card anim-item">
+    <section class="card dashboard-progres-card" data-reveal>
         <div class="dashboard-progres-card__body">
             <div class="dashboard-progres-card__circle">
                 <svg class="dashboard-progres-ring" viewBox="0 0 120 120" role="img" aria-labelledby="progres-materi-title">
@@ -156,7 +156,7 @@
                     </thead>
                     <tbody>
                         @foreach($daftarSiswa as $siswa)
-                            <tr>
+                            <tr data-reveal>
                                 <td>
                                     <strong>
                                         <a href="{{ route('dashboard', ['kelas' => $kelasDipilih->id_kelas, 'mapel' => $kelasDipilih->id_mapel, 'siswa' => $siswa->id_user]) }}">
@@ -330,7 +330,7 @@
         </section>
     @endif
 
-    <section class="card dashboard-remedial anim-item">
+    <section class="card dashboard-remedial" data-reveal>
         <div class="card-header">
             <div>
                 <h2>Remedial</h2>

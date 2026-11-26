@@ -28,14 +28,14 @@
                 <div class="actions"><span class="badge">{{ $kuisTerpilih ? 'KKM kuis' : 'KKM acuan agregat' }} {{ number_format((float) $hasil['kkm'], 2, ',', '.') }}</span><a class="btn btn-secondary btn-small" href="{{ route('admin.kelas.show', $hasil['kelas']) }}">Lihat anggota</a></div>
             </div>
             <div class="rekap-stats">
-                <div class="rekap-stat"><span>Anggota historis</span><strong>{{ $hasil['jumlah_anggota'] }}</strong></div>
-                <div class="rekap-stat"><span>Sudah dinilai</span><strong>{{ $hasil['jumlah_dinilai'] }}</strong></div>
-                <div class="rekap-stat"><span>Belum dinilai</span><strong>{{ $hasil['belum_dinilai'] }}</strong></div>
-                <div class="rekap-stat"><span>Rata-rata kelas</span><strong>{{ $hasil['rata_rata'] === null ? '—' : number_format((float) $hasil['rata_rata'], 2, ',', '.') }}</strong></div>
-                <div class="rekap-stat"><span>Nilai tertinggi</span><strong>{{ $hasil['tertinggi'] === null ? '—' : number_format((float) $hasil['tertinggi'], 2, ',', '.') }}</strong></div>
-                <div class="rekap-stat"><span>Nilai terendah</span><strong>{{ $hasil['terendah'] === null ? '—' : number_format((float) $hasil['terendah'], 2, ',', '.') }}</strong></div>
-                <div class="rekap-stat"><span>Kuat / mencapai acuan</span><strong>{{ $hasil['jumlah_kuat'] }}</strong></div>
-                <div class="rekap-stat"><span>Di bawah acuan / perlu pendampingan</span><strong>{{ $hasil['jumlah_lemah'] }}</strong></div>
+                <div class="rekap-stat" data-reveal><span>Anggota historis</span><strong>{{ $hasil['jumlah_anggota'] }}</strong></div>
+                <div class="rekap-stat" data-reveal><span>Sudah dinilai</span><strong>{{ $hasil['jumlah_dinilai'] }}</strong></div>
+                <div class="rekap-stat" data-reveal><span>Belum dinilai</span><strong>{{ $hasil['belum_dinilai'] }}</strong></div>
+                <div class="rekap-stat" data-reveal><span>Rata-rata kelas</span><strong>{{ $hasil['rata_rata'] === null ? '—' : number_format((float) $hasil['rata_rata'], 2, ',', '.') }}</strong></div>
+                <div class="rekap-stat" data-reveal><span>Nilai tertinggi</span><strong>{{ $hasil['tertinggi'] === null ? '—' : number_format((float) $hasil['tertinggi'], 2, ',', '.') }}</strong></div>
+                <div class="rekap-stat" data-reveal><span>Nilai terendah</span><strong>{{ $hasil['terendah'] === null ? '—' : number_format((float) $hasil['terendah'], 2, ',', '.') }}</strong></div>
+                <div class="rekap-stat" data-reveal><span>Kuat / mencapai acuan</span><strong>{{ $hasil['jumlah_kuat'] }}</strong></div>
+                <div class="rekap-stat" data-reveal><span>Di bawah acuan / perlu pendampingan</span><strong>{{ $hasil['jumlah_lemah'] }}</strong></div>
             </div>
             @if($hasil['jumlah_dinilai'] > 0)
                 <div class="grid grid-2">
@@ -46,7 +46,7 @@
                     <p class="help">Semua siswa dengan nilai yang sama ditampilkan pada kelompok tertinggi atau terendah. Jumlah kuis menunjukkan kuis yang telah menghasilkan nilai final untuk siswa tersebut.</p>
                     <div class="table-wrap"><table><thead><tr><th scope="col">No.</th><th scope="col">NISN</th><th scope="col">Nama siswa</th><th scope="col" class="number">{{ $kuisTerpilih ? 'Nilai terbaik' : 'Rata-rata nilai terbaik' }}</th><th scope="col" class="number">Jumlah kuis</th><th scope="col">Posisi terhadap acuan</th></tr></thead><tbody>
                         @foreach($hasil['siswa'] as $baris)
-                            <tr><td>{{ $loop->iteration }}</td><td class="nowrap">{{ $baris->nomor_induk ?? '—' }}</td><td class="text-break"><strong>{{ $baris->nama_lengkap }}</strong></td><td class="number">{{ number_format((float) $baris->nilai_akhir, 2, ',', '.') }}</td><td class="number">{{ $baris->jumlah_kuis }}</td><td><span class="badge {{ (float) $baris->nilai_akhir >= (float) $hasil['kkm'] ? 'badge-success' : 'badge-warning' }}">{{ (float) $baris->nilai_akhir >= (float) $hasil['kkm'] ? 'Mencapai acuan' : 'Di bawah acuan' }}</span></td></tr>
+                            <tr data-reveal><td>{{ $loop->iteration }}</td><td class="nowrap">{{ $baris->nomor_induk ?? '—' }}</td><td class="text-break"><strong>{{ $baris->nama_lengkap }}</strong></td><td class="number">{{ number_format((float) $baris->nilai_akhir, 2, ',', '.') }}</td><td class="number">{{ $baris->jumlah_kuis }}</td><td><span class="badge {{ (float) $baris->nilai_akhir >= (float) $hasil['kkm'] ? 'badge-success' : 'badge-warning' }}">{{ (float) $baris->nilai_akhir >= (float) $hasil['kkm'] ? 'Mencapai acuan' : 'Di bawah acuan' }}</span></td></tr>
                         @endforeach
                     </tbody></table></div>
                 </div></details>

@@ -18,7 +18,7 @@
             <p>Pilih mata pelajaran untuk mulai membaca dan mempelajari materi bahan ajar.</p>
         </div>
         <a href="{{ route('siswa.kuis.index') }}" class="btn btn-secondary">
-            Ke Daftar Kuis →
+            Ke Daftar Kuis @include('partials.icon', ['name' => 'arrow-right'])
         </a>
     </div>
 
@@ -35,16 +35,16 @@
             </div>
         @endif
     @else
-        <div class="mapel-grid-siswa anim-stagger">
+        <div class="mapel-grid-siswa">
             @foreach($mapelAktif as $mp)
-                <a href="{{ route('siswa.materi.index', ['mapel' => $mp->id_mapel]) }}" class="mapel-card-s anim-item">
-                    <div class="mapel-icon-s">📚</div>
+                <a href="{{ route('siswa.materi.index', ['mapel' => $mp->id_mapel]) }}" class="mapel-card-s" data-reveal>
+                    <div class="mapel-icon-s">@include('partials.icon', ['name' => 'book-open'])</div>
                     <div>
                         <div class="mapel-code-s">{{ $mp->kode_mapel }}</div>
                         <h3 class="mapel-title-s">{{ $mp->nama_mapel }}</h3>
                         <div class="mapel-count-s">{{ $mp->materi_count ?? 0 }} Materi Pembelajaran</div>
                     </div>
-                    <div class="mapel-arrow-s">→</div>
+                    <div class="mapel-arrow-s">@include('partials.icon', ['name' => 'arrow-right'])</div>
                 </a>
             @endforeach
         </div>
@@ -56,14 +56,14 @@
     {{-- ============================================================ --}}
     <div class="breadcrumb-siswa">
         <a href="{{ route('siswa.materi.index') }}">Materi</a>
-        <span class="sep">›</span>
+        <span class="sep">@include('partials.icon', ['name' => 'chevron-right'])</span>
         <span class="current">{{ $mapelTerpilih->nama_mapel }}</span>
     </div>
 
     <div class="page-heading">
         <div>
             <a href="{{ route('siswa.materi.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-                ← Kembali
+                @include('partials.icon', ['name' => 'arrow-left']) Kembali
             </a>
             <h1>{{ $mapelTerpilih->nama_mapel }}</h1>
             <p>{{ $materi->count() }} materi pembelajaran tersedia untuk mata pelajaran ini.</p>
@@ -75,7 +75,7 @@
             <h3>Belum Ada Materi untuk Mata Pelajaran Ini</h3>
             <p>Guru belum menambahkan materi pembelajaran untuk mata pelajaran ini.</p>
             <a href="{{ route('siswa.materi.index') }}" class="btn btn-secondary u-margin-top-14px">
-                ← Pilih Mata Pelajaran Lain
+                @include('partials.icon', ['name' => 'arrow-left']) Pilih Mata Pelajaran Lain
             </a>
         </div>
     @else
@@ -101,7 +101,7 @@
                     $isMateriTerkunci = (bool) ($preTest && !$preTestSelesai);
                     $isPostTestTerkunci = (bool) ($postTest && !$prog);
                 @endphp
-                <div class="materi-card-link">
+                <div class="materi-card-link" data-reveal>
                     <div class="materi-main-info">
                         <div class="materi-num-badge">
                             {{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }}
@@ -120,16 +120,16 @@
                             <div class="materi-badge-group">
                                 @if($preTest)
                                     @if($preTestSelesai)
-                                        <span class="badge badge-success">✓ Pre-test Selesai</span>
+                                        <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Pre-test Selesai</span>
                                     @else
                                         <span class="badge badge-warning">Pre-test Wajib</span>
                                     @endif
                                 @endif
 
                                 @if($isMateriTerkunci)
-                                    <span class="badge badge-muted">🔒 Materi Terkunci</span>
+                                    <span class="badge badge-muted">@include('partials.icon', ['name' => 'lock']) Materi Terkunci</span>
                                 @elseif($materiSelesai)
-                                    <span class="badge badge-success">✓ Materi Selesai</span>
+                                    <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Materi Selesai</span>
                                 @elseif(!$prog)
                                     <span class="badge badge-muted">Belum Mulai</span>
                                 @elseif($postTests && $postTests->isNotEmpty())
@@ -142,9 +142,9 @@
 
                                 @if($postTest)
                                     @if($postTestSelesai)
-                                        <span class="badge badge-success">✓ Post-test Selesai</span>
+                                        <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Post-test Selesai</span>
                                     @elseif($isPostTestTerkunci)
-                                        <span class="badge badge-muted">🔒 Post-test Terkunci</span>
+                                        <span class="badge badge-muted">@include('partials.icon', ['name' => 'lock']) Post-test Terkunci</span>
                                     @else
                                         <span class="badge badge-warning">Post-test Siap</span>
                                     @endif
@@ -159,7 +159,7 @@
                                 Mulai Pre-test
                             </a>
                             <button type="button" class="btn btn-secondary btn-small" disabled title="Selesaikan Pre-test terlebih dahulu">
-                                🔒 Baca Materi
+                                @include('partials.icon', ['name' => 'lock']) Baca Materi
                             </button>
                         @else
                             <a href="{{ route('siswa.materi.show', $item->id_materi) }}" class="btn btn-secondary btn-small">
@@ -173,7 +173,7 @@
                                     </a>
                                 @elseif($isPostTestTerkunci)
                                     <button type="button" class="btn btn-secondary btn-small" disabled title="Buka materi terlebih dahulu">
-                                        🔒 Post-test
+                                        @include('partials.icon', ['name' => 'lock']) Post-test
                                     </button>
                                 @else
                                     <a href="{{ route('siswa.kuis.mulai', $postTest->id_kuis) }}" class="btn btn-small">

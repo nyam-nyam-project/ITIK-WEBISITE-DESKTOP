@@ -10,7 +10,7 @@
 <div class="page-heading">
     <div>
         <a href="{{ route('siswa.materi.index', ['mapel' => $materi->id_mapel]) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>{{ $materi->judul }}</h1>
         <p>{{ $materi->bab ?? '-' }} &bull; Kelas {{ $materi->kelas ?? '-' }}</p>
@@ -21,7 +21,7 @@
         </a>
         @if($pdfUrl)
             <a href="{{ $pdfUrl }}" target="_blank" class="btn btn-secondary btn-small">
-                Buka PDF di tab baru ↗
+                Buka PDF di tab baru @include('partials.icon', ['name' => 'external-link'])
             </a>
         @endif
     </div>
@@ -39,7 +39,7 @@
                 <div class="pdf-viewer-container" data-pdf-url="{{ $pdfUrl }}">
                     <div class="pdf-toolbar">
                         <span class="pdf-page-indicator" id="pdf-page-status">Memuat...</span>
-                        <button type="button" id="pdf-fullscreen" class="btn btn-secondary btn-small">⛶ Layar Penuh</button>
+                        <button type="button" id="pdf-fullscreen" class="btn btn-secondary btn-small">@include('partials.icon', ['name' => 'maximize']) Layar Penuh</button>
                     </div>
                     <div class="pdf-canvas-wrapper" id="pdf-canvas-wrapper">
                         <div id="pdf-loading" class="pdf-loading">Memuat dokumen materi...</div>
@@ -67,7 +67,7 @@
             <div class="card-header">
                 <h2>Informasi Materi</h2>
                 @if($materiSelesai)
-                    <span class="badge badge-success">✓ Selesai</span>
+                    <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Selesai</span>
                 @else
                     <span class="badge badge-warning">Sedang Belajar</span>
                 @endif
@@ -99,7 +99,7 @@
                     <h2>Video Pembelajaran</h2>
                 </div>
                 <a href="{{ $materi->link_youtube }}" target="_blank" class="btn btn-secondary">
-                    ▶ Tonton video pembelajaran di YouTube ↗
+                    @include('partials.icon', ['name' => 'play']) Tonton video pembelajaran di YouTube @include('partials.icon', ['name' => 'external-link'])
                 </a>
             </section>
         @endif
@@ -115,7 +115,7 @@
                         Selesaikan Post-test untuk menandai materi ini selesai.
                     </p>
                     <a href="{{ route('siswa.kuis.mulai', $postTest->id_kuis) }}" class="btn">
-                        → Kerjakan Post-test
+                        @include('partials.icon', ['name' => 'arrow-right']) Kerjakan Post-test
                     </a>
                 @else
                     <p class="muted small u-margin-bottom-16px">
@@ -125,22 +125,22 @@
                     <form action="{{ route('siswa.materi.selesai', $materi->id_materi) }}" method="POST">
                         @csrf
                         <button type="submit" class="btn">
-                            ✓ Tandai Sudah Selesai Membaca
+                            @include('partials.icon', ['name' => 'check']) Tandai Sudah Selesai Membaca
                         </button>
                     </form>
                 @endif
             @else
                 <div class="alert alert-success u-margin-bottom-0">
                     @if($postTest)
-                        ✓ Materi selesai setelah Post-test dikerjakan!
+                        @include('partials.icon', ['name' => 'check']) Materi selesai setelah Post-test dikerjakan!
                     @else
-                        ✓ Materi ini sudah kamu tandai selesai dipelajari!
+                        @include('partials.icon', ['name' => 'check']) Materi ini sudah kamu tandai selesai dipelajari!
                     @endif
                 </div>
                 @if($postTest)
                     <div class="u-margin-top-12px">
                         <a href="{{ route('siswa.kuis.hasil', $postTest->id_kuis) }}" class="btn u-width-100pct u-text-align-center">
-                            → Lihat Hasil Post-test
+                            @include('partials.icon', ['name' => 'arrow-right']) Lihat Hasil Post-test
                         </a>
                     </div>
                 @endif
@@ -170,12 +170,12 @@
                                 <strong>{{ $itemKuis->judul }}</strong>
                                 <span class="badge small">{{ ucfirst($itemKuis->kategori) }}</span>
                                 @if($postTestTerkunci)
-                                    <span class="badge badge-muted small">🔒 Terkunci</span>
+                                    <span class="badge badge-muted small">@include('partials.icon', ['name' => 'lock']) Terkunci</span>
                                 @endif
                             </div>
                             @if($postTestTerkunci)
                                 <button type="button" class="btn btn-secondary btn-small" disabled title="Buka materi terlebih dahulu">
-                                    🔒 Materi Belum Dibuka
+                                    @include('partials.icon', ['name' => 'lock']) Materi Belum Dibuka
                                 </button>
                             @else
                                 <a href="{{ route('siswa.kuis.mulai', $itemKuis->id_kuis) }}" class="btn btn-small">

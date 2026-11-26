@@ -6,7 +6,7 @@
 <div class="page-heading">
     <div>
         <a href="{{ request('mapel') ? route('materi.index', ['mapel' => request('mapel')]) : route('materi.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>Tambah Materi</h1>
         <p>Lengkapi formulir di bawah ini untuk menambahkan materi pembelajaran baru.</p>

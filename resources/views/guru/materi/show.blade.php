@@ -10,7 +10,7 @@
 <div class="page-heading">
     <div>
         <a href="{{ route('materi.index', ['mapel' => $materi->id_mapel]) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>{{ $materi->judul }}</h1>
         <p>{{ $materi->bab ?? 'Materi Pembelajaran' }} &bull; Kelas {{ $materi->kelas ?? '-' }}</p>
@@ -43,7 +43,7 @@
                 </div>
                 @if($pdfUrl)
                     <a href="{{ $pdfUrl }}" target="_blank" class="btn btn-secondary btn-small">
-                        Buka PDF di Tab Baru ↗
+                        Buka PDF di Tab Baru @include('partials.icon', ['name' => 'external-link'])
                     </a>
                 @endif
             </div>
@@ -52,7 +52,7 @@
                 <div class="pdf-viewer-container" data-pdf-url="{{ $pdfUrl }}">
                     <div class="pdf-toolbar">
                         <span class="pdf-page-indicator" id="pdf-page-status">Memuat...</span>
-                        <button type="button" id="pdf-fullscreen" class="btn btn-secondary btn-small">⛶ Layar Penuh</button>
+                        <button type="button" id="pdf-fullscreen" class="btn btn-secondary btn-small">@include('partials.icon', ['name' => 'maximize']) Layar Penuh</button>
                     </div>
                     <div class="pdf-canvas-wrapper" id="pdf-canvas-wrapper">
                         <div id="pdf-loading" class="pdf-loading">Memuat dokumen PDF...</div>
@@ -113,7 +113,7 @@
                     <h2>Video Pembelajaran</h2>
                 </div>
                 <a href="{{ $materi->link_youtube }}" target="_blank" class="btn btn-secondary">
-                    ▶ Tonton Video di YouTube ↗
+                    @include('partials.icon', ['name' => 'play']) Tonton Video di YouTube @include('partials.icon', ['name' => 'external-link'])
                 </a>
             </section>
         @endif

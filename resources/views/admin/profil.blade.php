@@ -13,7 +13,7 @@
             <div><dt>Peran</dt><dd>{{ ucfirst($pengguna?->role ?? 'admin') }}</dd></div>
             <div><dt>Status akun</dt><dd>{{ ucfirst($pengguna?->status ?? '—') }}</dd></div>
         </dl>
-        <div class="form-actions"><a class="btn btn-secondary" href="{{ route('admin.dashboard') }}">← Kembali</a></div>
+        <div class="form-actions"><a class="btn btn-secondary" href="{{ route('admin.dashboard') }}">@include('partials.icon', ['name' => 'arrow-left']) Kembali</a></div>
     </section>
     <div class="alert alert-info">Identitas dan kata sandi tidak dapat diubah dari halaman profil admin. Kata sandi tidak ditampilkan untuk menjaga keamanan akun.</div>
 @endsection

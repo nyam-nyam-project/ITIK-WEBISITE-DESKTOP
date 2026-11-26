@@ -18,6 +18,7 @@
     <title>@yield('title', 'ITIK') | ITIK</title>
     <script src="{{ asset('js/theme-init.js') }}"></script>
     <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
+    <script src="{{ asset('js/reveal-init.js') }}"></script>
     @include('partials.styles')
     @stack('styles')
 </head>
@@ -92,7 +93,9 @@
             <div class="sidebar-inner">
                 <div class="brand-row">
                     <a class="brand" href="{{ $brandUrl }}" aria-label="ITIK, {{ $brandSub }}">
-                        <span class="brand-mark" aria-hidden="true">IT</span>
+                        <span class="brand-mark" aria-hidden="true">
+                            <img src="{{ asset('images/logo-itik.png') }}" alt="" class="logo-itik-img">
+                        </span>
                         <span><strong>ITIK</strong><small>{{ $brandSub }}</small></span>
                     </a>
                     <button type="button" class="nav-toggle" id="nav-toggle" aria-controls="app-navigation" aria-expanded="false">Menu</button>
@@ -182,6 +185,7 @@
     <script src="{{ asset('js/theme.js') }}" defer></script>
     <script src="{{ asset('js/aksesibilitas.js') }}" defer></script>
     <script src="{{ asset('js/app.js') }}" defer></script>
+    <script src="{{ asset('js/reveal.js') }}" defer></script>
     @stack('scripts')
 </body>
 </html>

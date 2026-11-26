@@ -9,9 +9,7 @@
 
 <div class="page-heading">
     <div>
-        <a href="{{ route('kuis.index', ['mapel' => $kuis->id_mapel]) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            @include('partials.icon', ['name' => 'arrow-left']) Kembali
-        </a>
+        <x-tombol-kembali :fallback="route('kuis.index', ['mapel' => $kuis->id_mapel])" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px" />
         <h1>{{ $kuis->judul }}</h1>
         <p>Detail kuis, jadwal, daftar butir soal, dan publikasi.</p>
     </div>

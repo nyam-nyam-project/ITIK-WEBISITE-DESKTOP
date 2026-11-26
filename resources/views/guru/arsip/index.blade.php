@@ -19,12 +19,8 @@
         <p>Kelola kuis dan materi yang telah diarsipkan. Anda dapat memulihkan kembali ke daftar aktif atau menghapusnya secara permanen.</p>
     </div>
     <div class="actions">
-        <a href="{{ route('kuis.index') }}" class="btn btn-secondary">
-            @include('partials.icon', ['name' => 'arrow-left']) Kembali ke Kuis
-        </a>
-        <a href="{{ route('materi.index') }}" class="btn btn-secondary">
-            @include('partials.icon', ['name' => 'arrow-left']) Kembali ke Materi
-        </a>
+        <x-tombol-kembali :fallback="route('kuis.index')" label="Kembali ke Kuis" />
+        <x-tombol-kembali :fallback="route('materi.index')" label="Kembali ke Materi" />
     </div>
 </div>
 

@@ -10,9 +10,7 @@
         <h1>Progres Siswa</h1>
         <p class="muted">{{ $kelasDipilih->nama_kelas }} · {{ $kelasDipilih->nama_mapel }}</p>
     </div>
-    <a href="{{ route('dashboard', ['kelas' => $kelasDipilih->id_kelas, 'mapel' => $kelasDipilih->id_mapel]) }}" class="btn btn-secondary">
-        ← Kembali ke Dashboard
-    </a>
+    <x-tombol-kembali :fallback="route('dashboard', ['kelas' => $kelasDipilih->id_kelas, 'mapel' => $kelasDipilih->id_mapel])" label="Kembali ke Dashboard" />
 </div>
 
 <section class="progres-profil card">

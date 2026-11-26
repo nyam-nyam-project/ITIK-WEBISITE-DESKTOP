@@ -6,7 +6,7 @@
             <h1>Tambah admin</h1>
             <p>Admin baru dapat masuk menggunakan username dan wajib mengganti password awal.</p>
         </div>
-        <a class="btn btn-secondary" href="{{ route('admin.admin.index') }}">Kembali</a>
+        <x-tombol-kembali :fallback="route('admin.admin.index')" :dengan-ikon="false" />
     </div>
 
     <section class="card">
@@ -41,7 +41,7 @@
             </div>
             <div class="actions">
                 <button class="btn" type="submit">Simpan admin</button>
-                <a class="btn btn-secondary" href="{{ route('admin.admin.index') }}">Batal</a>
+                <x-tombol-kembali :fallback="route('admin.admin.index')" label="Batal" :dengan-ikon="false" />
             </div>
         </form>
     </section>

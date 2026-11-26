@@ -36,9 +36,7 @@
                 Lihat Tugas Remedial
             </a>
         @endif
-        <a href="{{ route('siswa.kuis.index') }}" class="btn btn-secondary">
-            @include('partials.icon', ['name' => 'arrow-left']) Kembali
-        </a>
+        <x-tombol-kembali :fallback="route('siswa.kuis.index')" />
     </div>
 </div>
 

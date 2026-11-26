@@ -9,9 +9,7 @@
 
 <div class="page-heading">
     <div>
-        <a href="{{ route('guru.remedial.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            @include('partials.icon', ['name' => 'arrow-left']) Kembali
-        </a>
+        <x-tombol-kembali :fallback="route('guru.remedial.index')" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px" />
         <h1>Tugaskan Siswa Remedial</h1>
         <p>Pilih siswa yang berhak mengikuti kuis remedial ini berdasarkan nilai ulangan asal.</p>
     </div>

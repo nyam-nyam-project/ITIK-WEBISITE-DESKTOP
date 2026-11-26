@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('title', 'Detail kelas')
 @section('content')
-    <div class="page-heading"><div><h1>{{ $kelas->nama_kelas }}</h1><p>Tingkat {{ $kelas->tingkat }} · Tahun ajaran {{ $kelas->tahunAjaran?->nama ?? '—' }} · {{ $kelas->is_aktif ? 'Kelas aktif' : 'Kelas nonaktif' }}</p></div><div class="actions"><a class="btn btn-secondary" href="{{ route('admin.kelas.index', ['tahun_ajaran' => $kelas->id_tahun_ajaran]) }}">Kembali</a><a class="btn" href="{{ route('admin.kelas.edit', $kelas) }}">Ubah kelas</a></div></div>
+    <div class="page-heading"><div><h1>{{ $kelas->nama_kelas }}</h1><p>Tingkat {{ $kelas->tingkat }} · Tahun ajaran {{ $kelas->tahunAjaran?->nama ?? '—' }} · {{ $kelas->is_aktif ? 'Kelas aktif' : 'Kelas nonaktif' }}</p></div><div class="actions"><x-tombol-kembali :fallback="route('admin.kelas.index', ['tahun_ajaran' => $kelas->id_tahun_ajaran])" :dengan-ikon="false" /><a class="btn" href="{{ route('admin.kelas.edit', $kelas) }}">Ubah kelas</a></div></div>
     <div class="alert alert-info"><strong>Keanggotaan historis tetap disimpan.</strong><p>Tidak ada tindakan mengeluarkan anggota karena hal itu dapat menghilangkan siswa dari rekap kelas lama. Jika siswa keluar sekolah, nonaktifkan akunnya melalui halaman siswa. Untuk tahun ajaran berikutnya, buat kelas dan keanggotaan baru.</p></div>
     <section class="card"><h2>Mata pelajaran kelas</h2><div class="tags">@forelse($kelas->mapel as $pelajaran)<span class="badge {{ $pelajaran->is_aktif ? '' : 'badge-muted' }}">{{ $pelajaran->nama_mapel }}{{ $pelajaran->is_aktif ? '' : ' (nonaktif)' }}</span>@empty<p class="muted">Belum ada mata pelajaran. Gunakan Ubah kelas untuk mengaturnya.</p>@endforelse</div></section>
     <section class="card">

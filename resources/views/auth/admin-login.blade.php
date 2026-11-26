@@ -117,9 +117,7 @@
 
             <!-- LINK KEMBALI KE LOGIN SISWA & GURU -->
             <div class="back-link-box">
-                <a href="{{ route('login') }}" class="btn-back-user">
-                    @include('partials.icon', ['name' => 'arrow-left']) Kembali ke Login Siswa & Guru
-                </a>
+                <x-tombol-kembali :fallback="route('login')" label="Kembali ke Login Siswa & Guru" class="btn-back-user" />
             </div>
 
         </div>

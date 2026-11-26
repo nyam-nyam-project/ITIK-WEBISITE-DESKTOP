@@ -62,9 +62,7 @@
 
     <div class="page-heading">
         <div>
-            <a href="{{ route('siswa.materi.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-                @include('partials.icon', ['name' => 'arrow-left']) Kembali
-            </a>
+            <x-tombol-kembali :fallback="route('siswa.materi.index')" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px" />
             <h1>{{ $mapelTerpilih->nama_mapel }}</h1>
             <p>{{ $materi->count() }} materi pembelajaran tersedia untuk mata pelajaran ini.</p>
         </div>
@@ -74,9 +72,7 @@
         <div class="empty">
             <h3>Belum Ada Materi untuk Mata Pelajaran Ini</h3>
             <p>Guru belum menambahkan materi pembelajaran untuk mata pelajaran ini.</p>
-            <a href="{{ route('siswa.materi.index') }}" class="btn btn-secondary u-margin-top-14px">
-                @include('partials.icon', ['name' => 'arrow-left']) Pilih Mata Pelajaran Lain
-            </a>
+            <x-tombol-kembali :fallback="route('siswa.materi.index')" label="Pilih Mata Pelajaran Lain" class="btn btn-secondary u-margin-top-14px" />
         </div>
     @else
         <div class="materi-list-foto2">

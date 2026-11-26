@@ -15,9 +15,7 @@
 
 <div class="page-heading">
     <div>
-        <a href="{{ route('kuis.soal.index', $kuis->id_kuis) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-6px">
-            @include('partials.icon', ['name' => 'arrow-left']) Kembali
-        </a>
+        <x-tombol-kembali :fallback="route('kuis.soal.index', $kuis->id_kuis)" class="btn btn-secondary u-display-inline-block u-margin-bottom-6px" />
         <h1>Edit Butir Soal</h1>
         <p>Kuis: <strong>{{ $kuis->judul }}</strong></p>
     </div>

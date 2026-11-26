@@ -51,10 +51,7 @@
         <button type="button" class="btn" id="buka-password">
             @include('partials.icon', ['name' => 'key']) Ganti Password
         </button>
-        <a class="btn btn-secondary"
-            href="{{ $pengguna?->role === 'siswa' ? route('siswa.dashboard') : route('dashboard') }}">
-            @include('partials.icon', ['name' => 'arrow-left']) Kembali
-        </a>
+        <x-tombol-kembali :fallback="$pengguna?->role === 'siswa' ? route('siswa.dashboard') : route('dashboard')" />
     </div>
 </section>
 

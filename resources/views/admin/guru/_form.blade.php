@@ -10,4 +10,4 @@
 @else
     <div class="alert alert-info">Akun guru baru dibuat dengan status aktif dan ditandai wajib mengganti kata sandi.</div>
 @endif
-<div class="form-actions"><button class="btn" type="submit">{{ $sedangEdit ? 'Simpan perubahan' : 'Simpan guru' }}</button><a class="btn btn-secondary" href="{{ route('admin.guru.index') }}">Batal</a></div>
+<div class="form-actions"><button class="btn" type="submit">{{ $sedangEdit ? 'Simpan perubahan' : 'Simpan guru' }}</button><x-tombol-kembali :fallback="route('admin.guru.index')" label="Batal" :dengan-ikon="false" /></div>

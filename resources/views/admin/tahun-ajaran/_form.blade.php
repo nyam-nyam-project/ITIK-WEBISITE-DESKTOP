@@ -10,4 +10,4 @@
     <div class="field"><label for="tanggal_selesai">Tanggal selesai</label><input id="tanggal_selesai" type="date" name="tanggal_selesai" value="{{ old('tanggal_selesai', isset($tahunAjaran) ? $tahunAjaran->tanggal_selesai?->format('Y-m-d') : '') }}" aria-describedby="tanggal-help" aria-invalid="{{ $errors->has('tanggal_selesai') ? 'true' : 'false' }}"><p class="help" id="tanggal-help">Tanggal selesai harus setelah tanggal mulai.</p>@error('tanggal_selesai')<p class="error">{{ $message }}</p>@enderror</div>
 </div>
 <div class="alert alert-info">Status aktif tidak diubah melalui formulir ini. Gunakan tindakan <strong>Aktifkan</strong> di daftar tahun ajaran setelah data disimpan.</div>
-<div class="form-actions"><button class="btn" type="submit">{{ isset($tahunAjaran) ? 'Simpan perubahan' : 'Simpan tahun ajaran' }}</button><a class="btn btn-secondary" href="{{ route('admin.tahun-ajaran.index') }}">Batal</a></div>
+<div class="form-actions"><button class="btn" type="submit">{{ isset($tahunAjaran) ? 'Simpan perubahan' : 'Simpan tahun ajaran' }}</button><x-tombol-kembali :fallback="route('admin.tahun-ajaran.index')" label="Batal" :dengan-ikon="false" /></div>

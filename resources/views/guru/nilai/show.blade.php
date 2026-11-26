@@ -20,9 +20,7 @@
         <h1>Detail Nilai Siswa</h1>
         <p>Detail hasil pengerjaan kuis siswa dan evaluasi butir soal.</p>
     </div>
-    <a href="{{ route('guru.nilai.index') }}" class="btn btn-secondary">
-        @include('partials.icon', ['name' => 'arrow-left']) Kembali
-    </a>
+    <x-tombol-kembali :fallback="route('guru.nilai.index')" />
 </div>
 
 @if($menungguPenilaian)

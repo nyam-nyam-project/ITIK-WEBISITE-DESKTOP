@@ -27,4 +27,4 @@
     <div class="field"><label for="id_kelas">Kelas awal (opsional)</label><select id="id_kelas" name="id_kelas"><option value="">Belum ditempatkan di kelas</option>@foreach($daftarKelas as $kelasPilihan)<option value="{{ $kelasPilihan->id_kelas }}" @selected(old('id_kelas') == $kelasPilihan->id_kelas)>{{ $kelasPilihan->nama_kelas }} · {{ $kelasPilihan->tahunAjaran?->nama ?? '—' }}</option>@endforeach</select><p class="help">Periksa tahun ajarannya. Keanggotaan tambahan dapat diatur setelah akun disimpan.</p>@error('id_kelas')<p class="error">{{ $message }}</p>@enderror</div>
     <div class="alert alert-info">Akun siswa baru dibuat dengan status aktif dan ditandai wajib mengganti kata sandi.</div>
 @endif
-<div class="form-actions"><button class="btn" type="submit">{{ $sedangEdit ? 'Simpan perubahan' : 'Simpan siswa' }}</button><a class="btn btn-secondary" href="{{ route('admin.siswa.index') }}">Batal</a></div>
+<div class="form-actions"><button class="btn" type="submit">{{ $sedangEdit ? 'Simpan perubahan' : 'Simpan siswa' }}</button><x-tombol-kembali :fallback="route('admin.siswa.index')" label="Batal" :dengan-ikon="false" /></div>

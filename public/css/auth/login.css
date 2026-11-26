@@ -69,6 +69,8 @@ body {
 .logo-icon {
     width: 58px;
     height: 58px;
+    padding: 11px;
+    overflow: hidden;
 
     border: 1px solid rgba(255, 255, 255, .4);
     border-radius: 16px;
@@ -79,6 +81,13 @@ body {
 
     font-size: 23px;
     font-weight: bold;
+}
+
+.logo-icon .logo-itik-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
 }
 
 .logo-text h2 {
@@ -282,6 +291,9 @@ body {
 .toggle-password:hover {
     color: var(--purple);
 }
+
+.toggle-password span { display: flex; }
+.toggle-password [hidden] { display: none; }
 
 /* =========================
    BUTTON LOGIN

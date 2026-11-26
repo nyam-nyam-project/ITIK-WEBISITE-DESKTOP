@@ -33,8 +33,11 @@
     background: var(--surface-alt);
     border: 1.5px solid var(--border);
     color: var(--ink);
+    font-family: inherit;
     font-size: 13px;
     font-weight: 600;
+    line-height: inherit;
+    text-align: left;
     cursor: pointer;
     transition: all .2s ease;
     user-select: none;
@@ -73,10 +76,17 @@
     display: block;
 }
 .pill-dropdown-item {
+    display: block;
+    width: 100%;
+    border: none;
+    background: transparent;
     padding: 10px 14px;
     border-radius: 8px;
+    font-family: inherit;
     font-size: 13px;
     font-weight: 500;
+    line-height: inherit;
+    text-align: left;
     cursor: pointer;
     color: var(--ink);
     transition: background .15s ease;

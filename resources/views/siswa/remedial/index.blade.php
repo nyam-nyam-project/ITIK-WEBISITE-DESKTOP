@@ -9,7 +9,7 @@
         <p>Perbaiki nilai kuis yang belum mencapai KKM.</p>
     </div>
     <a href="{{ route('siswa.kuis.index') }}" class="btn btn-secondary">
-        ← Ke Daftar Kuis
+        @include('partials.icon', ['name' => 'arrow-left']) Ke Daftar Kuis
     </a>
 </div>
 

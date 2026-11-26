@@ -16,7 +16,7 @@
 <div class="page-heading">
     <div>
         <a href="{{ route('kuis.soal.index', $kuis->id_kuis) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-6px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>Edit Butir Soal</h1>
         <p>Kuis: <strong>{{ $kuis->judul }}</strong></p>
@@ -127,8 +127,8 @@
                 </div>
             </div>
 
-            <p class="jawaban-hint">👆 Klik pada baris opsi untuk memilihnya sebagai kunci jawaban yang benar.</p>
-            <p class="jawaban-selected-label" id="label-jawaban-selected" data-answer-label="&#9989; Kunci Jawaban: Opsi "></p>
+            <p class="jawaban-hint">@include('partials.icon', ['name' => 'info']) Klik pada baris opsi untuk memilihnya sebagai kunci jawaban yang benar.</p>
+            <p class="jawaban-selected-label" id="label-jawaban-selected" data-answer-label="Kunci Jawaban: Opsi "></p>
             @error('jawaban') <div class="error">{{ $message }}</div> @enderror
         </div>
 

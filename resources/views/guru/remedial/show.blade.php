@@ -10,14 +10,14 @@
 <div class="page-heading">
     <div>
         <a href="{{ route('guru.remedial.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>Detail Kuis Remedial</h1>
         <p>Pantau perkembangan dan hasil pengerjaan remedial siswa.</p>
     </div>
     <div class="u-display-flex u-gap-10px">
         <a href="{{ route('guru.remedial.siswa', $remedial->id_remedial) }}" class="btn btn-primary">
-            👥 Tugaskan Siswa
+            @include('partials.icon', ['name' => 'users']) Tugaskan Siswa
         </a>
     </div>
 </div>
@@ -60,11 +60,11 @@
 
     @if($remedial->remedialSiswa->isEmpty())
         <div class="empty-state u-padding-48px-20px u-text-align-center">
-            <div class="u-font-size-40px u-margin-bottom-12px">📝</div>
+            <div class="u-font-size-40px u-margin-bottom-12px">@include('partials.icon', ['name' => 'file-text'])</div>
             <h3 class="u-margin-bottom-6px">Belum Ada Siswa yang Ditugaskan</h3>
             <p class="muted u-margin-bottom-20px">Klik tombol "Tugaskan Siswa" di atas untuk memilih siswa yang nilainya di bawah KKM pada Ulangan.</p>
             <a href="{{ route('guru.remedial.siswa', $remedial->id_remedial) }}" class="btn btn-primary">
-                👥 Tugaskan Siswa Sekarang
+                @include('partials.icon', ['name' => 'users']) Tugaskan Siswa Sekarang
             </a>
         </div>
     @else
@@ -120,7 +120,7 @@
                                 @if($nilaiRemedial === null)
                                     <span class="badge badge-secondary">Belum Mengerjakan</span>
                                 @elseif($nilaiRemedial >= $kkm)
-                                    <span class="badge badge-success">✓ Lulus Remedial</span>
+                                    <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Lulus Remedial</span>
                                 @else
                                     <span class="badge badge-danger">Belum Lulus</span>
                                 @endif

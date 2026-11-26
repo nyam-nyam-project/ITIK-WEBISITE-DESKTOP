@@ -14,11 +14,11 @@
     </div>
     <div class="actions">
         <a href="{{ route('guru.arsip.index', ['tab' => 'kuis', 'mapel' => $mapelTerpilih?->id_mapel]) }}" class="btn btn-secondary">
-            📁 Kotak Arsip
+            @include('partials.icon', ['name' => 'folder']) Kotak Arsip
         </a>
         @if ($mapelTerpilih)
             <a href="{{ route('kuis.create', ['mapel' => $mapelTerpilih->id_mapel]) }}" class="btn">
-                + Tambah Kuis
+                @include('partials.icon', ['name' => 'plus']) Tambah Kuis
             </a>
         @endif
     </div>
@@ -42,15 +42,15 @@
         @else
             <div class="mapel-grid">
                 @foreach ($mapelAktif as $mapel)
-                    <a href="{{ route('kuis.index', ['mapel' => $mapel->id_mapel]) }}" class="mapel-card">
+                    <a href="{{ route('kuis.index', ['mapel' => $mapel->id_mapel]) }}" class="mapel-card" data-reveal>
                         <div>
-                            <div class="mapel-icon">📖</div>
+                            <div class="mapel-icon">@include('partials.icon', ['name' => 'book-open'])</div>
                             <h3 class="u-font-size-17px u-margin-bottom-4px">{{ $mapel->nama_mapel }}</h3>
                             <span class="muted small">{{ $mapel->id_mapel }}</span>
                         </div>
                         <div class="u-margin-top-16px u-padding-top-12px u-border-top-1px-solid-var---border u-display-flex u-justify-content-space-between u-align-items-center u-font-size-12px">
                             <span class="muted"><strong>{{ $mapel->kuis_count }}</strong> kuis aktif</span>
-                            <span class="u-font-weight-700 u-color-var---purple">Kelola →</span>
+                            <span class="u-font-weight-700 u-color-var---purple">Kelola @include('partials.icon', ['name' => 'arrow-right'])</span>
                         </div>
                     </a>
                 @endforeach
@@ -66,17 +66,17 @@
             <p>{{ $kuis->total() }} kuis tersedia &bull; Kode: {{ $mapelTerpilih->id_mapel }}</p>
         </div>
         <a href="{{ route('kuis.index') }}" class="btn-back-mapel">
-            ← Ganti Mata Pelajaran
+            @include('partials.icon', ['name' => 'arrow-left']) Ganti Mata Pelajaran
         </a>
     </div>
 
     {{-- TOGGLE VIEW --}}
     <div class="view-toggle">
         <button type="button" class="view-btn active" id="btn-view-bab" data-view="bab">
-            📁 Kelompokkan Per Bab Materi
+            @include('partials.icon', ['name' => 'folder']) Kelompokkan Per Bab Materi
         </button>
         <button type="button" class="view-btn" id="btn-view-all" data-view="all">
-            📋 Semua Kuis (Tabel Lengkap)
+            @include('partials.icon', ['name' => 'list']) Semua Kuis (Tabel Lengkap)
         </button>
     </div>
 
@@ -116,13 +116,28 @@
 
                         <div class="u-display-flex u-gap-6px">
                             <span class="level-pill {{ $hasMudah ? 'active-mudah' : 'inactive' }}">
-                                {{ $hasMudah ? '✓' : '○' }} Mudah
+                                @if($hasMudah)
+                                    @include('partials.icon', ['name' => 'check'])
+                                @else
+                                    @include('partials.icon', ['name' => 'circle-x'])
+                                @endif
+                                Mudah<span class="sr-only"> {{ $hasMudah ? 'tersedia' : 'belum tersedia' }}</span>
                             </span>
                             <span class="level-pill {{ $hasSedang ? 'active-sedang' : 'inactive' }}">
-                                {{ $hasSedang ? '✓' : '○' }} Sedang
+                                @if($hasSedang)
+                                    @include('partials.icon', ['name' => 'check'])
+                                @else
+                                    @include('partials.icon', ['name' => 'circle-x'])
+                                @endif
+                                Sedang<span class="sr-only"> {{ $hasSedang ? 'tersedia' : 'belum tersedia' }}</span>
                             </span>
                             <span class="level-pill {{ $hasSulit ? 'active-sulit' : 'inactive' }}">
-                                {{ $hasSulit ? '✓' : '○' }} Sulit
+                                @if($hasSulit)
+                                    @include('partials.icon', ['name' => 'check'])
+                                @else
+                                    @include('partials.icon', ['name' => 'circle-x'])
+                                @endif
+                                Sulit<span class="sr-only"> {{ $hasSulit ? 'tersedia' : 'belum tersedia' }}</span>
                             </span>
                         </div>
                     </div>
@@ -145,7 +160,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($listKuisBab as $item)
-                                        <tr>
+                                        <tr data-reveal>
                                             <td><code>{{ $item->id_kuis }}</code></td>
                                             <td><strong>{{ $item->judul }}</strong></td>
                                             <td><span class="badge">{{ ucfirst($item->kategori) }}</span></td>
@@ -188,7 +203,7 @@
                         <div class="empty u-padding-16px">
                             <p class="muted small u-margin-bottom-8px">Belum ada kuis untuk bab materi ini.</p>
                             <a href="{{ route('kuis.create', ['mapel' => $mapelTerpilih->id_mapel]) }}" class="btn btn-secondary btn-small">
-                                + Buat Kuis Bab Ini
+                                @include('partials.icon', ['name' => 'plus']) Buat Kuis Bab Ini
                             </a>
                         </div>
                     @endif
@@ -201,7 +216,7 @@
             <div class="bab-card">
                 <div class="bab-header">
                     <div>
-                        <h2 class="u-font-size-17px u-margin-bottom-2px">📝 Ulangan &amp; Kuis Umum</h2>
+                        <h2 class="u-font-size-17px u-margin-bottom-2px">@include('partials.icon', ['name' => 'file-text']) Ulangan &amp; Kuis Umum</h2>
                         <span class="muted small">{{ count($kuisUmum) }} kuis umum tanpa materi spesifik</span>
                     </div>
                 </div>
@@ -223,7 +238,7 @@
                         </thead>
                         <tbody>
                             @foreach ($kuisUmum as $item)
-                                <tr>
+                                <tr data-reveal>
                                     <td><code>{{ $item->id_kuis }}</code></td>
                                     <td><strong>{{ $item->judul }}</strong></td>
                                     <td><span class="badge">{{ ucfirst($item->kategori) }}</span></td>
@@ -287,7 +302,7 @@
                         </thead>
                         <tbody>
                             @foreach ($kuis as $item)
-                                <tr>
+                                <tr data-reveal>
                                     <td><code>{{ $item->id_kuis }}</code></td>
                                     <td><strong>{{ $item->judul }}</strong></td>
                                     <td><span class="badge">{{ ucfirst($item->kategori) }}</span></td>

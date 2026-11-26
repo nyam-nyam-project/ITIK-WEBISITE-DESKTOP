@@ -8,7 +8,7 @@
         @if($tahunAjaran->isNotEmpty())
             <div class="table-wrap"><table><thead><tr><th scope="col">Tahun ajaran</th><th scope="col">Tanggal mulai</th><th scope="col">Tanggal selesai</th><th scope="col" class="number">Kelas</th><th scope="col">Status</th><th scope="col">Tindakan</th></tr></thead><tbody>
                 @foreach($tahunAjaran as $item)
-                    <tr>
+                    <tr data-reveal>
                         <td><strong>{{ $item->nama }}</strong><span class="muted small">{{ $item->id_tahun_ajaran }}</span></td>
                         <td class="nowrap">{{ $item->tanggal_mulai?->format('d/m/Y') ?? '—' }}</td><td class="nowrap">{{ $item->tanggal_selesai?->format('d/m/Y') ?? '—' }}</td>
                         <td class="number"><a href="{{ route('admin.kelas.index', ['tahun_ajaran' => $item->id_tahun_ajaran]) }}">{{ $item->kelas_count }}</a></td>

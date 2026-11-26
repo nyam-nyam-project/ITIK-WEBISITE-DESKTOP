@@ -9,7 +9,7 @@
 
 <div class="breadcrumb">
     <a href="{{ route('dashboard') }}">Dashboard</a>
-    <span class="sep">›</span>
+    <span class="sep">@include('partials.icon', ['name' => 'chevron-right'])</span>
     <span class="current">Kotak Arsip</span>
 </div>
 
@@ -20,10 +20,10 @@
     </div>
     <div class="actions">
         <a href="{{ route('kuis.index') }}" class="btn btn-secondary">
-            ← Kembali ke Kuis
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali ke Kuis
         </a>
         <a href="{{ route('materi.index') }}" class="btn btn-secondary">
-            ← Kembali ke Materi
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali ke Materi
         </a>
     </div>
 </div>
@@ -32,12 +32,12 @@
 <div class="arsip-tabs">
     <a href="{{ route('guru.arsip.index', ['tab' => 'kuis', 'mapel' => $idMapel]) }}"
        class="arsip-tab-btn {{ $tab === 'kuis' ? 'active' : '' }}">
-        <span>📝 Kuis Diarsipkan</span>
+        <span>@include('partials.icon', ['name' => 'file-text']) Kuis Diarsipkan</span>
         <span class="arsip-count-badge">{{ $totalKuisArsip }}</span>
     </a>
     <a href="{{ route('guru.arsip.index', ['tab' => 'materi', 'mapel' => $idMapel]) }}"
        class="arsip-tab-btn {{ $tab === 'materi' ? 'active' : '' }}">
-        <span>📚 Materi Diarsipkan</span>
+        <span>@include('partials.icon', ['name' => 'book-open']) Materi Diarsipkan</span>
         <span class="arsip-count-badge">{{ $totalMateriArsip }}</span>
     </a>
 </div>
@@ -90,7 +90,7 @@
                 </thead>
                 <tbody>
                     @foreach($kuisArsip as $k)
-                        <tr>
+                        <tr data-reveal>
                             <td><code>{{ $k->id_kuis }}</code></td>
                             <td><strong>{{ $k->judul }}</strong></td>
                             <td>{{ $k->mapel?->nama_mapel ?? '-' }}</td>
@@ -115,7 +115,7 @@
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" class="btn-restore" title="Kembalikan ke daftar kuis aktif">
-                                            ↻ Pulihkan
+                                            @include('partials.icon', ['name' => 'rotate-ccw']) Pulihkan
                                         </button>
                                     </form>
 
@@ -124,7 +124,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn-force-delete" title="Hapus permanen dari database">
-                                            🗑 Hapus Permanen
+                                            @include('partials.icon', ['name' => 'trash']) Hapus Permanen
                                         </button>
                                     </form>
                                 </div>
@@ -162,7 +162,7 @@
                 </thead>
                 <tbody>
                     @foreach($materiArsip as $m)
-                        <tr>
+                        <tr data-reveal>
                             <td><code>{{ $m->id_materi }}</code></td>
                             <td><strong>{{ $m->judul }}</strong></td>
                             <td>{{ $m->mapel?->nama_mapel ?? '-' }}</td>
@@ -171,7 +171,7 @@
                             </td>
                             <td>
                                 @if($m->isi_materi)
-                                    <span class="badge badge-success">📄 Tersimpan</span>
+                                    <span class="badge badge-success">@include('partials.icon', ['name' => 'file-text']) Tersimpan</span>
                                 @else
                                     <span class="muted small">-</span>
                                 @endif
@@ -183,7 +183,7 @@
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" class="btn-restore" title="Kembalikan ke daftar materi aktif">
-                                            ↻ Pulihkan
+                                            @include('partials.icon', ['name' => 'rotate-ccw']) Pulihkan
                                         </button>
                                     </form>
 
@@ -192,7 +192,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn-force-delete" title="Hapus permanen dari database dan penyimpanan">
-                                            🗑 Hapus Permanen
+                                            @include('partials.icon', ['name' => 'trash']) Hapus Permanen
                                         </button>
                                     </form>
                                 </div>

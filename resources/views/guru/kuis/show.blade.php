@@ -10,7 +10,7 @@
 <div class="page-heading">
     <div>
         <a href="{{ route('kuis.index', ['mapel' => $kuis->id_mapel]) }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>{{ $kuis->judul }}</h1>
         <p>Detail kuis, jadwal, daftar butir soal, dan publikasi.</p>
@@ -18,15 +18,15 @@
     <div class="u-display-flex u-gap-10px">
         @if ($kuis->status_publikasi === 'terbit')
             <a href="{{ route('kuis.edit', $kuis->id_kuis) }}" class="btn btn-secondary" data-alert="Kuis tersebut tidak dapat diedit karena berstatus terbit. Ubah ke status draft terlebih dahulu.">
-                ✎ Edit Kuis
+                @include('partials.icon', ['name' => 'edit']) Edit Kuis
             </a>
         @else
             <a href="{{ route('kuis.edit', $kuis->id_kuis) }}" class="btn btn-secondary">
-                ✎ Edit Kuis
+                @include('partials.icon', ['name' => 'edit']) Edit Kuis
             </a>
         @endif
         <a href="{{ route('kuis.soal.index', $kuis->id_kuis) }}" class="btn btn-primary">
-            ⚙ Kelola Bank Soal
+            @include('partials.icon', ['name' => 'settings']) Kelola Bank Soal
         </a>
     </div>
 </div>
@@ -53,21 +53,21 @@
             @csrf
             @method('PATCH')
             <button type="submit" class="btn btn-primary u-background-10b981 u-border-color-10b981">
-                ✓ Publikasikan Kuis
+                @include('partials.icon', ['name' => 'check']) Publikasikan Kuis
             </button>
         </form>
     </div>
 @elseif ($kuis->status_publikasi === 'terbit' && $kuis->is_aktif)
     <div class="card u-background-f0fdf4 u-border-color-bbf7d0 u-margin-bottom-24px u-padding-18px-24px u-display-flex u-align-items-center u-justify-content-space-between u-gap-20px u-flex-wrap-wrap">
         <div>
-            <strong class="u-color-166534 u-font-size-16px u-display-block u-margin-bottom-4px">🟢 Kuis AKTIF / TERBIT</strong>
+            <strong class="u-color-166534 u-font-size-16px u-display-block u-margin-bottom-4px">@include('partials.icon', ['name' => 'circle-check']) Kuis AKTIF / TERBIT</strong>
             <p class="muted small u-margin-0">Kuis ini dapat dikerjakan siswa. Tarik kuis kembali ke draft jika ingin menghentikan pengerjaan sementara atau mengubah butir soal.</p>
         </div>
         <form action="{{ route('kuis.unpublish', $kuis->id_kuis) }}" method="POST" data-confirm="Yakin ingin menarik kuis ini kembali ke draft? Siswa tidak akan bisa mengerjakan kuis ini.">
             @csrf
             @method('PATCH')
             <button type="submit" class="btn btn-secondary u-color-b91c1c u-border-color-fca5a5">
-                ✕ Tarik ke Draft
+                @include('partials.icon', ['name' => 'x']) Tarik ke Draft
             </button>
         </form>
     </div>
@@ -152,7 +152,7 @@
             @forelse ($kuis->materi as $materi)
                 <div class="u-display-flex u-align-items-center u-gap-12px u-padding-12px-14px u-background-fbfafd u-border-radius-10px u-border-1px-solid-f0eff6">
                     <div class="u-width-28px u-height-28px u-border-radius-8px u-background-ede9fc u-color-5542dc u-display-flex u-align-items-center u-justify-content-center u-font-weight-700 u-font-size-13px">
-                        📖
+                        @include('partials.icon', ['name' => 'book-open'])
                     </div>
                     <div>
                         <strong class="u-font-size-14px u-color-202044">{{ $materi->judul }}</strong>
@@ -177,7 +177,7 @@
                 <p class="muted">Pratinjau butir pertanyaan dalam kuis ini.</p>
             </div>
             <a href="{{ route('kuis.soal.index', $kuis->id_kuis) }}" class="btn btn-secondary small">
-                Buka Bank Soal →
+                Buka Bank Soal @include('partials.icon', ['name' => 'arrow-right'])
             </a>
         </div>
 
@@ -196,7 +196,7 @@
                 <div class="empty-state u-padding-30px-16px u-text-align-center">
                     <p class="muted u-margin-bottom-12px">Kuis ini belum memiliki butir soal.</p>
                     <a href="{{ route('kuis.soal.create', $kuis->id_kuis) }}" class="btn btn-primary small">
-                        + Tambah Soal Pertama
+                        @include('partials.icon', ['name' => 'plus']) Tambah Soal Pertama
                     </a>
                 </div>
             @endforelse

@@ -111,7 +111,7 @@
                     </thead>
                     <tbody>
                         @foreach($pengajaran as $item)
-                            <tr>
+                            <tr data-reveal>
                                 <td>{{ ($pengajaran->firstItem() ?? 1) + $loop->index }}</td>
                                 <td class="text-break">
                                     <strong>{{ $item->guru?->nama_lengkap ?? '—' }}</strong>

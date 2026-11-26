@@ -35,7 +35,7 @@
                         @php
                             $kkm = $item->mengerjakanAsal?->kuis?->kkm;
                         @endphp
-                        <tr>
+                        <tr data-reveal>
                             <td class="number u-text-align-left">{{ $loop->iteration }}</td>
                             <td>
                                 <strong>{{ $item->mengerjakanAsal?->kuis?->judul ?? '-' }}</strong>
@@ -54,7 +54,7 @@
                                 @if($item->status === 'ditugaskan')
                                     <span class="badge badge-warning">Belum Dikerjakan</span>
                                 @elseif($item->status === 'selesai')
-                                    <span class="badge badge-success">✓ Selesai</span>
+                                    <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Selesai</span>
                                 @else
                                     <span class="badge">{{ $item->status }}</span>
                                 @endif
@@ -62,10 +62,10 @@
                             <td>
                                 @if($item->status === 'ditugaskan')
                                     <a href="{{ route('siswa.remedial.kerjakan', $item->id_remedial_siswa) }}" class="btn btn-small">
-                                        Kerjakan Remedial →
+                                        Kerjakan Remedial @include('partials.icon', ['name' => 'arrow-right'])
                                     </a>
                                 @elseif($item->status === 'selesai')
-                                    <span class="muted small u-color-166534 u-font-weight-600">✓ Sudah Selesai</span>
+                                    <span class="muted small u-color-166534 u-font-weight-600">@include('partials.icon', ['name' => 'check']) Sudah Selesai</span>
                                 @else
                                     {{ $item->status }}
                                 @endif

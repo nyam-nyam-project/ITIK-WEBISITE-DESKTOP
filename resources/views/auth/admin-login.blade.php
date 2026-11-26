@@ -9,6 +9,7 @@
     <script src="{{ asset('js/theme-init.js') }}"></script>
     <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/icons.css') }}">
     <link rel="stylesheet" href="{{ asset('css/auth/admin-login.css') }}">
     <link rel="stylesheet" href="{{ asset('css/utilities.css') }}">
 </head>
@@ -21,12 +22,12 @@
         <div class="login-left">
 
             <div class="admin-badge">
-                🛡️ PORTAL ADMINISTRATOR
+                @include('partials.icon', ['name' => 'shield']) PORTAL ADMINISTRATOR
             </div>
 
             <div class="logo">
                 <div class="logo-icon">
-                    ⚙️
+                    <img src="{{ asset('images/logo-itik.png') }}" alt="Logo ITIK" class="logo-itik-img">
                 </div>
                 <div class="logo-text">
                     <h2>ITIK Admin</h2>
@@ -67,7 +68,7 @@
                 <div class="form-group">
                     <label for="login">Username atau Email Administrator</label>
                     <div class="input-wrapper">
-                        <span class="input-icon">✉</span>
+                        <span class="input-icon">@include('partials.icon', ['name' => 'mail'])</span>
                         <input
                             type="text"
                             id="login"
@@ -85,7 +86,7 @@
                 <div class="form-group">
                     <label for="password">Password</label>
                     <div class="input-wrapper">
-                        <span class="input-icon">🔒</span>
+                        <span class="input-icon">@include('partials.icon', ['name' => 'lock'])</span>
                         <input
                             type="password"
                             id="password"
@@ -98,13 +99,13 @@
                             type="button"
                             class="toggle-password"
                             data-password-toggle="password"
-                            data-password-visible-icon="&#128274;"
-                            data-password-hidden-icon="&#128065;"
                             data-password-visible-label="Sembunyikan password"
                             data-password-hidden-label="Tampilkan password"
                             aria-label="Tampilkan password"
+                            aria-pressed="false"
                         >
-                            👁
+                            <span data-password-icon="hidden">@include('partials.icon', ['name' => 'eye'])</span>
+                            <span data-password-icon="visible" hidden>@include('partials.icon', ['name' => 'eye-off'])</span>
                         </button>
                     </div>
                 </div>
@@ -117,7 +118,7 @@
             <!-- LINK KEMBALI KE LOGIN SISWA & GURU -->
             <div class="back-link-box">
                 <a href="{{ route('login') }}" class="btn-back-user">
-                    ← Kembali ke Login Siswa & Guru
+                    @include('partials.icon', ['name' => 'arrow-left']) Kembali ke Login Siswa & Guru
                 </a>
             </div>
 

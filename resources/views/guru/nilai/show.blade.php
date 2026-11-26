@@ -21,7 +21,7 @@
         <p>Detail hasil pengerjaan kuis siswa dan evaluasi butir soal.</p>
     </div>
     <a href="{{ route('guru.nilai.index') }}" class="btn btn-secondary">
-        ← Kembali
+        @include('partials.icon', ['name' => 'arrow-left']) Kembali
     </a>
 </div>
 
@@ -94,9 +94,9 @@
                     @elseif($mengerjakan->nilai === null)
                         —
                     @elseif($mengerjakan->kuis->kkm !== null && $mengerjakan->nilai >= $mengerjakan->kuis->kkm)
-                        <span class="badge badge-success">✓ Lulus</span>
+                        <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Lulus</span>
                     @else
-                        <span class="badge badge-warning">⚠️ Tidak Lulus</span>
+                        <span class="badge badge-warning">@include('partials.icon', ['name' => 'alert-triangle']) Tidak Lulus</span>
                     @endif
                 </dd>
             </div>
@@ -150,7 +150,7 @@
     <section class="card">
         <div class="card-header">
             <div>
-                <h2>📋 Evaluasi Jawaban Siswa per Butir Soal</h2>
+                <h2>@include('partials.icon', ['name' => 'file-text']) Evaluasi Jawaban Siswa per Butir Soal</h2>
                 <p class="muted">{{ $soalEssay->isNotEmpty() ? 'Evaluasi pilihan ganda serta jawaban essay yang tersimpan untuk percobaan ini.' : 'Daftar butir soal, jawaban yang dipilih siswa, serta kunci jawaban sistem.' }}</p>
             </div>
         </div>
@@ -247,11 +247,11 @@
                     </strong>
 
                     @if($isBenar)
-                        <span class="badge badge-success">✓ Benar (+{{ $itemSoal->bobot ?? 0 }}%)</span>
+                        <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Benar (+{{ $itemSoal->bobot ?? 0 }}%)</span>
                     @elseif($jawabanDipilih)
-                        <span class="badge badge-warning">✗ Salah (Siswa pilih: {{ strtoupper($jawabanDipilih) }})</span>
+                        <span class="badge badge-warning">@include('partials.icon', ['name' => 'x']) Salah (Siswa pilih: {{ strtoupper($jawabanDipilih) }})</span>
                     @else
-                        <span class="badge badge-muted">○ Tidak Dijawab</span>
+                        <span class="badge badge-muted">@include('partials.icon', ['name' => 'circle-x']) Tidak Dijawab</span>
                     @endif
                 </div>
 
@@ -278,11 +278,11 @@
                                 <span>{{ $teksOpsi }}</span>
 
                                 @if($isKunci && $isDipilih)
-                                    <span class="opsi-guru-badge badge-green">✓ Jawaban Siswa (Benar)</span>
+                                    <span class="opsi-guru-badge badge-green">@include('partials.icon', ['name' => 'check']) Jawaban Siswa (Benar)</span>
                                 @elseif($isKunci)
-                                    <span class="opsi-guru-badge badge-green">✓ Kunci Jawaban</span>
+                                    <span class="opsi-guru-badge badge-green">@include('partials.icon', ['name' => 'check']) Kunci Jawaban</span>
                                 @elseif($isDipilih)
-                                    <span class="opsi-guru-badge badge-red">✗ Pilihan Siswa (Salah)</span>
+                                    <span class="opsi-guru-badge badge-red">@include('partials.icon', ['name' => 'x']) Pilihan Siswa (Salah)</span>
                                 @endif
                             </div>
                         @endif

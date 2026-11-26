@@ -1,0 +1,40 @@
+@media (prefers-reduced-motion: no-preference) {
+    html.js [data-reveal].reveal-pending {
+        opacity: 0;
+        transform: translateY(8px);
+        transition: none;
+    }
+
+    html.js [data-reveal].reveal-pending.reveal-visible {
+        opacity: 1;
+        transform: none;
+        transition: opacity 320ms ease-out, transform 320ms ease-out;
+    }
+
+    html.js [data-reveal].reveal-pending.reveal-visible[data-reveal-step="1"] {
+        transition-delay: 40ms;
+    }
+
+    html.js [data-reveal].reveal-pending.reveal-visible[data-reveal-step="2"] {
+        transition-delay: 80ms;
+    }
+
+    html.js [data-reveal].reveal-pending.reveal-visible[data-reveal-step="3"] {
+        transition-delay: 120ms;
+    }
+
+    html.js [data-reveal].reveal-pending:focus-within {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.js [data-reveal].reveal-pending {
+        opacity: 1;
+        transform: none;
+        transition: none;
+        animation: none;
+    }
+}

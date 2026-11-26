@@ -10,7 +10,7 @@
     </div>
     <div>
         <a href="{{ route('guru.remedial.create') }}" class="btn btn-primary">
-            + Buat Kuis Remedial
+            @include('partials.icon', ['name' => 'plus']) Buat Kuis Remedial
         </a>
     </div>
 </div>
@@ -25,11 +25,11 @@
 
     @if($remedials->isEmpty())
         <div class="empty-state u-padding-48px-20px u-text-align-center">
-            <div class="u-font-size-40px u-margin-bottom-12px">📋</div>
+            <div class="u-font-size-40px u-margin-bottom-12px">@include('partials.icon', ['name' => 'file-text'])</div>
             <h3 class="u-margin-bottom-6px">Belum Ada Kuis Remedial</h3>
             <p class="muted u-margin-bottom-20px">Silakan buat kuis remedial baru untuk siswa yang nilainya di bawah KKM pada Ulangan.</p>
             <a href="{{ route('guru.remedial.create') }}" class="btn btn-primary">
-                + Buat Kuis Remedial Sekarang
+                @include('partials.icon', ['name' => 'plus']) Buat Kuis Remedial Sekarang
             </a>
         </div>
     @else
@@ -49,7 +49,7 @@
                 </thead>
                 <tbody>
                     @foreach($remedials as $item)
-                        <tr>
+                        <tr data-reveal>
                             <td>{{ $loop->iteration }}</td>
                             <td>
                                 <strong>{{ $item->kuisRemedial->judul ?? '-' }}</strong>
@@ -78,7 +78,7 @@
                             <td class="u-text-align-right">
                                 <div class="u-display-inline-flex u-gap-6px">
                                     <a href="{{ route('guru.remedial.siswa', $item->id_remedial) }}" class="btn btn-primary small">
-                                        👥 Tugaskan Siswa
+                                        @include('partials.icon', ['name' => 'users']) Tugaskan Siswa
                                     </a>
                                     <a href="{{ route('guru.remedial.show', $item->id_remedial) }}" class="btn btn-secondary small">
                                         Detail

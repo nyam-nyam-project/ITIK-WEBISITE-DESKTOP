@@ -9,6 +9,7 @@
     <script src="{{ asset('js/theme-init.js') }}"></script>
     <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/icons.css') }}">
     <link rel="stylesheet" href="{{ asset('css/siswa/kuis/kerjakan.css') }}">
     <link rel="stylesheet" href="{{ asset('css/utilities.css') }}">
     <link rel="stylesheet" href="{{ asset('css/aksesibilitas.css') }}">
@@ -19,7 +20,7 @@
 <!-- MODAL AWAL: MULAI UJIAN & KUNCI LAYAR PENUH -->
 <div id="fullscreenModal" class="fullscreen-modal-overlay">
     <div class="fullscreen-modal-card">
-        <div class="fullscreen-modal-icon">🔒</div>
+        <div class="fullscreen-modal-icon">@include('partials.icon', ['name' => 'lock'])</div>
         <h2>Ujian Moda Layar Penuh (CBT)</h2>
         <p>
             Untuk menjaga integritas dan ketertiban ujian, Anda wajib mengaktifkan mode layar penuh.
@@ -37,9 +38,9 @@
 <!-- OVERLAY MERAH: PERINGATAN PELANGGARAN -->
 <div id="pelanggaranOverlay" class="pelanggaran-overlay is-cbt-hidden" role="alert" aria-live="assertive">
     <div class="pelanggaran-card">
-        <div class="pelanggaran-icon">⚠️</div>
-        <h2 id="pelanggaranPesan" class="pelanggaran-text">
-            ⚠️ PERINGATAN (0/{{ \App\Http\Controllers\SiswaKuisController::BATAS_PELANGGARAN }}): Anda terdeteksi keluar dari layar penuh atau berpindah jendela. Segera kembali ke mode layar penuh.
+        <div class="pelanggaran-icon">@include('partials.icon', ['name' => 'alert-triangle'])</div>
+        <h2 class="pelanggaran-text">
+            <span id="pelanggaranPesan">PERINGATAN (0/{{ \App\Http\Controllers\SiswaKuisController::BATAS_PELANGGARAN }}): Anda terdeteksi keluar dari layar penuh atau berpindah jendela. Segera kembali ke mode layar penuh.</span>
         </h2>
         <button type="button" id="btnKembaliLayarPenuh" class="btn-warning-action">
             Kembali ke Layar Penuh

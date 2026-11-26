@@ -14,7 +14,7 @@
         <p>Pilih kuis pembelajaran yang tersedia dan selesaikan tantangannya.</p>
     </div>
     <a href="{{ route('siswa.nilai.index') }}" class="btn btn-secondary">
-        Lihat Nilai Saya →
+        Lihat Nilai Saya @include('partials.icon', ['name' => 'arrow-right'])
     </a>
 </div>
 
@@ -41,11 +41,11 @@
                 </div>
             @endif
         @else
-            <div class="mapel-grid-siswa anim-stagger">
+            <div class="mapel-grid-siswa">
                 @foreach ($mapelAktif as $mapel)
-                    <a href="{{ url('/siswa/kuis?mapel=' . $mapel->id_mapel) }}" class="mapel-card-s anim-item">
+                    <a href="{{ url('/siswa/kuis?mapel=' . $mapel->id_mapel) }}" class="mapel-card-s" data-reveal>
                         <div>
-                            <div class="mapel-icon-s">📖</div>
+                            <div class="mapel-icon-s">@include('partials.icon', ['name' => 'book-open'])</div>
                             <div class="mapel-nama">{{ $mapel->nama_mapel }}</div>
                             <span class="muted small">{{ $mapel->id_mapel }}</span>
                         </div>
@@ -62,11 +62,11 @@
 @else
     {{-- BREADCRUMB --}}
     <div class="breadcrumb-siswa">
-        <a href="{{ url('/siswa/kuis') }}">📚 Semua Mata Pelajaran</a>
-        <span>›</span>
+        <a href="{{ url('/siswa/kuis') }}">@include('partials.icon', ['name' => 'book-open']) Semua Mata Pelajaran</a>
+        <span>@include('partials.icon', ['name' => 'chevron-right'])</span>
         @if ($materiTerpilih)
             <a href="{{ url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel) }}">{{ $mapelTerpilih->nama_mapel }}</a>
-            <span>›</span>
+            <span>@include('partials.icon', ['name' => 'chevron-right'])</span>
             <strong>{{ $materiTerpilih->bab ? $materiTerpilih->bab . ' - ' : '' }}{{ $materiTerpilih->judul }}</strong>
         @else
             <strong>{{ $mapelTerpilih->nama_mapel }}</strong>
@@ -76,7 +76,7 @@
     {{-- BANNER MAPEL --}}
     <div class="mapel-banner">
         <div class="mapel-banner-info">
-            <div class="mapel-banner-icon">📖</div>
+            <div class="mapel-banner-icon">@include('partials.icon', ['name' => 'book-open'])</div>
             <div>
                 <h3>{{ $mapelTerpilih->nama_mapel }}</h3>
                 <p>
@@ -91,11 +91,11 @@
 
         @if ($materiTerpilih)
             <a href="{{ url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel) }}" class="btn-back-mapel">
-                ← Kembali
+                @include('partials.icon', ['name' => 'arrow-left']) Kembali
             </a>
         @else
             <a href="{{ url('/siswa/kuis') }}" class="btn-back-mapel">
-                ← Kembali
+                @include('partials.icon', ['name' => 'arrow-left']) Kembali
             </a>
         @endif
     </div>
@@ -116,7 +116,7 @@
                     <p>Materi pembelajaran untuk mata pelajaran ini belum tersedia.</p>
                 </div>
             @else
-                <div class="bab-grid-siswa anim-stagger">
+                <div class="bab-grid-siswa">
                     @foreach ($daftarMateri as $materiItem)
                         @php
                             $kuisDiBab = $materiItem->kuis->where('status_publikasi', 'terbit')->where('is_aktif', true);
@@ -125,10 +125,10 @@
                             $hasSulit = $kuisDiBab->contains(fn ($k) => $k->tingkat_kesulitan === 'sulit');
                         @endphp
 
-                        <a href="{{ url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel . '&materi=' . $materiItem->id_materi) }}" class="bab-card-siswa anim-item">
+                        <a href="{{ url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel . '&materi=' . $materiItem->id_materi) }}" class="bab-card-siswa" data-reveal>
                             <div>
                                 <div class="bab-card-header">
-                                    <div class="bab-card-icon">📖</div>
+                                    <div class="bab-card-icon">@include('partials.icon', ['name' => 'book-open'])</div>
                                     <div>
                                         <span class="bab-card-tag">{{ $materiItem->bab ?? 'Materi' }}</span>
                                         <div class="bab-card-title">{{ $materiItem->judul }}</div>
@@ -143,20 +143,20 @@
 
                                 <div class="u-display-flex u-gap-6px u-flex-wrap-wrap u-margin-top-10px">
                                     <span class="badge {{ $hasMudah ? 'badge-success' : 'badge-muted' }}">
-                                        {{ $hasMudah ? '✓' : '○' }} Mudah
+                                        @include('partials.icon', ['name' => $hasMudah ? 'check' : 'x']) Mudah<span class="sr-only"> {{ $hasMudah ? 'tersedia' : 'belum tersedia' }}</span>
                                     </span>
                                     <span class="badge {{ $hasSedang ? 'badge-warning' : 'badge-muted' }}">
-                                        {{ $hasSedang ? '✓' : '○' }} Sedang
+                                        @include('partials.icon', ['name' => $hasSedang ? 'check' : 'x']) Sedang<span class="sr-only"> {{ $hasSedang ? 'tersedia' : 'belum tersedia' }}</span>
                                     </span>
                                     <span class="badge {{ $hasSulit ? 'badge-danger' : 'badge-muted' }}">
-                                        {{ $hasSulit ? '✓' : '○' }} Sulit
+                                        @include('partials.icon', ['name' => $hasSulit ? 'check' : 'x']) Sulit<span class="sr-only"> {{ $hasSulit ? 'tersedia' : 'belum tersedia' }}</span>
                                     </span>
                                 </div>
                             </div>
 
                             <div class="bab-card-footer">
                                 <span>{{ $kuisDiBab->count() }} Kuis Tersedia</span>
-                                <span>Buka Bab Ini →</span>
+                                <span>Buka Bab Ini @include('partials.icon', ['name' => 'arrow-right'])</span>
                             </div>
                         </a>
                     @endforeach
@@ -173,12 +173,12 @@
             <section class="card">
                 <div class="card-header">
                     <div>
-                        <h2>📝 Ulangan &amp; Kuis Umum</h2>
+                        <h2>@include('partials.icon', ['name' => 'file-text']) Ulangan &amp; Kuis Umum</h2>
                         <p class="muted">Kuis evaluasi umum untuk mata pelajaran {{ $mapelTerpilih->nama_mapel }}</p>
                     </div>
                 </div>
 
-                <div class="kuis-grid anim-stagger">
+                <div class="kuis-grid">
                     @foreach ($kuisTanpaBab as $item)
                         @php
                             $status = $statusKuis[$item->id_kuis] ?? [];
@@ -191,16 +191,16 @@
                             $bisaUlang = in_array($katItem, ['kuis harian', 'pre-test', 'post-test']);
                         @endphp
 
-                        <div class="kuis-item anim-item {{ $terkunci ? 'terkunci' : '' }}">
+                        <div class="kuis-item {{ $terkunci ? 'terkunci' : '' }}" data-reveal>
                             <div>
                                 <h3>{{ $item->judul }}</h3>
                                 <div class="badges-row">
                                     <span class="badge">{{ ucfirst($item->kategori) }}</span>
                                     <span class="badge badge-muted">{{ ucfirst($item->tingkat_kesulitan ?? 'mudah') }}</span>
                                     @if ($terkunci)
-                                        <span class="badge badge-muted">🔒 Terkunci</span>
+                                        <span class="badge badge-muted">@include('partials.icon', ['name' => 'lock']) Terkunci</span>
                                     @elseif ($lulus)
-                                        <span class="badge badge-success">✓ Lulus</span>
+                                        <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Lulus</span>
                                     @elseif ($sudahPernah)
                                         <span class="badge badge-warning">Belum Lulus</span>
                                     @endif
@@ -230,15 +230,15 @@
 
                             <div>
                                 @if ($terkunci)
-                                    <button class="btn btn-secondary u-width-100pct u-opacity-p6" disabled>🔒 Kuis Terkunci</button>
-                                    <div class="kunci-info">ℹ️ {{ $alasanKunci }}</div>
+                                    <button class="btn btn-secondary u-width-100pct u-opacity-p6" disabled>@include('partials.icon', ['name' => 'lock']) Kuis Terkunci</button>
+                                    <div class="kunci-info">@include('partials.icon', ['name' => 'info']) {{ $alasanKunci }}</div>
                                 @elseif ($bisaUlang && $sudahPernah && !$lulus)
                                     <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
-                                        <button type="submit" class="btn btn-warning u-width-100pct">↻ Kerjakan Ulang</button>
+                                        <button type="submit" class="btn btn-warning u-width-100pct">@include('partials.icon', ['name' => 'rotate-ccw']) Kerjakan Ulang</button>
                                     </form>
                                 @elseif ($katItem === 'ulangan' && $sudahPernah && !$lulus)
                                     <div class="small u-color-991b1b u-font-weight-700 u-margin-bottom-8px">
-                                        ⚠️ Nilai di bawah KKM
+                                        @include('partials.icon', ['name' => 'alert-triangle']) Nilai di bawah KKM
                                     </div>
                                     <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning u-width-100pct u-text-align-center">
                                         Cek Tugas Remedial
@@ -246,7 +246,11 @@
                                 @else
                                     <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
                                         <button type="submit" class="btn u-width-100pct">
-                                            {{ $sudahPernah ? '→ Kerjakan Lagi' : 'Mulai' }}
+                                            @if ($sudahPernah)
+                                                @include('partials.icon', ['name' => 'arrow-right']) Kerjakan Lagi
+                                            @else
+                                                Mulai
+                                            @endif
                                         </button>
                                     </form>
                                 @endif
@@ -279,7 +283,7 @@
                     <p class="muted">Selesaikan kuis secara berurutan: <strong>Mudah</strong> → <strong>Sedang</strong> → <strong>Sulit</strong></p>
                 </div>
                 <a href="{{ url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel) }}" class="btn btn-secondary btn-small">
-                    ← Pilih Bab Lain
+                    @include('partials.icon', ['name' => 'arrow-left']) Pilih Bab Lain
                 </a>
             </div>
 
@@ -289,7 +293,7 @@
                     <p>Kuis untuk bab materi ini belum dipublikasikan oleh guru.</p>
                 </div>
             @else
-                <div class="kuis-grid anim-stagger">
+                <div class="kuis-grid">
                     @foreach ($kuisBabTerpilih as $item)
                         @php
                             $status = $statusKuis[$item->id_kuis] ?? [];
@@ -302,16 +306,16 @@
                             $bisaBabUlang = in_array($katBabItem, ['kuis harian', 'pre-test', 'post-test']);
                         @endphp
 
-                        <div class="kuis-item anim-item {{ $terkunci ? 'terkunci' : '' }}">
+                        <div class="kuis-item {{ $terkunci ? 'terkunci' : '' }}" data-reveal>
                             <div>
                                 <h3>{{ $item->judul }}</h3>
                                 <div class="badges-row">
                                     <span class="badge">{{ ucfirst($item->kategori) }}</span>
                                     <span class="badge badge-muted">Tingkat {{ ucfirst($item->tingkat_kesulitan ?? 'mudah') }}</span>
                                     @if ($terkunci)
-                                        <span class="badge badge-muted">🔒 Terkunci</span>
+                                        <span class="badge badge-muted">@include('partials.icon', ['name' => 'lock']) Terkunci</span>
                                     @elseif ($lulus)
-                                        <span class="badge badge-success">✓ Lulus</span>
+                                        <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Lulus</span>
                                     @elseif ($sudahPernah)
                                         <span class="badge badge-warning">Belum Lulus</span>
                                     @endif
@@ -341,15 +345,15 @@
 
                             <div>
                                 @if ($terkunci)
-                                    <button class="btn btn-secondary u-width-100pct u-opacity-p6" disabled>🔒 Kuis Terkunci</button>
-                                    <div class="kunci-info">ℹ️ {{ $alasanKunci }}</div>
+                                    <button class="btn btn-secondary u-width-100pct u-opacity-p6" disabled>@include('partials.icon', ['name' => 'lock']) Kuis Terkunci</button>
+                                    <div class="kunci-info">@include('partials.icon', ['name' => 'info']) {{ $alasanKunci }}</div>
                                 @elseif ($bisaBabUlang && $sudahPernah && !$lulus)
                                     <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
-                                        <button type="submit" class="btn btn-warning u-width-100pct">↻ Kerjakan Ulang</button>
+                                        <button type="submit" class="btn btn-warning u-width-100pct">@include('partials.icon', ['name' => 'rotate-ccw']) Kerjakan Ulang</button>
                                     </form>
                                 @elseif ($katBabItem === 'ulangan' && $sudahPernah && !$lulus)
                                     <div class="small u-color-991b1b u-font-weight-700 u-margin-bottom-8px">
-                                        ⚠️ Nilai di bawah KKM
+                                        @include('partials.icon', ['name' => 'alert-triangle']) Nilai di bawah KKM
                                     </div>
                                     <a href="{{ route('siswa.remedial.index') }}" class="btn btn-warning u-width-100pct u-text-align-center">
                                         Cek Tugas Remedial
@@ -357,7 +361,11 @@
                                 @else
                                     <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
                                         <button type="submit" class="btn u-width-100pct">
-                                            {{ $sudahPernah ? '→ Kerjakan Lagi' : 'Mulai' }}
+                                            @if ($sudahPernah)
+                                                @include('partials.icon', ['name' => 'arrow-right']) Kerjakan Lagi
+                                            @else
+                                                Mulai
+                                            @endif
                                         </button>
                                     </form>
                                 @endif
@@ -391,13 +399,13 @@
                     </thead>
                     <tbody>
                         @foreach($remedial as $item)
-                            <tr>
+                            <tr data-reveal>
                                 <td class="number u-text-align-left">{{ $loop->iteration }}</td>
                                 <td><strong>{{ $item->kuisRemedial->judul }}</strong></td>
                                 <td><span class="badge">{{ ucfirst($item->kuisRemedial->kategori) }}</span></td>
                                 <td>
                                     <a href="{{ route('siswa.kuis.mulai', $item->kuisRemedial->id_kuis) }}" class="btn btn-small">
-                                        Kerjakan Remedial →
+                                        Kerjakan Remedial @include('partials.icon', ['name' => 'arrow-right'])
                                     </a>
                                 </td>
                             </tr>

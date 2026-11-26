@@ -7,6 +7,7 @@
     <script src="{{ asset('js/theme-init.js') }}"></script>
     <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('css/theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/icons.css') }}">
     <link rel="stylesheet" href="{{ asset('css/auth/wajib-ganti-password.css') }}">
     <link rel="stylesheet" href="{{ asset('css/utilities.css') }}">
 </head>
@@ -14,7 +15,7 @@
 
 <div class="card-wrapper">
     <div class="header">
-        <div class="icon-shield">🔒</div>
+        <div class="icon-shield">@include('partials.icon', ['name' => 'lock'])</div>
         <h1>Ganti Password Sementara</h1>
         <p>
             Admin memberikan password sementara untuk akun Anda.
@@ -35,7 +36,7 @@
         <div class="form-group">
             <label for="password">Password Baru</label>
             <div class="input-wrapper">
-                <span class="input-icon">🔑</span>
+                <span class="input-icon">@include('partials.icon', ['name' => 'key'])</span>
                 <input
                     type="password"
                     id="password"
@@ -51,7 +52,7 @@
         <div class="form-group">
             <label for="password_confirmation">Konfirmasi Password Baru</label>
             <div class="input-wrapper">
-                <span class="input-icon">✓</span>
+                <span class="input-icon">@include('partials.icon', ['name' => 'check'])</span>
                 <input
                     type="password"
                     id="password_confirmation"

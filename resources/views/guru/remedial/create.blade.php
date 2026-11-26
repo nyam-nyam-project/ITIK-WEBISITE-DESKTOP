@@ -6,7 +6,7 @@
 <div class="page-heading">
     <div>
         <a href="{{ route('guru.remedial.index') }}" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px">
-            ← Kembali
+            @include('partials.icon', ['name' => 'arrow-left']) Kembali
         </a>
         <h1>Buat Kuis Remedial</h1>
         <p>Siapkan kuis remedial untuk siswa yang nilainya di bawah KKM pada Ulangan.</p>
@@ -15,7 +15,7 @@
 
 <div class="card u-background-eef2ff u-border-left-4px-solid-6366f1 u-padding-14px-18px u-margin-bottom-22px">
     <div class="u-font-size-14px u-color-3730a3">
-        💡 <strong>Ketentuan Remedial:</strong> Sesuai kebijakan sekolah, kuis remedial hanya dapat dibuat untuk kuis dengan kategori <strong>Ulangan</strong>. Siswa yang nilainya &lt; KKM pada kuis ulangan yang dipilih akan dapat diberikan tugas kuis remedial ini.
+        @include('partials.icon', ['name' => 'lightbulb']) <strong>Ketentuan Remedial:</strong> Sesuai kebijakan sekolah, kuis remedial hanya dapat dibuat untuk kuis dengan kategori <strong>Ulangan</strong>. Siswa yang nilainya &lt; KKM pada kuis ulangan yang dipilih akan dapat diberikan tugas kuis remedial ini.
     </div>
 </div>
 

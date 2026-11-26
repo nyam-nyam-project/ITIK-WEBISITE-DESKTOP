@@ -16,12 +16,11 @@
 
 <!-- BREADCRUMB -->
 <div class="breadcrumb-wrap">
-    <a href="{{ url('/siswa/nilai') }}">Nilai Saya</a>
     @if ($mapelTerpilih)
-        <span>›</span>
+        <span>@include('partials.icon', ['name' => 'chevron-right'])</span>
         @if ($materiTerpilih)
             <a href="{{ url('/siswa/nilai?mapel=' . $mapelTerpilih->id_mapel) }}">{{ $mapelTerpilih->nama_mapel }}</a>
-            <span>›</span>
+            <span>@include('partials.icon', ['name' => 'chevron-right'])</span>
             <span class="current">{{ $materiTerpilih->judul }}</span>
         @else
             <span class="current">{{ $mapelTerpilih->nama_mapel }}</span>
@@ -46,17 +45,17 @@
                     $totalKuisSelesai = $hasilMapel->pluck('id_kuis')->unique()->count();
                     $rataRata = $hasilMapel->isNotEmpty() ? $hasilMapel->avg('nilai') : null;
                 @endphp
-                <a href="{{ url('/siswa/nilai?mapel=' . $mp->id_mapel) }}" class="mapel-card">
+                <a href="{{ url('/siswa/nilai?mapel=' . $mp->id_mapel) }}" class="mapel-card" data-reveal>
                     <div>
                         <div class="mapel-icon-wrap">
                             @if(stripos($mp->nama_mapel, 'informasi') !== false || stripos($mp->nama_mapel, 'tik') !== false)
-                                💻
+                                @include('partials.icon', ['name' => 'laptop'])
                             @elseif(stripos($mp->nama_mapel, 'server') !== false || stripos($mp->nama_mapel, 'jaringan') !== false)
-                                🖥️
+                                @include('partials.icon', ['name' => 'monitor'])
                             @elseif(stripos($mp->nama_mapel, 'indonesia') !== false)
-                                🇮🇩
+                                @include('partials.icon', ['name' => 'flag'])
                             @else
-                                📘
+                                @include('partials.icon', ['name' => 'book-open'])
                             @endif
                         </div>
                         <h3 class="mapel-title">{{ $mp->nama_mapel }}</h3>
@@ -81,7 +80,7 @@
 
                         <div class="btn-buka-mapel">
                             <span>Lihat Nilai Bab Materi</span>
-                            <span>→</span>
+                            <span>@include('partials.icon', ['name' => 'arrow-right'])</span>
                         </div>
                     </div>
                 </a>
@@ -98,7 +97,7 @@
                 <p class="muted">Klik bab materi di bawah untuk melihat rincian riwayat kuis dan evaluasi butir soal</p>
             </div>
             <a href="{{ url('/siswa/nilai') }}" class="btn btn-secondary btn-small">
-                ← Kembali
+                @include('partials.icon', ['name' => 'arrow-left']) Kembali
             </a>
         </div>
 
@@ -117,7 +116,7 @@
                         $kuisSelesai = $ringkasan['kuis_selesai'] ?? 0;
                         $nilaiTertinggi = $ringkasan['nilai_tertinggi'] ?? null;
                     @endphp
-                    <a href="{{ url('/siswa/nilai?mapel=' . $mapelTerpilih->id_mapel . '&materi=' . $mat->id_materi) }}" class="bab-card-foto2">
+                    <a href="{{ url('/siswa/nilai?mapel=' . $mapelTerpilih->id_mapel . '&materi=' . $mat->id_materi) }}" class="bab-card-foto2" data-reveal>
                         <div class="bab-num-badge">{{ $numStr }}</div>
                         <div class="bab-card-body">
                             <h3 class="bab-card-title">{{ $mat->judul }}</h3>
@@ -131,10 +130,7 @@
                             </p>
                         </div>
                         <div class="bab-card-arrow">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                                <polyline points="12 5 19 12 12 19"></polyline>
-                            </svg>
+                            @include('partials.icon', ['name' => 'arrow-right'])
                         </div>
                     </a>
                 @endforeach
@@ -147,7 +143,7 @@
         <section class="card">
             <div class="card-header">
                 <div>
-                    <h2>📝 Riwayat Nilai Ulangan &amp; Evaluasi</h2>
+                    <h2>@include('partials.icon', ['name' => 'file-text']) Riwayat Nilai Ulangan &amp; Evaluasi</h2>
                     <p class="muted">Hasil pengerjaan ulangan mata pelajaran {{ $mapelTerpilih->nama_mapel }}</p>
                 </div>
             </div>
@@ -171,7 +167,7 @@
                             @php
                                 $lulus = $item->nilai !== null && $item->kuis && $item->kuis->kkm !== null && $item->nilai >= $item->kuis->kkm;
                             @endphp
-                            <tr>
+                            <tr data-reveal>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>
                                     <strong>{{ $item->kuis->judul ?? '-' }}</strong>
@@ -186,15 +182,15 @@
                                 <td>{{ number_format($item->kuis->kkm ?? 75, 1) }}</td>
                                 <td>
                                     @if($lulus)
-                                        <span class="badge badge-success">✓ Lulus</span>
+                                        <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Lulus</span>
                                     @else
-                                        <span class="badge badge-warning">⚠️ Belum Lulus</span>
+                                        <span class="badge badge-warning">@include('partials.icon', ['name' => 'alert-triangle']) Belum Lulus</span>
                                     @endif
                                 </td>
                                 <td>{{ $item->tanggal ? date('d/m/Y', strtotime($item->tanggal)) : '-' }}</td>
                                 <td>
                                     <a href="{{ route('siswa.kuis.hasil', $item->id_kuis) }}" class="btn btn-secondary btn-small">
-                                        📋 Evaluasi Soal
+                                        @include('partials.icon', ['name' => 'list']) Evaluasi Soal
                                     </a>
                                 </td>
                             </tr>
@@ -214,7 +210,7 @@
                 <p class="muted">Daftar riwayat pengerjaan dan hasil evaluasi butir kuis pada bab ini</p>
             </div>
             <a href="{{ url('/siswa/nilai?mapel=' . $mapelTerpilih->id_mapel) }}" class="btn btn-secondary btn-small">
-                ← Kembali
+                @include('partials.icon', ['name' => 'arrow-left']) Kembali
             </a>
         </div>
 
@@ -223,7 +219,7 @@
                 <h3>Belum Ada Riwayat Kuis di Bab Ini</h3>
                 <p>Kamu belum pernah mengerjakan kuis untuk bab materi ini.</p>
                 <a href="{{ url('/siswa/kuis?mapel=' . $mapelTerpilih->id_mapel . '&materi=' . $materiTerpilih->id_materi) }}" class="btn u-margin-top-14px">
-                    Mulai Kerjakan Kuis Bab Ini →
+                    Mulai Kerjakan Kuis Bab Ini @include('partials.icon', ['name' => 'arrow-right'])
                 </a>
             </div>
         @else
@@ -249,7 +245,7 @@
                                 $tingkat = strtolower(trim($item->kuis->tingkat_kesulitan ?? 'mudah'));
                                 $lulus = $item->nilai !== null && $item->kuis && $item->kuis->kkm !== null && $item->nilai >= $item->kuis->kkm;
                             @endphp
-                            <tr>
+                            <tr data-reveal>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>
                                     <strong>{{ $item->kuis->judul ?? '-' }}</strong>
@@ -273,15 +269,15 @@
                                 <td>{{ $item->kuis->kkm !== null ? number_format($item->kuis->kkm, 1) : '-' }}</td>
                                 <td>
                                     @if($lulus)
-                                        <span class="badge badge-success">✓ Lulus</span>
+                                        <span class="badge badge-success">@include('partials.icon', ['name' => 'check']) Lulus</span>
                                     @else
-                                        <span class="badge badge-warning">⚠️ Tidak Lulus</span>
+                                        <span class="badge badge-warning">@include('partials.icon', ['name' => 'alert-triangle']) Tidak Lulus</span>
                                     @endif
                                 </td>
                                 <td>{{ $item->tanggal ? date('d/m/Y', strtotime($item->tanggal)) : '-' }}</td>
                                 <td>
                                     <a href="{{ route('siswa.kuis.hasil', $item->id_kuis) }}" class="btn btn-secondary btn-small">
-                                        📋 Evaluasi Soal
+                                        @include('partials.icon', ['name' => 'list']) Evaluasi Soal
                                     </a>
                                 </td>
                             </tr>

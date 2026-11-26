@@ -16,12 +16,90 @@ function perbaruiNavigasi() {
         }
     });
 
-    document.querySelectorAll('[data-nav]').forEach(function (link) {
-        link.classList.toggle('answered', terjawab.has(link.dataset.nav));
+    document.querySelectorAll('[data-nav]').forEach(function (tombol) {
+        const nomor = tombol.dataset.soalIndex ? (Number(tombol.dataset.soalIndex) + 1) : tombol.textContent.trim();
+        const sudahDijawab = terjawab.has(tombol.dataset.nav);
+        tombol.classList.toggle('answered', sudahDijawab);
+        tombol.setAttribute('aria-label', 'Soal ' + nomor + (sudahDijawab ? ', sudah dijawab' : ', belum dijawab'));
     });
 
-    document.getElementById('jumlahTerjawab').textContent = terjawab.size;
+    const jumlahEl = document.getElementById('jumlahTerjawab');
+    if (jumlahEl) {
+        jumlahEl.textContent = terjawab.size;
+    }
 }
+
+// Navigasi antar soal (Sebelumnya, Berikutnya, dan Daftar Nomor Soal)
+const daftarSoalItem = Array.from(document.querySelectorAll('.soal-item[data-soal-index]'));
+const tombolNavigasiNomor = Array.from(document.querySelectorAll('.nav-soal-btn[data-soal-index]'));
+const btnSoalSebelumnya = document.getElementById('btnSoalSebelumnya');
+const btnSoalBerikutnya = document.getElementById('btnSoalBerikutnya');
+const indikatorSoalAktif = document.getElementById('indikatorSoalAktif');
+let indeksSoalAktif = 0;
+
+function bukaSoal(indeksBaru, pindahkanFokus) {
+    if (daftarSoalItem.length === 0) {
+        return;
+    }
+
+    const indeksValid = Math.max(0, Math.min(daftarSoalItem.length - 1, indeksBaru));
+    indeksSoalAktif = indeksValid;
+
+    daftarSoalItem.forEach(function (item, idx) {
+        item.classList.toggle('is-cbt-hidden', idx !== indeksValid);
+    });
+
+    tombolNavigasiNomor.forEach(function (btn, idx) {
+        const aktif = idx === indeksValid;
+        btn.classList.toggle('active', aktif);
+        if (aktif) {
+            btn.setAttribute('aria-current', 'step');
+        } else {
+            btn.removeAttribute('aria-current');
+        }
+    });
+
+    if (btnSoalSebelumnya) {
+        btnSoalSebelumnya.disabled = indeksValid === 0;
+    }
+    if (btnSoalBerikutnya) {
+        btnSoalBerikutnya.disabled = indeksValid >= daftarSoalItem.length - 1;
+    }
+    if (indikatorSoalAktif) {
+        indikatorSoalAktif.textContent = 'Soal ' + (indeksValid + 1) + ' dari ' + daftarSoalItem.length;
+    }
+
+    if (pindahkanFokus) {
+        const soalAktif = daftarSoalItem[indeksValid];
+        const judulSoal = soalAktif ? soalAktif.querySelector('.soal-text') : null;
+        if (judulSoal) {
+            judulSoal.focus();
+        }
+    }
+}
+
+tombolNavigasiNomor.forEach(function (tombol) {
+    tombol.addEventListener('click', function () {
+        const idx = Number(this.dataset.soalIndex);
+        if (!Number.isNaN(idx)) {
+            bukaSoal(idx, true);
+        }
+    });
+});
+
+if (btnSoalSebelumnya) {
+    btnSoalSebelumnya.addEventListener('click', function () {
+        bukaSoal(indeksSoalAktif - 1, true);
+    });
+}
+
+if (btnSoalBerikutnya) {
+    btnSoalBerikutnya.addEventListener('click', function () {
+        bukaSoal(indeksSoalAktif + 1, true);
+    });
+}
+
+bukaSoal(0, false);
 
 perbaruiNavigasi();
 
@@ -304,7 +382,25 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
         });
     }
 
-    // 2. Cegah reload / tutup tab / navigasi keluar
+    // 2. Pesan status di halaman (tanpa popup alert/confirm/prompt browser)
+    const cbtStatusBanner = document.getElementById('cbtStatusBanner');
+    let timerPesanStatus = null;
+
+    function tampilkanPesanCbt(pesan) {
+        if (!cbtStatusBanner) {
+            return;
+        }
+        cbtStatusBanner.textContent = pesan;
+        cbtStatusBanner.classList.remove('is-cbt-hidden');
+        if (timerPesanStatus) {
+            clearTimeout(timerPesanStatus);
+        }
+        timerPesanStatus = setTimeout(function () {
+            cbtStatusBanner.classList.add('is-cbt-hidden');
+        }, 5000);
+    }
+
+    // 3. Cegah reload / tutup tab / navigasi keluar
     window.addEventListener('beforeunload', function (e) {
         if (!formSubmitted && !sudahSubmit) {
             e.preventDefault();
@@ -313,20 +409,18 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
         }
     });
 
-    // 3. Kunci tombol Back / Forward browser
+    // 4. Kunci tombol Back / Forward browser (tanpa alert popup)
     history.pushState(null, document.title, location.href);
     window.addEventListener('popstate', function () {
         history.pushState(null, document.title, location.href);
-        alert('PERINGATAN: Navigasi browser dinonaktifkan selama ujian berlangsung. Harap selesaikan kuis dan klik tombol "Kumpulkan kuis".');
+        tampilkanPesanCbt('Navigasi browser dinonaktifkan selama ujian berlangsung. Gunakan tombol Sebelumnya, Berikutnya, atau daftar nomor soal.');
     });
 
-    // 4. Blokir tombol refresh keyboard (F5, Ctrl+R, Alt+Left) dan tombol sistem (Alt, Windows/Meta)
+    // 5. Blokir tombol refresh keyboard (F5, Ctrl+R, Alt+Left) dan tombol sistem (Alt, Windows/Meta)
     window.addEventListener('keydown', function (e) {
-        // Tombol Windows (Meta/OS) dan kombinasi Alt+Tab ditangani langsung oleh sistem operasi (OS)
-        // dan hanya bisa dicegah sebagian oleh browser web.
         if (e.key === 'Alt' || e.key === 'Meta' || e.key === 'OS') {
             e.preventDefault();
-            alert('PERINGATAN: Anda terdeteksi mencoba keluar dari halaman ujian! Harap tetap berada di halaman kuis hingga selesai.');
+            tampilkanPesanCbt('Harap tetap berada di halaman kuis hingga selesai.');
             return false;
         }
 
@@ -336,7 +430,7 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
             (e.altKey && e.key === 'ArrowLeft')
         ) {
             e.preventDefault();
-            alert('Tombol refresh dan navigasi kembali dinonaktifkan selama ujian.');
+            tampilkanPesanCbt('Tombol refresh dan navigasi kembali dinonaktifkan selama ujian.');
             return false;
         }
     });

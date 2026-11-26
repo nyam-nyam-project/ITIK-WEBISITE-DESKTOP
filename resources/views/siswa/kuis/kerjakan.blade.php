@@ -106,6 +106,8 @@
 
             <div class="section-card">
 
+                <div id="cbtStatusBanner" class="cbt-status-banner is-cbt-hidden" role="alert" aria-live="polite"></div>
+
                 <form id="formKuis"
                     data-jawaban-url="{{ route('siswa.kuis.jawaban', $kuis->id_kuis) }}"
                     data-pelanggaran-url="{{ route('siswa.kuis.pelanggaran', $kuis->id_kuis) }}"
@@ -119,11 +121,11 @@
                                 $draftJawaban[$item->id_soal]->jawaban_dipilih ?? null;
                         @endphp
 
-                        <div class="soal-item" id="soal-{{ $item->id_soal }}">
+                        <div class="soal-item {{ $index === 0 ? '' : 'is-cbt-hidden' }}" id="soal-{{ $item->id_soal }}" data-soal-index="{{ $index }}" data-soal-id="{{ $item->id_soal }}">
 
                             <div class="soal-head">
                                 <div class="soal-no">{{ $index + 1 }}</div>
-                                <div class="soal-text">
+                                <div class="soal-text" id="judul-soal-{{ $item->id_soal }}" tabindex="-1" aria-label="Soal {{ $index + 1 }} dari {{ $soal->count() }}: {{ Str::limit(strip_tags($item->pertanyaan), 120) }}">
                                     <div>{{ $item->pertanyaan }}</div>
                                     @if ($item->gambar)
                                         <div class="soal-gambar-wrap">
@@ -223,10 +225,6 @@
 
                         </div>
 
-                        @if (! $loop->last)
-                            <hr class="soal-divider">
-                        @endif
-
                     @empty
 
                         <div class="empty">Belum ada soal pada kuis ini.</div>
@@ -234,6 +232,20 @@
                     @endforelse
 
                 </form>
+
+                @if ($soal->isNotEmpty())
+                    <div class="soal-nav-actions" aria-label="Navigasi antar soal">
+                        <button type="button" id="btnSoalSebelumnya" class="btn-soal-nav" disabled>
+                            @include('partials.icon', ['name' => 'arrow-left']) Sebelumnya
+                        </button>
+                        <span class="soal-nav-indikator" id="indikatorSoalAktif" aria-live="polite">
+                            Soal 1 dari {{ $soal->count() }}
+                        </span>
+                        <button type="button" id="btnSoalBerikutnya" class="btn-soal-nav" @disabled($soal->count() <= 1)>
+                            Berikutnya @include('partials.icon', ['name' => 'arrow-right'])
+                        </button>
+                    </div>
+                @endif
 
             </div>
 
@@ -271,11 +283,19 @@
                         <span id="jumlahTerjawab">0</span> dari {{ $soal->count() }} soal terjawab
                     </div>
 
-                    <div class="nav-grid">
+                    <div class="nav-grid" role="navigation" aria-label="Daftar nomor soal">
                         @foreach ($soal as $index => $item)
-                            <a href="#soal-{{ $item->id_soal }}" data-nav="{{ $item->id_soal }}">
-                                {{ $index + 1 }}
-                            </a>
+                            <button
+                                type="button"
+                                class="nav-soal-btn {{ $index === 0 ? 'active' : '' }}"
+                                data-nav="{{ $item->id_soal }}"
+                                data-soal-index="{{ $index }}"
+                                aria-label="Soal {{ $index + 1 }}"
+                                @if ($index === 0) aria-current="step" @endif
+                            >
+                                <span class="nav-soal-angka">{{ $index + 1 }}</span>
+                                <span class="nav-soal-ikon" aria-hidden="true">@include('partials.icon', ['name' => 'check'])</span>
+                            </button>
                         @endforeach
                     </div>
 

@@ -11,7 +11,7 @@
     <div>
         <x-tombol-kembali :fallback="route('materi.index', ['mapel' => $materi->id_mapel])" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px" />
         <h1>{{ $materi->judul }}</h1>
-        <p>{{ $materi->bab ?? 'Materi Pembelajaran' }} &bull; Kelas {{ $materi->kelas ?? '-' }}</p>
+        <p>{{ $materi->bab ?? 'Materi Pembelajaran' }} &bull; Kelas {{ $materi->kelasTerkait->pluck('nama_kelas')->join(', ') ?: '-' }}</p>
     </div>
     <div class="actions">
         @unless($materi->kuis->contains('kategori', 'post-test'))
@@ -79,7 +79,7 @@
         <section class="card">
             <div class="card-header">
                 <h2>Informasi Materi</h2>
-                <span class="badge">Kelas {{ $materi->kelas ?? '-' }}</span>
+                <span class="badge">Kelas {{ $materi->kelasTerkait->pluck('nama_kelas')->join(', ') ?: '-' }}</span>
             </div>
 
             <dl class="identity">
@@ -93,7 +93,7 @@
                 </div>
                 <div>
                     <dt>Kelas</dt>
-                    <dd>{{ $materi->kelas ?? '-' }}</dd>
+                    <dd>{{ $materi->kelasTerkait->pluck('nama_kelas')->join(', ') ?: '-' }}</dd>
                 </div>
             </dl>
 

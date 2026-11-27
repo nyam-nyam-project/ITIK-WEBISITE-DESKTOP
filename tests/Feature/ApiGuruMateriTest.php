@@ -7,6 +7,7 @@ use App\Models\Materi;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -17,7 +18,7 @@ class ApiGuruMateriTest extends TestCase
     {
         parent::setUp();
 
-        Schema::create('users', function (Blueprint $table): void {
+        Schema::create('tm_user', function (Blueprint $table): void {
             $table->string('id_user', 50)->primary();
             $table->string('nomor_induk', 50)->nullable()->unique();
             $table->string('nama_lengkap', 100);
@@ -30,7 +31,7 @@ class ApiGuruMateriTest extends TestCase
             $table->timestamps();
         });
 
-        Schema::create('mapel', function (Blueprint $table): void {
+        Schema::create('tm_mapel', function (Blueprint $table): void {
             $table->string('id_mapel', 50)->primary();
             $table->string('kode_mapel', 20)->unique();
             $table->string('nama_mapel', 100);
@@ -38,7 +39,28 @@ class ApiGuruMateriTest extends TestCase
             $table->timestamps();
         });
 
-        Schema::create('materis', function (Blueprint $table): void {
+        Schema::create('tm_tahun_ajaran', function (Blueprint $table): void {
+            $table->string('id_tahun_ajaran', 50)->primary();
+            $table->string('nama', 20)->nullable();
+            $table->boolean('is_aktif')->default(false);
+        });
+
+        Schema::create('tm_kelas', function (Blueprint $table): void {
+            $table->string('id_kelas', 50)->primary();
+            $table->string('nama_kelas', 50);
+            $table->string('tingkat', 10);
+            $table->string('id_tahun_ajaran', 50);
+            $table->boolean('is_aktif')->default(true);
+        });
+
+        Schema::create('tr_pengajaran', function (Blueprint $table): void {
+            $table->increments('id_pengajaran');
+            $table->string('id_user', 50);
+            $table->string('id_kelas', 50);
+            $table->string('id_mapel', 50);
+        });
+
+        Schema::create('tm_materi', function (Blueprint $table): void {
             $table->string('id_materi', 50)->primary();
             $table->string('judul', 150);
             $table->string('bab', 50)->nullable();
@@ -48,22 +70,42 @@ class ApiGuruMateriTest extends TestCase
             $table->string('isi_materi', 255)->nullable();
             $table->string('link_youtube', 255)->nullable();
             $table->string('id_user', 50);
+            $table->boolean('is_aktif')->default(true);
             $table->timestamps();
-            $table->unique(['kelas', 'bab', 'judul']);
-            $table->foreign('id_mapel')->references('id_mapel')->on('mapel');
-            $table->foreign('id_user')->references('id_user')->on('users');
+            $table->foreign('id_mapel')->references('id_mapel')->on('tm_mapel');
+            $table->foreign('id_user')->references('id_user')->on('tm_user');
         });
 
-        Schema::create('progress', function (Blueprint $table): void {
+        Schema::create('tp_materi_kelas', function (Blueprint $table): void {
+            $table->string('id_materi', 50);
+            $table->string('id_kelas', 50);
+            $table->primary(['id_materi', 'id_kelas']);
+            $table->foreign('id_materi')->references('id_materi')->on('tm_materi')->cascadeOnDelete();
+            $table->foreign('id_kelas')->references('id_kelas')->on('tm_kelas')->restrictOnDelete();
+        });
+
+        Schema::create('tr_progress', function (Blueprint $table): void {
             $table->string('id_progress', 50)->primary();
             $table->string('id_materi', 50);
             $table->string('id_user', 50);
             $table->string('status', 30)->nullable();
             $table->date('tanggal')->nullable();
-            $table->foreign('id_materi')->references('id_materi')->on('materis');
-            $table->foreign('id_user')->references('id_user')->on('users');
+            $table->foreign('id_materi')->references('id_materi')->on('tm_materi');
+            $table->foreign('id_user')->references('id_user')->on('tm_user');
         });
 
+        DB::table('tm_tahun_ajaran')->insert([
+            'id_tahun_ajaran' => 'TA001',
+            'nama' => '2026/2027',
+            'is_aktif' => true,
+        ]);
+        DB::table('tm_kelas')->insert([
+            'id_kelas' => 'KLS001',
+            'nama_kelas' => 'X RPL 1',
+            'tingkat' => 'X',
+            'id_tahun_ajaran' => 'TA001',
+            'is_aktif' => true,
+        ]);
         Mapel::create([
             'id_mapel' => 'MP001',
             'kode_mapel' => 'TIK',
@@ -75,6 +117,11 @@ class ApiGuruMateriTest extends TestCase
             'kode_mapel' => 'IPA',
             'nama_mapel' => 'Ilmu Pengetahuan Alam',
             'is_aktif' => false,
+        ]);
+        DB::table('tr_pengajaran')->insert([
+            'id_user' => 'G001',
+            'id_kelas' => 'KLS001',
+            'id_mapel' => 'MP001',
         ]);
 
         Storage::fake('public');
@@ -88,13 +135,14 @@ class ApiGuruMateriTest extends TestCase
             ->post('/api/guru/materi', [
                 'id_mapel' => 'MP001',
                 'judul' => 'Algoritma',
+                'id_kelas' => ['KLS001'],
                 'file_pdf' => $pdf,
             ], ['Accept' => 'application/json']);
 
         $response
             ->assertCreated()
             ->assertJsonPath('data.id_mapel', 'MP001')
-            ->assertJsonPath('data.pdf_url', Storage::disk('public')->url('materi/'.$pdf->hashName()));
+            ->assertJsonPath('data.pdf_url', route('materi.pdf', 'M001', false));
 
         $materi = Materi::findOrFail('M001');
         $this->assertSame('MP001', $materi->id_mapel);
@@ -109,7 +157,7 @@ class ApiGuruMateriTest extends TestCase
                 'id_mapel' => 'MP001',
                 'judul' => 'Materi Jaringan',
                 'bab' => 'Bab 1',
-                'kelas' => 'X RPL 1',
+                'id_kelas' => ['KLS001'],
                 'deskripsi' => 'Pengenalan jaringan komputer.',
                 'link_youtube' => 'https://www.youtube.com/watch?v=abc123',
             ])
@@ -117,7 +165,8 @@ class ApiGuruMateriTest extends TestCase
             ->assertJsonPath('data.id_mapel', 'MP001')
             ->assertJsonPath('data.judul', 'Materi Jaringan')
             ->assertJsonPath('data.bab', 'Bab 1')
-            ->assertJsonPath('data.kelas', 'X RPL 1')
+            ->assertJsonPath('data.kelas.0', 'X RPL 1')
+            ->assertJsonPath('data.id_kelas.0', 'KLS001')
             ->assertJsonPath('data.deskripsi', 'Pengenalan jaringan komputer.')
             ->assertJsonPath('data.link_youtube', 'https://www.youtube.com/watch?v=abc123');
     }
@@ -125,6 +174,7 @@ class ApiGuruMateriTest extends TestCase
     public function test_update_replaces_pdf_safely_and_preserves_it_when_no_new_file_is_sent(): void
     {
         Storage::disk('public')->put('materi/original.pdf', '%PDF-1.4 original');
+        Storage::disk('public')->assertExists('materi/original.pdf');
         $materi = $this->createMateri(['isi_materi' => 'materi/original.pdf']);
         $replacement = UploadedFile::fake()->create('replacement.pdf', 48, 'application/pdf');
 
@@ -133,6 +183,7 @@ class ApiGuruMateriTest extends TestCase
                 '_method' => 'PUT',
                 'id_mapel' => 'MP001',
                 'judul' => 'Perubahan tidak valid',
+                'id_kelas' => ['KLS001'],
                 'file_pdf' => UploadedFile::fake()->create('invalid.txt', 12, 'text/plain'),
             ], ['Accept' => 'application/json'])
             ->assertUnprocessable()
@@ -146,6 +197,7 @@ class ApiGuruMateriTest extends TestCase
                 '_method' => 'PUT',
                 'id_mapel' => 'MP001',
                 'judul' => 'Materi diperbarui',
+                'id_kelas' => ['KLS001'],
                 'file_pdf' => $replacement,
             ], ['Accept' => 'application/json']);
 
@@ -161,6 +213,7 @@ class ApiGuruMateriTest extends TestCase
                 '_method' => 'PUT',
                 'id_mapel' => 'MP001',
                 'judul' => 'Materi diperbarui lagi',
+                'id_kelas' => ['KLS001'],
             ], ['Accept' => 'application/json'])
             ->assertOk()
             ->assertJsonPath('data.pdf_url', $materi->pdfUrl());
@@ -177,6 +230,7 @@ class ApiGuruMateriTest extends TestCase
             ->post('/api/guru/materi', [
                 'id_mapel' => 'MP002',
                 'judul' => 'Mapel tidak aktif',
+                'id_kelas' => ['KLS001'],
             ], ['Accept' => 'application/json'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('id_mapel');
@@ -185,6 +239,7 @@ class ApiGuruMateriTest extends TestCase
             ->post('/api/guru/materi', [
                 'id_mapel' => 'MP001',
                 'judul' => 'File bukan PDF',
+                'id_kelas' => ['KLS001'],
                 'file_pdf' => UploadedFile::fake()->create('materi.txt', 10, 'text/plain'),
             ], ['Accept' => 'application/json'])
             ->assertUnprocessable()
@@ -194,6 +249,7 @@ class ApiGuruMateriTest extends TestCase
             ->post('/api/guru/materi', [
                 'id_mapel' => 'MP001',
                 'judul' => 'File terlalu besar',
+                'id_kelas' => ['KLS001'],
                 'file_pdf' => UploadedFile::fake()->create('besar.pdf', 10241, 'application/pdf'),
             ], ['Accept' => 'application/json'])
             ->assertUnprocessable()
@@ -202,21 +258,16 @@ class ApiGuruMateriTest extends TestCase
         $this->assertSame([], Storage::disk('public')->allFiles());
     }
 
-    public function test_teacher_can_create_materi_without_a_subject(): void
+    public function test_api_requires_a_subject_and_class_for_material(): void
     {
         $this->actingAs($this->teacher(), 'sanctum')
             ->post('/api/guru/materi', [
                 'judul' => 'Materi tanpa mapel',
             ], ['Accept' => 'application/json'])
-            ->assertCreated()
-            ->assertJsonPath('data.id_mapel', null)
-            ->assertJsonPath('data.judul', 'Materi tanpa mapel');
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['id_mapel', 'id_kelas']);
 
-        $this->assertDatabaseHas('materis', [
-            'id_materi' => 'M001',
-            'id_mapel' => null,
-            'judul' => 'Materi tanpa mapel',
-        ]);
+        $this->assertDatabaseCount('tm_materi', 0);
     }
 
     public function test_api_returns_active_subjects_and_pdf_urls(): void
@@ -280,11 +331,14 @@ class ApiGuruMateriTest extends TestCase
      */
     private function createMateri(array $attributes = []): Materi
     {
-        return Materi::create(array_replace([
+        $materi = Materi::create(array_replace([
             'id_materi' => 'M001',
             'id_mapel' => 'MP001',
             'judul' => 'Materi',
             'id_user' => $this->teacher()->id_user,
         ], $attributes));
+        $materi->kelasTerkait()->sync(['KLS001']);
+
+        return $materi;
     }
 }

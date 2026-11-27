@@ -11,7 +11,7 @@
     <div>
         <x-tombol-kembali :fallback="route('siswa.materi.index', ['mapel' => $materi->id_mapel])" class="btn btn-secondary u-display-inline-block u-margin-bottom-10px" />
         <h1>{{ $materi->judul }}</h1>
-        <p>{{ $materi->bab ?? '-' }} &bull; Kelas {{ $materi->kelas ?? '-' }}</p>
+        <p>{{ $materi->bab ?? '-' }} &bull; Kelas {{ $materi->kelasTerkait->pluck('nama_kelas')->join(', ') ?: '-' }}</p>
     </div>
     <div class="actions">
         <a href="{{ route('siswa.kuis.index', ['mapel' => $materi->id_mapel, 'materi' => $materi->id_materi]) }}" class="btn">
@@ -82,7 +82,7 @@
                 </div>
                 <div>
                     <dt>Kelas</dt>
-                    <dd>{{ $materi->kelas ?? '-' }}</dd>
+                    <dd>{{ $materi->kelasTerkait->pluck('nama_kelas')->join(', ') ?: '-' }}</dd>
                 </div>
                 <div>
                     <dt>Deskripsi</dt>

@@ -1,0 +1,97 @@
+.materi-kelas-fieldset {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 0 0 18px;
+    min-width: 0;
+    padding: 14px;
+}
+
+.materi-kelas-fieldset > legend {
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    padding: 0;
+}
+
+.materi-kelas-groups {
+    align-items: start;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.materi-kelas-group {
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 14px;
+}
+
+.materi-kelas-group h3 {
+    color: var(--ink);
+    font-size: 15px;
+    margin: 0;
+}
+
+.materi-kelas-options {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+}
+
+.materi-kelas-option {
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    min-height: 40px;
+    padding: 10px 14px;
+    transition: border-color 0.15s, background-color 0.15s;
+    user-select: none;
+    width: 100%;
+}
+
+.materi-kelas-option:hover {
+    background: var(--purple-light);
+    border-color: var(--purple);
+}
+
+.materi-kelas-option input {
+    flex: 0 0 auto;
+    height: 18px;
+    margin: 0;
+    width: 18px;
+}
+
+.materi-kelas-option span {
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.materi-kelas-option:focus-within {
+    border-color: var(--purple);
+    outline: 2px solid var(--purple);
+    outline-offset: 2px;
+}
+
+[data-kelas-status]:empty {
+    display: none;
+}
+
+@media (max-width: 800px) {
+    .materi-kelas-groups {
+        grid-template-columns: 1fr;
+    }
+}

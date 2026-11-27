@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\DraftJawaban;
 use App\Models\Kelas;
 use App\Models\Kuis;
-use App\Models\Materi;
 use App\Models\Mengerjakan;
 use App\Models\NilaiEssay;
 use App\Models\Pengajaran;
@@ -139,22 +138,12 @@ class ValidasiNilaiController extends Controller
 
             $semuaMapelIds = $daftarKelas->flatMap(fn ($kelas) => $kelas->mapel->pluck('id_mapel'))->unique()->values();
             $semuaSiswaIds = $daftarKelas->flatMap(fn ($kelas) => $kelas->siswa->pluck('id_user'))->unique()->values();
-            $materiPerMapel = Materi::query()
-                ->selectRaw('id_mapel, COUNT(*) AS total')
-                ->whereIn('id_mapel', $semuaMapelIds)
-                ->groupBy('id_mapel')
+            $materiPerKelas = DB::table('tp_materi_kelas')
+                ->selectRaw('id_kelas, COUNT(*) AS total')
+                ->whereIn('id_kelas', $daftarKelas->pluck('id_kelas'))
+                ->groupBy('id_kelas')
                 ->get()
-                ->keyBy('id_mapel');
-            $namaKelasMateri = $daftarKelas->flatMap(fn ($kelas) => [$kelas->tingkat, $kelas->nama_kelas])
-                ->filter()
-                ->unique()
-                ->values();
-            $materiPerKelas = Materi::query()
-                ->selectRaw('kelas, COUNT(*) AS total')
-                ->whereIn('kelas', $namaKelasMateri)
-                ->groupBy('kelas')
-                ->get()
-                ->keyBy('kelas');
+                ->keyBy('id_kelas');
             $kuisPerMapel = Kuis::query()
                 ->selectRaw('id_mapel, COUNT(*) AS total')
                 ->where('is_aktif', true)
@@ -176,17 +165,11 @@ class ValidasiNilaiController extends Controller
                 ->get()
                 ->keyBy('id_user');
 
-            $kelasList = $daftarKelas->map(function ($k) use ($materiPerMapel, $materiPerKelas, $kuisPerMapel, $kuisAktifTanpaMapel, $nilaiPerSiswa) {
+            $kelasList = $daftarKelas->map(function ($k) use ($materiPerKelas, $kuisPerMapel, $kuisAktifTanpaMapel, $nilaiPerSiswa) {
                 $siswaIds = $k->siswa->pluck('id_user')->toArray();
                 $mapelIds = $k->mapel->pluck('id_mapel')->toArray();
 
                 $totalSiswa = count($siswaIds);
-
-                $totalMateri = Materi::when(! empty($mapelIds), function ($q) use ($mapelIds) {
-                    $q->whereIn('id_mapel', $mapelIds);
-                }, function ($q) use ($k) {
-                    $q->where('kelas', $k->tingkat)->orWhere('kelas', $k->nama_kelas);
-                })->count();
 
                 $kuisAktif = Kuis::where('is_aktif', true)
                     ->where('status_publikasi', 'terbit')
@@ -200,12 +183,7 @@ class ValidasiNilaiController extends Controller
                         ->whereNotNull('nilai')
                         ->avg('nilai')
                     : null;
-                $totalMateri = ! empty($mapelIds)
-                    ? collect($mapelIds)->sum(fn ($idMapel) => (int) ($materiPerMapel->get($idMapel)?->total ?? 0))
-                    : collect([$k->tingkat, $k->nama_kelas])
-                        ->filter()
-                        ->unique()
-                        ->sum(fn ($namaKelas) => (int) ($materiPerKelas->get($namaKelas)?->total ?? 0));
+                $totalMateri = (int) ($materiPerKelas->get($k->id_kelas)?->total ?? 0);
                 $kuisAktif = ! empty($mapelIds)
                     ? collect($mapelIds)->sum(fn ($idMapel) => (int) ($kuisPerMapel->get($idMapel)?->total ?? 0))
                     : $kuisAktifTanpaMapel;

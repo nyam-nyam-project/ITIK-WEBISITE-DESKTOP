@@ -43,6 +43,7 @@ class ProgressController extends Controller
     {
         $user = Auth::user();
         $idMapel = $request->query('mapel');
+        $this->pastikanTabelRelasiMateriKelas();
 
         [$mapelIds, $idKelas, $tanpaKelas] = $this->mapelSiswa();
 
@@ -54,7 +55,17 @@ class ProgressController extends Controller
 
         // Batasi mapelAktif hanya ke mapel kelas siswa
         $mapelAktif = Mapel::aktif()
-            ->withCount(['materi' => fn ($q) => $q->where('is_aktif', true)])
+            ->withCount(['materi' => function ($query) use ($idKelas, $tanpaKelas) {
+                $query->where('is_aktif', true)
+                    ->when(
+                        $tanpaKelas,
+                        fn ($materiQuery) => $materiQuery->whereRaw('1 = 0'),
+                        fn ($materiQuery) => $materiQuery->whereHas(
+                            'kelasTerkait',
+                            fn ($kelasQuery) => $kelasQuery->where('tm_kelas.id_kelas', $idKelas),
+                        ),
+                    );
+            }])
             ->when(! $tanpaKelas, fn ($q) => $q->whereIn('id_mapel', $mapelIds))
             ->when($tanpaKelas, fn ($q) => $q->whereRaw('1 = 0'))  // kosongkan jika belum punya kelas
             ->orderBy('nama_mapel')
@@ -70,7 +81,14 @@ class ProgressController extends Controller
             if ($mapelTerpilih) {
                 $query = Materi::where('is_aktif', true)
                     ->where('id_mapel', $idMapel)
+                    ->whereHas(
+                        'kelasTerkait',
+                        fn ($kelasQuery) => $kelasQuery->where('tm_kelas.id_kelas', $idKelas),
+                    )
                     ->with([
+                        'kelasTerkait' => fn ($kelasQuery) => $kelasQuery
+                            ->orderBy('tingkat')
+                            ->orderBy('nama_kelas'),
                         'kuis' => function ($q) {
                             $q->where('is_aktif', true)
                                 ->where('status_publikasi', 'terbit');
@@ -129,8 +147,13 @@ class ProgressController extends Controller
         }
 
         // Tolak jika mapel materi di luar mapel kelas siswa
-        [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
-        if ($tanpaKelas || ! $mapelIds->contains($materi->id_mapel)) {
+        $this->pastikanTabelRelasiMateriKelas();
+        [$mapelIds, $idKelas, $tanpaKelas] = $this->mapelSiswa();
+        if (
+            $tanpaKelas
+            || ! $mapelIds->contains($materi->id_mapel)
+            || ! $materi->kelasTerkait()->where('tm_kelas.id_kelas', $idKelas)->exists()
+        ) {
             abort(403, 'Materi ini tidak termasuk dalam mata pelajaran kelasmu.');
         }
 
@@ -212,8 +235,13 @@ class ProgressController extends Controller
         }
 
         // Tolak jika mapel materi di luar mapel kelas siswa
-        [$mapelIds, , $tanpaKelas] = $this->mapelSiswa();
-        if ($tanpaKelas || ! $mapelIds->contains($materi->id_mapel)) {
+        $this->pastikanTabelRelasiMateriKelas();
+        [$mapelIds, $idKelas, $tanpaKelas] = $this->mapelSiswa();
+        if (
+            $tanpaKelas
+            || ! $mapelIds->contains($materi->id_mapel)
+            || ! $materi->kelasTerkait()->where('tm_kelas.id_kelas', $idKelas)->exists()
+        ) {
             abort(403, 'Materi ini tidak termasuk dalam mata pelajaran kelasmu.');
         }
 
@@ -259,5 +287,14 @@ class ProgressController extends Controller
         return redirect()
             ->route('siswa.materi.show', $materi->id_materi)
             ->with('success', 'Materi berhasil ditandai selesai.');
+    }
+
+    private function pastikanTabelRelasiMateriKelas(): void
+    {
+        abort_unless(
+            Schema::hasTable('tp_materi_kelas'),
+            503,
+            'Relasi kelas materi belum tersedia. Hubungi administrator sekolah.',
+        );
     }
 }

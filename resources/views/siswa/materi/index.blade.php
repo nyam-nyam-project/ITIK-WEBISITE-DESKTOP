@@ -108,7 +108,7 @@
                                 @if($item->bab)
                                     <strong>{{ $item->bab }}</strong> &bull;
                                 @endif
-                                Kelas {{ $item->kelas ?? '-' }}
+                                Kelas {{ $item->kelasTerkait->pluck('nama_kelas')->join(', ') ?: '-' }}
                                 @if($item->deskripsi)
                                     &bull; {{ Str::limit($item->deskripsi, 85) }}
                                 @endif

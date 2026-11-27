@@ -57,7 +57,7 @@ class ArsipController extends Controller
             ->withQueryString();
 
         $materiArsip = $materiArsipQuery
-            ->with('mapel')
+            ->with(['mapel', 'kelasTerkait'])
             ->orderByDesc('created_at')
             ->orderBy('id_materi')
             ->paginate($perPage, ['*'], 'materi_page')
@@ -83,9 +83,12 @@ class ArsipController extends Controller
             abort(403, 'Anda tidak berhak memulihkan kuis milik guru lain.');
         }
 
-        $kuis->update([
-            'is_aktif' => true,
-        ]);
+        DB::transaction(function () use ($kuis): void {
+            $kuis->update([
+                'is_aktif' => true,
+                'diarsipkan_bersama' => null,
+            ]);
+        });
 
         return redirect()
             ->back()
@@ -130,13 +133,30 @@ class ArsipController extends Controller
             abort(403, 'Anda tidak berhak memulihkan materi milik guru lain.');
         }
 
-        $materi->update([
-            'is_aktif' => true,
-        ]);
+        $jumlahKuisDipulihkan = DB::transaction(function () use ($materi): int {
+            $materi->update([
+                'is_aktif' => true,
+            ]);
+
+            $kuisIkut = Kuis::where('diarsipkan_bersama', $materi->id_materi)->get();
+            foreach ($kuisIkut as $kuis) {
+                $kuis->update([
+                    'is_aktif' => true,
+                    'diarsipkan_bersama' => null,
+                ]);
+            }
+
+            return $kuisIkut->count();
+        });
+
+        $pesan = "Materi \"{$materi->judul}\" berhasil dipulihkan ke daftar aktif.";
+        if ($jumlahKuisDipulihkan > 0) {
+            $pesan = "Materi \"{$materi->judul}\" beserta {$jumlahKuisDipulihkan} kuis terkait berhasil dipulihkan ke daftar aktif.";
+        }
 
         return redirect()
             ->back()
-            ->with('success', "Materi \"{$materi->judul}\" berhasil dipulihkan ke daftar aktif.");
+            ->with('success', $pesan);
     }
 
     public function hapusPermanenMateri(string $id)
@@ -148,12 +168,20 @@ class ArsipController extends Controller
             abort(403, 'Anda tidak berhak menghapus materi milik guru lain.');
         }
 
-        if ($materi->isi_materi && Storage::disk('public')->exists($materi->isi_materi)) {
-            Storage::disk('public')->delete($materi->isi_materi);
-        }
-
+        $pathPdf = $materi->isi_materi;
         $judul = $materi->judul;
-        $materi->delete();
+
+        DB::transaction(function () use ($materi): void {
+            Kuis::where('diarsipkan_bersama', $materi->id_materi)
+                ->update(['diarsipkan_bersama' => null]);
+            $materi->kuis()->detach();
+            $materi->kelasTerkait()->detach();
+            $materi->delete();
+        });
+
+        if ($pathPdf && Storage::disk('public')->exists($pathPdf)) {
+            Storage::disk('public')->delete($pathPdf);
+        }
 
         return redirect()
             ->back()

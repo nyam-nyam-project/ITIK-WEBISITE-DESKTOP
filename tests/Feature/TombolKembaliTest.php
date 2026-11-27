@@ -258,6 +258,22 @@ class TombolKembaliTest extends TestCase
         $this->assertStringNotContainsString('onclick=', $isiKomponen);
     }
 
+    public function test_kembali_setelah_membuka_halaman_sebelumnya_tidak_muter_muter(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk();
+        $this->actingAs($admin)->get(route('admin.siswa.index'))->assertOk();
+        // Membuka form create tidak boleh masuk riwayat
+        $this->actingAs($admin)->get(route('admin.siswa.create'))->assertOk();
+        // Kembali ke daftar siswa: stack harus terpotong sehingga tombol kembali di daftar menunjuk ke dashboard (bukan create)
+        $response = $this->actingAs($admin)->get(route('admin.siswa.index'));
+
+        $response->assertOk();
+        $this->assertNotContains(route('admin.siswa.create'), session(RiwayatHalaman::KUNCI_SESSION, []));
+        $response->assertSee('href="'.route('admin.dashboard').'"', false);
+    }
+
     private function buatAdmin(): User
     {
         return User::query()->create([

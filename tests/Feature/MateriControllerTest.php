@@ -60,45 +60,55 @@ class MateriControllerTest extends TestCase
             $table->string('isi_materi', 255)->nullable();
             $table->string('link_youtube', 255)->nullable();
             $table->string('id_user', 50);
+            $table->boolean('is_aktif')->default(true);
             $table->timestamps();
-            $table->unique(['kelas', 'bab', 'judul'], 'uq_materi_judul');
-            $table->unique(['id_mapel', 'kelas', 'bab'], 'uq_materi_mapel_kelas_bab');
+        });
+
+        Schema::create('tp_materi_kelas', function (Blueprint $table): void {
+            $table->string('id_materi', 50);
+            $table->string('id_kelas', 50);
+            $table->primary(['id_materi', 'id_kelas']);
+            $table->foreign('id_materi')->references('id_materi')->on('tm_materi')->cascadeOnDelete();
+            $table->foreign('id_kelas')->references('id_kelas')->on('tm_kelas')->restrictOnDelete();
         });
     }
 
-    public function test_create_form_shows_only_active_classes_in_a_dropdown(): void
+    public function test_create_form_shows_only_classes_assigned_to_the_teacher_as_checkboxes(): void
     {
         $this->seedFormData();
 
         $response = $this->actingAs($this->guru())
-            ->get(route('materi.create'));
+            ->get(route('materi.create', ['mapel' => 'MP001']));
 
         $response->assertOk()
-            ->assertSee('<select id="kelas" name="kelas"', false)
-            ->assertSee('value="X TKJ 1"', false)
-            ->assertSee('value="X TKJ 2"', false)
+            ->assertSee('<fieldset', false)
+            ->assertSee('<legend>Kelas', false)
+            ->assertSee('name="id_kelas[]"', false)
+            ->assertSee('value="KLS001"', false)
+            ->assertSee('value="KLS002"', false)
             ->assertDontSee('value="XI TKJ 1"', false)
-            ->assertDontSee('value="X TKJ 3"', false);
+            ->assertDontSee('value="KLS004"', false)
+            ->assertDontSee('value="KLS005"', false);
     }
 
-    public function test_edit_form_keeps_a_legacy_class_value_available(): void
+    public function test_edit_form_preselects_the_material_classes(): void
     {
         $this->seedFormData();
-        $materi = $this->createMateri('M001', 'Bab 1', 'X');
+        $materi = $this->createMateri('M001', 'Bab 1', ['KLS001', 'KLS002']);
 
         $response = $this->actingAs($this->guru())
             ->get(route('materi.edit', $materi->id_materi));
 
         $response->assertOk()
-            ->assertSee('<select id="kelas" name="kelas"', false)
-            ->assertSee('value="X" selected', false)
-            ->assertSee('value="X TKJ 1"', false);
+            ->assertSee('value="KLS001"', false)
+            ->assertSee('value="KLS002"', false)
+            ->assertSee('checked', false);
     }
 
     public function test_store_rejects_a_bab_already_used_for_the_same_subject_and_class(): void
     {
         $this->seedFormData();
-        $this->createMateri('M001', 'Bab 1', 'X TKJ 1');
+        $this->createMateri('M001', 'Bab 1', ['KLS001']);
 
         $response = $this->actingAs($this->guru())
             ->from(route('materi.create'))
@@ -106,18 +116,18 @@ class MateriControllerTest extends TestCase
                 'id_mapel' => 'MP001',
                 'judul' => 'Materi berbeda',
                 'bab' => 'Bab 1',
-                'kelas' => 'X TKJ 1',
+                'id_kelas' => ['KLS001'],
             ]);
 
         $response->assertRedirect(route('materi.create'))
-            ->assertSessionHas('error', 'Bab tersebut sudah digunakan untuk mata pelajaran dan kelas ini.');
+            ->assertSessionHasErrors('bab');
         $this->assertDatabaseCount('tm_materi', 1);
     }
 
     public function test_store_accepts_the_same_bab_for_a_different_class(): void
     {
         $this->seedFormData();
-        $this->createMateri('M001', 'Bab 1', 'X TKJ 1');
+        $this->createMateri('M001', 'Bab 1', ['KLS001']);
 
         $response = $this->actingAs($this->guru())
             ->from(route('materi.create'))
@@ -125,16 +135,16 @@ class MateriControllerTest extends TestCase
                 'id_mapel' => 'MP001',
                 'judul' => 'Materi kelas kedua',
                 'bab' => 'Bab 1',
-                'kelas' => 'X TKJ 2',
+                'id_kelas' => ['KLS002'],
             ]);
 
-        $response->assertRedirect(route('materi.index'));
+        $response->assertRedirect(route('materi.index', ['mapel' => 'MP001']));
         $this->assertDatabaseHas('tm_materi', [
             'id_materi' => 'M002',
             'id_mapel' => 'MP001',
             'bab' => 'Bab 1',
-            'kelas' => 'X TKJ 2',
         ]);
+        $this->assertDatabaseHas('tp_materi_kelas', ['id_materi' => 'M002', 'id_kelas' => 'KLS002']);
     }
 
     public function test_store_rejects_a_class_that_is_not_available(): void
@@ -147,19 +157,19 @@ class MateriControllerTest extends TestCase
                 'id_mapel' => 'MP001',
                 'judul' => 'Materi kelas tidak valid',
                 'bab' => 'Bab 1',
-                'kelas' => 'Kelas tidak tersedia',
+                'id_kelas' => ['KLS005'],
             ]);
 
         $response->assertRedirect(route('materi.create'))
-            ->assertSessionHasErrors('kelas');
+            ->assertSessionHasErrors('id_kelas.0');
         $this->assertDatabaseCount('tm_materi', 0);
     }
 
     public function test_update_rejects_a_bab_used_by_another_materi_without_changing_the_record(): void
     {
         $this->seedFormData();
-        $this->createMateri('M001', 'Bab 1', 'X TKJ 1');
-        $materi = $this->createMateri('M002', 'Bab 2', 'X TKJ 1');
+        $this->createMateri('M001', 'Bab 1', ['KLS001']);
+        $materi = $this->createMateri('M002', 'Bab 2', ['KLS001']);
 
         $response = $this->actingAs($this->guru())
             ->from(route('materi.edit', $materi->id_materi))
@@ -167,11 +177,11 @@ class MateriControllerTest extends TestCase
                 'id_mapel' => 'MP001',
                 'judul' => $materi->judul,
                 'bab' => 'Bab 1',
-                'kelas' => 'X TKJ 1',
+                'id_kelas' => ['KLS001'],
             ]);
 
         $response->assertRedirect(route('materi.edit', $materi->id_materi))
-            ->assertSessionHas('error', 'Bab tersebut sudah digunakan untuk mata pelajaran dan kelas ini.');
+            ->assertSessionHasErrors('bab');
         $this->assertDatabaseHas('tm_materi', [
             'id_materi' => 'M002',
             'judul' => 'Materi M002',
@@ -191,6 +201,7 @@ class MateriControllerTest extends TestCase
             ['id_kelas' => 'KLS002', 'nama_kelas' => 'X TKJ 2', 'tingkat' => 'X', 'id_tahun_ajaran' => 'TA001', 'is_aktif' => true],
             ['id_kelas' => 'KLS003', 'nama_kelas' => 'XI TKJ 1', 'tingkat' => 'XI', 'id_tahun_ajaran' => 'TA002', 'is_aktif' => true],
             ['id_kelas' => 'KLS004', 'nama_kelas' => 'X TKJ 3', 'tingkat' => 'X', 'id_tahun_ajaran' => 'TA001', 'is_aktif' => false],
+            ['id_kelas' => 'KLS005', 'nama_kelas' => 'X TKJ 4', 'tingkat' => 'X', 'id_tahun_ajaran' => 'TA001', 'is_aktif' => true],
         ]);
 
         DB::table('tm_mapel')->insert([
@@ -205,6 +216,11 @@ class MateriControllerTest extends TestCase
             'id_kelas' => 'KLS001',
             'id_mapel' => 'MP001',
         ]);
+        DB::table('tr_pengajaran')->insert([
+            'id_user' => 'G001',
+            'id_kelas' => 'KLS002',
+            'id_mapel' => 'MP001',
+        ]);
     }
 
     private function guru(): User
@@ -217,15 +233,17 @@ class MateriControllerTest extends TestCase
         return $guru;
     }
 
-    private function createMateri(string $id, string $bab, string $kelas): Materi
+    private function createMateri(string $id, string $bab, array $kelasIds): Materi
     {
-        return Materi::create([
+        $materi = Materi::create([
             'id_materi' => $id,
             'judul' => 'Materi '.$id,
             'bab' => $bab,
-            'kelas' => $kelas,
             'id_mapel' => 'MP001',
             'id_user' => 'G001',
         ]);
+        $materi->kelasTerkait()->sync($kelasIds);
+
+        return $materi;
     }
 }

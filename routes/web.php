@@ -211,6 +211,10 @@ Route::middleware(['auth', 'role:admin'])
 
 Route::middleware(['auth', 'role:guru'])->group(function () {
 
+    Route::get('/materi/kelas', [MateriController::class, 'kelasUntukMapel'])
+        ->name('materi.kelas');
+    Route::get('/materi/{materi}/konfirmasi-arsip', [MateriController::class, 'konfirmasiArsip'])
+        ->name('materi.konfirmasi-arsip');
     Route::resource('materi', MateriController::class);
 
     Route::resource('kuis', KuisController::class);

@@ -20,9 +20,9 @@ Berikut adalah pembagian peran dalam pengembangan sistem ITIK:
 | Nama Anggota | Peran / Tugas Spesifik |
 | :--- | :--- |
 | **Sa'dan Arya Diputra** | **Project Manager & System Analyst** (Merancang ERD, Flowchart, API, & mengawasi repository) |
-| **Achamd Kevin Arisandi** | **Mobile Developer** (Mengembangkan aplikasi Flutter dan integrasi REST API) |
+| **Natasya Mei Dista** | **Mobile Developer** (Mengembangkan aplikasi Flutter dan integrasi REST API) |
 | **Marshanda Gracella Andryanta** | **Backend Developer** (Membuat logika Laravel, Database Migration, & fitur Import Excel) |
-| **Natasya Mei Dista** | **Frontend Web Developer** (Melakukan Slicing UI dan integrasi layout Blade Laravel) |
+| **Achamd Kevin Arisandi** | **Frontend Web Developer** (Melakukan Slicing UI dan integrasi layout Blade Laravel) |
 | **Muhammad Ryo Fabriyansah** | **UI/UX Designer & QA** (Merancang desain Figma awal dan melakukan *testing* sistem) |
 
 ## 🚀 Cara Instalasi (Local Development)

@@ -16,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'ITIK') | ITIK</title>
+    @include('partials.favicon')
     <script src="{{ asset('js/theme-init.js') }}"></script>
     <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     <script src="{{ asset('js/reveal-init.js') }}"></script>

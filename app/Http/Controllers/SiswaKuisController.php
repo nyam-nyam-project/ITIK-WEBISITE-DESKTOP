@@ -639,6 +639,7 @@ class SiswaKuisController extends Controller
             $sesi->refresh();
             $this->submission->submit($sesi);
             $autoSubmitted = true;
+            session()->flash('error', 'Kuis dikumpulkan otomatis karena pelanggaran melebihi batas yang diizinkan.');
         }
 
         return response()->json([

@@ -314,7 +314,13 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
 
             const pesanEl = document.getElementById('pelanggaranPesan');
             if (pesanEl) {
-                pesanEl.textContent = 'PERINGATAN (' + data.jumlah + '/' + data.batas + '): Anda terdeteksi keluar dari layar penuh atau berpindah jendela. Segera kembali ke mode layar penuh.';
+                if (data.jumlah === 1) {
+                    pesanEl.textContent = 'Peringatan 1 dari 2: jangan keluar dari halaman ujian.';
+                } else if (data.jumlah === 2) {
+                    pesanEl.textContent = 'Peringatan 2 dari 2: pelanggaran berikutnya akan langsung mengumpulkan kuis.';
+                } else {
+                    pesanEl.textContent = 'Peringatan ' + data.jumlah + ' dari ' + (data.batas - 1) + ': jangan keluar dari halaman ujian.';
+                }
             }
             if (overlayPelanggaran) {
                 overlayPelanggaran.classList.remove('is-cbt-hidden');
@@ -420,7 +426,8 @@ document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
     window.addEventListener('keydown', function (e) {
         if (e.key === 'Alt' || e.key === 'Meta' || e.key === 'OS') {
             e.preventDefault();
-            tampilkanPesanCbt('Harap tetap berada di halaman kuis hingga selesai.');
+            tampilkanPesanCbt('Tombol sistem dinonaktifkan selama ujian. Harap tetap berada di halaman kuis.');
+            laporkanPelanggaran();
             return false;
         }
 

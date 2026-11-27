@@ -86,12 +86,18 @@ class MapelController extends Controller
                 'alpha_dash',
                 Rule::unique('tm_mapel', 'kode_mapel')->ignore($kecuali, 'id_mapel'),
             ],
-            'nama_mapel' => ['required', 'string', 'max:100'],
+            'nama_mapel' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('tm_mapel', 'nama_mapel')->ignore($kecuali, 'id_mapel'),
+            ],
             'deskripsi' => ['nullable', 'string'],
             'is_aktif' => ['nullable', 'boolean'],
         ], [
             'kode_mapel.unique' => 'Kode mata pelajaran sudah digunakan.',
             'kode_mapel.alpha_dash' => 'Kode hanya boleh berisi huruf, angka, tanda hubung, atau garis bawah.',
+            'nama_mapel.unique' => 'Nama mata pelajaran sudah digunakan.',
         ]);
 
         $validated['kode_mapel'] = strtoupper($validated['kode_mapel']);

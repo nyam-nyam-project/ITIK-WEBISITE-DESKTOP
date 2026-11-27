@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Login Administrator - ITIK</title>
+    @include('partials.favicon')
     <script src="{{ asset('js/theme-init.js') }}"></script>
     <script src="{{ asset('js/aksesibilitas-init.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('css/theme.css') }}">

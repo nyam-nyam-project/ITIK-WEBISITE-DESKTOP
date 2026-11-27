@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -63,9 +65,21 @@ class Kelas extends Model
         return $this->hasMany(AnggotaKelas::class, 'id_kelas', 'id_kelas');
     }
 
-    public function pengajaran()
+    public function pengajaran(): HasMany
     {
         return $this->hasMany(Pengajaran::class, 'id_kelas', 'id_kelas');
+    }
+
+    public function materi(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Materi::class,
+            'tp_materi_kelas',
+            'id_kelas',
+            'id_materi',
+            'id_kelas',
+            'id_materi'
+        );
     }
 
     public function scopeAktif($query)

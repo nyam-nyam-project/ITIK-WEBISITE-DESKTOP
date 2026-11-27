@@ -48,6 +48,7 @@ class SiswaDashboardController extends Controller
         $this->submission->selesaikanMilikSiswa($user->id_user);
 
         $mapelIds = $this->mapelSiswa();
+        $idKelasMateri = Kelas::kelasAktifSiswa($user);
 
         /*
          * Tugas remedial yang belum dikerjakan.
@@ -64,15 +65,29 @@ class SiswaDashboardController extends Controller
          * Materi pembelajaran yang aktif untuk kelas siswa.
          */
         $materiBaseQuery = Materi::where('is_aktif', true)
-            ->when($mapelIds !== null, fn ($q) => $q->whereIn('id_mapel', $mapelIds));
+            ->when($mapelIds !== null, fn ($q) => $q->whereIn('id_mapel', $mapelIds))
+            ->when(
+                Schema::hasTable('tp_materi_kelas'),
+                fn ($query) => $query->whereHas(
+                    'kelasTerkait',
+                    fn ($kelasQuery) => $kelasQuery->where('tm_kelas.id_kelas', $idKelasMateri),
+                ),
+            );
 
         $totalMateri = (clone $materiBaseQuery)->count();
 
         $materiSelesai = Progress::where('id_user', $user->id_user)
             ->where('status', 'selesai')
-            ->whereHas('materi', function ($q) use ($mapelIds) {
+            ->whereHas('materi', function ($q) use ($mapelIds, $idKelasMateri) {
                 $q->where('is_aktif', true)
-                    ->when($mapelIds !== null, fn ($sub) => $sub->whereIn('id_mapel', $mapelIds));
+                    ->when($mapelIds !== null, fn ($sub) => $sub->whereIn('id_mapel', $mapelIds))
+                    ->when(
+                        Schema::hasTable('tp_materi_kelas'),
+                        fn ($sub) => $sub->whereHas(
+                            'kelasTerkait',
+                            fn ($kelasQuery) => $kelasQuery->where('tm_kelas.id_kelas', $idKelasMateri),
+                        ),
+                    );
             })
             ->count();
 

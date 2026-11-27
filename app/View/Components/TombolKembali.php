@@ -57,6 +57,9 @@ class TombolKembali extends Component
                 || $path === 'logout'
                 || str_ends_with($path, '/kerjakan')
                 || str_ends_with($path, '/mulai')
+                || str_ends_with($path, '/create')
+                || str_ends_with($path, '/edit')
+                || str_ends_with($path, '/konfirmasi-arsip')
             ) {
                 continue;
             }

@@ -34,15 +34,13 @@ class SiswaController extends Controller
         $materi = Materi::query()
             ->with([
                 'progress' => fn ($query) => $query->where('id_user', $user->id_user),
+                'kelasTerkait:id_kelas,nama_kelas,tingkat',
             ])
             ->orderByDesc('created_at')
             ->orderByDesc('id_materi')
             ->paginate(20);
 
-        $materi->getCollection()->transform(fn (Materi $item): array => [
-            ...$item->toArray(),
-            'pdf_url' => $item->pdfUrl(),
-        ]);
+        $materi->getCollection()->transform(fn (Materi $item): array => $this->materiPayload($item));
 
         return response()->json($materi);
     }
@@ -63,8 +61,7 @@ class SiswaController extends Controller
 
         return response()->json([
             'data' => [
-                ...$materi->toArray(),
-                'pdf_url' => $materi->pdfUrl(),
+                ...$this->materiPayload($materi),
             ],
             'progress' => $progress,
         ]);
@@ -130,13 +127,34 @@ class SiswaController extends Controller
                             });
                     });
             })
-            ->with('materi:id_materi,judul,bab,kelas')
+            ->with([
+                'materi:id_materi,judul,bab',
+                'materi.kelasTerkait:id_kelas,nama_kelas,tingkat',
+            ])
             ->withCount('soal')
             ->orderByDesc('created_at')
             ->orderByDesc('id_kuis')
             ->paginate(20);
 
         return response()->json($kuis);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function materiPayload(Materi $materi): array
+    {
+        $payload = $materi->toArray();
+        unset($payload['kelas']);
+
+        $kelas = $materi->kelasTerkait;
+
+        return [
+            ...$payload,
+            'id_kelas' => $kelas->pluck('id_kelas')->all(),
+            'kelas' => $kelas->pluck('nama_kelas')->all(),
+            'pdf_url' => $materi->pdfUrl(),
+        ];
     }
 
     public function mulaiKuis(Request $request, Kuis $kuis): JsonResponse

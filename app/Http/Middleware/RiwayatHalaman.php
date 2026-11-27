@@ -36,6 +36,9 @@ class RiwayatHalaman
         'siswa.kuis.kerjakan',
         'siswa.kuis.mulai',
         'materi.pdf',
+        '*.create',
+        '*.edit',
+        'materi.konfirmasi-arsip',
     ];
 
     public function handle(Request $request, Closure $next): Response
@@ -62,7 +65,15 @@ class RiwayatHalaman
             return $response;
         }
 
-        $riwayat[] = $urlSaatIni;
+        $indeksAda = array_search($urlSaatIni, $riwayat, true);
+
+        if ($indeksAda !== false) {
+            // Jika kembali ke halaman yang sudah ada di stack, potong stack sampai posisi itu
+            // agar tombol kembali tidak berputar-putar antar dua halaman.
+            $riwayat = array_slice($riwayat, 0, $indeksAda + 1);
+        } else {
+            $riwayat[] = $urlSaatIni;
+        }
 
         if (count($riwayat) > self::MAKSIMAL_RIWAYAT) {
             $riwayat = array_slice($riwayat, -self::MAKSIMAL_RIWAYAT);
@@ -134,6 +145,9 @@ class RiwayatHalaman
             || $path === 'logout'
             || str_ends_with($path, '/kerjakan')
             || str_ends_with($path, '/mulai')
+            || str_ends_with($path, '/create')
+            || str_ends_with($path, '/edit')
+            || str_ends_with($path, '/konfirmasi-arsip')
         ) {
             return false;
         }

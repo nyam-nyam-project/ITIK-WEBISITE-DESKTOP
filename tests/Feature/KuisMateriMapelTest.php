@@ -55,7 +55,7 @@ class KuisMateriMapelTest extends TestCase
 
     private function createSchema(): void
     {
-        Schema::create('user', function (Blueprint $table) {
+        Schema::create('tm_user', function (Blueprint $table) {
             $table->string('id_user', 50)->primary();
             $table->string('nomor_induk', 50)->nullable()->unique();
             $table->string('nama_lengkap', 100);
@@ -67,10 +67,10 @@ class KuisMateriMapelTest extends TestCase
             $table->boolean('wajib_ganti_password')->default(false);
             $table->string('dibuat_oleh', 50)->nullable();
             $table->timestamps();
-            $table->foreign('dibuat_oleh')->references('id_user')->on('user')->nullOnDelete();
+            $table->foreign('dibuat_oleh')->references('id_user')->on('tm_user')->nullOnDelete();
         });
 
-        Schema::create('tahun_ajaran', function (Blueprint $table) {
+        Schema::create('tm_tahun_ajaran', function (Blueprint $table) {
             $table->string('id_tahun_ajaran', 50)->primary();
             $table->string('nama', 20)->unique();
             $table->date('tanggal_mulai')->nullable();
@@ -79,7 +79,7 @@ class KuisMateriMapelTest extends TestCase
             $table->timestamps();
         });
 
-        Schema::create('mapel', function (Blueprint $table) {
+        Schema::create('tm_mapel', function (Blueprint $table) {
             $table->string('id_mapel', 50)->primary();
             $table->string('kode_mapel', 20)->unique();
             $table->string('nama_mapel', 100);
@@ -89,7 +89,7 @@ class KuisMateriMapelTest extends TestCase
             $table->timestamps();
         });
 
-        Schema::create('kuis', function (Blueprint $table) {
+        Schema::create('tm_kuis', function (Blueprint $table) {
             $table->string('id_kuis', 50)->primary();
             $table->string('judul', 150);
             $table->text('deskripsi')->nullable();
@@ -107,13 +107,22 @@ class KuisMateriMapelTest extends TestCase
             $table->boolean('is_aktif')->default(true);
             $table->string('tampil_jawaban', 20)->default('setelah_submit');
             $table->timestamp('created_at')->nullable()->useCurrent();
-            $table->foreign('id_mapel')->references('id_mapel')->on('mapel')->restrictOnDelete();
-            $table->foreign('id_tahun_ajaran')->references('id_tahun_ajaran')->on('tahun_ajaran')->restrictOnDelete();
-            $table->foreign('id_user')->references('id_user')->on('user')->restrictOnDelete();
-            $table->foreign('id_publisher')->references('id_user')->on('user')->nullOnDelete();
+            $table->foreign('id_mapel')->references('id_mapel')->on('tm_mapel')->restrictOnDelete();
+            $table->foreign('id_tahun_ajaran')->references('id_tahun_ajaran')->on('tm_tahun_ajaran')->restrictOnDelete();
+            $table->foreign('id_user')->references('id_user')->on('tm_user')->restrictOnDelete();
+            $table->foreign('id_publisher')->references('id_user')->on('tm_user')->nullOnDelete();
         });
 
-        Schema::create('materi', function (Blueprint $table) {
+        Schema::create('tm_kelas', function (Blueprint $table) {
+            $table->string('id_kelas', 50)->primary();
+            $table->string('nama_kelas', 50);
+            $table->string('tingkat', 10);
+            $table->string('id_tahun_ajaran', 50);
+            $table->boolean('is_aktif')->default(true);
+            $table->foreign('id_tahun_ajaran')->references('id_tahun_ajaran')->on('tm_tahun_ajaran')->restrictOnDelete();
+        });
+
+        Schema::create('tm_materi', function (Blueprint $table) {
             $table->string('id_materi', 50)->primary();
             $table->string('judul', 150);
             $table->string('bab', 50)->nullable();
@@ -124,29 +133,37 @@ class KuisMateriMapelTest extends TestCase
             $table->string('link_youtube')->nullable();
             $table->string('id_user', 50);
             $table->timestamps();
-            $table->unique(['kelas', 'bab', 'judul']);
-            $table->foreign('id_mapel')->references('id_mapel')->on('mapel')->restrictOnDelete();
-            $table->foreign('id_user')->references('id_user')->on('user')->restrictOnDelete();
+            $table->boolean('is_aktif')->default(true);
+            $table->foreign('id_mapel')->references('id_mapel')->on('tm_mapel')->restrictOnDelete();
+            $table->foreign('id_user')->references('id_user')->on('tm_user')->restrictOnDelete();
         });
 
-        Schema::create('materi_kuis', function (Blueprint $table) {
+        Schema::create('tp_materi_kuis', function (Blueprint $table) {
             $table->increments('id_materi_kuis');
             $table->string('id_materi', 50);
             $table->string('id_kuis', 50);
             $table->unique(['id_materi', 'id_kuis']);
-            $table->foreign('id_materi')->references('id_materi')->on('materi')->cascadeOnDelete();
-            $table->foreign('id_kuis')->references('id_kuis')->on('kuis')->cascadeOnDelete();
+            $table->foreign('id_materi')->references('id_materi')->on('tm_materi')->cascadeOnDelete();
+            $table->foreign('id_kuis')->references('id_kuis')->on('tm_kuis')->cascadeOnDelete();
         });
 
-        Schema::create('remedial', function (Blueprint $table) {
+        Schema::create('tp_materi_kelas', function (Blueprint $table) {
+            $table->string('id_materi', 50);
+            $table->string('id_kelas', 50);
+            $table->primary(['id_materi', 'id_kelas']);
+            $table->foreign('id_materi')->references('id_materi')->on('tm_materi')->cascadeOnDelete();
+            $table->foreign('id_kelas')->references('id_kelas')->on('tm_kelas')->restrictOnDelete();
+        });
+
+        Schema::create('tr_remedial', function (Blueprint $table) {
             $table->increments('id_remedial');
             $table->string('id_kuis_remedial', 50)->unique();
             $table->string('id_kuis_asal', 50);
-            $table->foreign('id_kuis_remedial')->references('id_kuis')->on('kuis')->cascadeOnDelete();
-            $table->foreign('id_kuis_asal')->references('id_kuis')->on('kuis')->restrictOnDelete();
+            $table->foreign('id_kuis_remedial')->references('id_kuis')->on('tm_kuis')->cascadeOnDelete();
+            $table->foreign('id_kuis_asal')->references('id_kuis')->on('tm_kuis')->restrictOnDelete();
         });
 
-        Schema::create('soal', function (Blueprint $table) {
+        Schema::create('tm_soal', function (Blueprint $table) {
             $table->string('id_soal', 50)->primary();
             $table->string('id_kuis', 50);
             $table->enum('tipe', ['pilihan_ganda', 'essay'])->default('pilihan_ganda');
@@ -157,10 +174,10 @@ class KuisMateriMapelTest extends TestCase
             $table->string('jawaban', 5)->nullable();
             $table->decimal('bobot', 5, 2)->default(1);
             $table->string('tingkat_kesulitan', 50)->nullable();
-            $table->foreign('id_kuis')->references('id_kuis')->on('kuis')->cascadeOnDelete();
+            $table->foreign('id_kuis')->references('id_kuis')->on('tm_kuis')->cascadeOnDelete();
         });
 
-        Schema::create('pengajaran', function (Blueprint $table) {
+        Schema::create('tr_pengajaran', function (Blueprint $table) {
             $table->increments('id_pengajaran');
             $table->string('id_user', 50);
             $table->string('id_kelas', 50)->nullable();
@@ -168,7 +185,15 @@ class KuisMateriMapelTest extends TestCase
             $table->timestamp('created_at')->nullable()->useCurrent();
         });
 
-        Schema::create('mengerjakan', function (Blueprint $table) {
+        Schema::create('tp_kuis_kelas', function (Blueprint $table) {
+            $table->string('id_kuis', 50);
+            $table->string('id_kelas', 50);
+            $table->primary(['id_kuis', 'id_kelas']);
+            $table->foreign('id_kuis')->references('id_kuis')->on('tm_kuis')->cascadeOnDelete();
+            $table->foreign('id_kelas')->references('id_kelas')->on('tm_kelas')->restrictOnDelete();
+        });
+
+        Schema::create('tr_mengerjakan', function (Blueprint $table) {
             $table->increments('id_mengerjakan');
             $table->string('id_kuis', 50);
             $table->string('id_user', 50);
@@ -179,8 +204,8 @@ class KuisMateriMapelTest extends TestCase
             $table->string('status_validasi', 50)->nullable()->default('belum divalidasi');
             $table->string('id_validator', 50)->nullable();
             $table->unique(['id_kuis', 'id_user', 'percobaan_ke']);
-            $table->foreign('id_kuis')->references('id_kuis')->on('kuis')->restrictOnDelete();
-            $table->foreign('id_user')->references('id_user')->on('user')->cascadeOnDelete();
+            $table->foreign('id_kuis')->references('id_kuis')->on('tm_kuis')->restrictOnDelete();
+            $table->foreign('id_user')->references('id_user')->on('tm_user')->cascadeOnDelete();
         });
     }
 
@@ -204,18 +229,25 @@ class KuisMateriMapelTest extends TestCase
                 'id_mapel' => $id, 'kode_mapel' => $id, 'nama_mapel' => 'Pelajaran '.$id, 'is_aktif' => $active,
             ]);
         }
+        DB::table('tm_kelas')->insert([
+            ['id_kelas' => 'KLS001', 'nama_kelas' => 'X TKJ 1', 'tingkat' => 'X', 'id_tahun_ajaran' => 'TA001', 'is_aktif' => true],
+            ['id_kelas' => 'KLS002', 'nama_kelas' => 'X TKJ 2', 'tingkat' => 'X', 'id_tahun_ajaran' => 'TA002', 'is_aktif' => true],
+        ]);
         $this->makeMateri('M001');
         $this->makeMateri('M002');
         $this->makeKuis('K001')->materi()->attach('M001');
-        DB::table('soal')->insert([
+        DB::table('tm_soal')->insert([
             'id_soal' => 'S001', 'id_kuis' => 'K001', 'pertanyaan' => 'Apa itu algoritma?',
             'opsi_a' => 'Langkah logis', 'opsi_b' => 'Monitor', 'opsi_c' => 'Mouse', 'opsi_d' => 'Keyboard',
             'jawaban' => 'A', 'bobot' => 100, 'tingkat_kesulitan' => 'mudah',
         ]);
-        DB::table('pengajaran')->insert([
+        DB::table('tr_pengajaran')->insert([
             ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP001'],
             ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP002'],
             ['id_user' => 'U002', 'id_kelas' => 'KLS001', 'id_mapel' => 'MP003'],
+            ['id_user' => 'U002', 'id_kelas' => 'KLS002', 'id_mapel' => 'MP001'],
+            ['id_user' => 'U002', 'id_kelas' => 'KLS002', 'id_mapel' => 'MP002'],
+            ['id_user' => 'U002', 'id_kelas' => 'KLS002', 'id_mapel' => 'MP003'],
         ]);
     }
 
@@ -230,18 +262,21 @@ class KuisMateriMapelTest extends TestCase
 
     private function makeMateri(string $id, array $attributes = []): Materi
     {
-        return Materi::create(array_replace([
-            'id_materi' => $id, 'judul' => 'Materi '.$id, 'bab' => 'Bab 1', 'kelas' => 'X',
+        $materi = Materi::create(array_replace([
+            'id_materi' => $id, 'judul' => 'Materi '.$id, 'bab' => 'Bab 1',
             'id_mapel' => 'MP001', 'id_user' => 'U002', 'deskripsi' => 'Materi algoritma',
         ], $attributes));
+        $materi->kelasTerkait()->sync(['KLS001']);
+
+        return $materi;
     }
 
     private function payload(string $resource, array $attributes = []): array
     {
         $defaults = $resource === 'kuis'
             ? ['judul' => 'Kuis baru', 'deskripsi' => 'Latihan algoritma', 'kategori' => 'kuis harian',
-                'id_mapel' => 'MP001', 'tingkat_kesulitan' => 'sedang', 'alokasi_waktu' => 30, 'kkm' => 80]
-            : ['judul' => 'Materi baru', 'bab' => 'Bab 2', 'kelas' => 'XI', 'id_mapel' => 'MP001',
+                'id_mapel' => 'MP001', 'kelas' => ['KLS001'], 'tingkat_kesulitan' => 'sedang', 'alokasi_waktu' => 30, 'kkm' => 80]
+            : ['judul' => 'Materi baru', 'bab' => 'Bab 2', 'id_kelas' => ['KLS001'], 'id_mapel' => 'MP001',
                 'deskripsi' => 'Materi pemrograman', 'link_youtube' => 'https://www.youtube.com/watch?v=regression123'];
 
         return array_replace($defaults, $attributes);
@@ -255,8 +290,19 @@ class KuisMateriMapelTest extends TestCase
     private function snapshot(): array
     {
         $rows = [];
-        foreach (['kuis', 'materi', 'materi_kuis', 'remedial', 'soal'] as $table) {
-            $rows[$table] = DB::table($table)->orderBy('id_'.$table)->get()
+        foreach ([
+            'tm_kuis' => ['id_kuis'],
+            'tm_materi' => ['id_materi'],
+            'tp_materi_kuis' => ['id_materi', 'id_kuis'],
+            'tr_remedial' => ['id_kuis_remedial'],
+            'tm_soal' => ['id_soal'],
+            'tp_materi_kelas' => ['id_materi', 'id_kelas'],
+        ] as $table => $primaryKeys) {
+            $query = DB::table($table);
+            foreach ($primaryKeys as $primaryKey) {
+                $query->orderBy($primaryKey);
+            }
+            $rows[$table] = $query->get()
                 ->map(fn ($row) => (array) $row)->all();
         }
 
@@ -277,6 +323,7 @@ class KuisMateriMapelTest extends TestCase
         $this->assertSame(1, $nodes->length, 'Expected one select named '.$name);
         $select = $nodes->item(0);
         $this->assertInstanceOf(DOMElement::class, $select);
+
         /** @var DOMElement $select */
         return $select;
     }
@@ -382,8 +429,8 @@ class KuisMateriMapelTest extends TestCase
         $this->assertTrue($kuis->is_aktif);
         $this->assertEqualsCanonicalizing(['M001', 'M002'], $kuis->materi->modelKeys());
         $this->assertTrue(Materi::findOrFail('M002')->kuis->contains('id_kuis', $id));
-        $this->assertDatabaseCount('remedial', 0);
-        $this->assertDatabaseHas('soal', ['id_soal' => 'S001', 'id_kuis' => 'K001', 'bobot' => 100]);
+        $this->assertDatabaseCount('tr_remedial', 0);
+        $this->assertDatabaseHas('tm_soal', ['id_soal' => 'S001', 'id_kuis' => 'K001', 'bobot' => 100]);
     }
 
     public static function clientYears(): array
@@ -399,12 +446,12 @@ class KuisMateriMapelTest extends TestCase
             'id_kuis' => 'K999', 'id_user' => 'U001', 'status_publikasi' => 'terbit', 'id_publisher' => 'U001',
             'id_kuis_asal' => 'K001',
         ])))->assertRedirect(route('kuis.index', ['mapel' => 'MP001']))->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('kuis', [
+        $this->assertDatabaseHas('tm_kuis', [
             'id_kuis' => 'K002', 'id_tahun_ajaran' => 'TA001', 'id_user' => 'U002', 'status_publikasi' => 'draft',
             'id_publisher' => null,
         ]);
-        $this->assertDatabaseMissing('kuis', ['id_kuis' => 'K999']);
-        $this->assertDatabaseCount('remedial', 0);
+        $this->assertDatabaseMissing('tm_kuis', ['id_kuis' => 'K999']);
+        $this->assertDatabaseCount('tr_remedial', 0);
     }
 
     public static function invalidMapel(): array
@@ -527,25 +574,23 @@ class KuisMateriMapelTest extends TestCase
         TahunAjaran::whereKey('TA002')->update(['is_aktif' => true]);
         $this->assertSame('TA002', TahunAjaran::aktif()->getKey());
         $this->actingAs($this->guru)->put(route('kuis.update', 'K001'), $this->payload('kuis', array_merge($year, [
-            'id_mapel' => 'MP002', 'tingkat_kesulitan' => 'sulit', 'materi' => ['M001'],
+            'id_mapel' => 'MP002', 'kelas' => ['KLS002'], 'tingkat_kesulitan' => 'sulit', 'materi' => ['M001'],
         ])))->assertRedirect(route('kuis.index', ['mapel' => 'MP002']))->assertSessionHasNoErrors();
         $kuis = Kuis::findOrFail('K001');
         $this->assertSame('TA001', $kuis->tahunAjaran->getKey());
         $this->assertSame('MP002', $kuis->id_mapel);
         $this->assertSame('sulit', $kuis->tingkat_kesulitan);
-        $this->assertDatabaseCount('kuis', 1);
+        $this->assertDatabaseCount('tm_kuis', 1);
     }
 
-    public function test_kuis_update_does_not_need_an_active_year_and_preserves_creator_and_year(): void
+    public function test_kuis_update_requires_an_active_year_and_preserves_the_record(): void
     {
         TahunAjaran::query()->update(['is_aktif' => false]);
-        $this->actingAs($this->guru)->put(route('kuis.update', 'K001'), $this->payload('kuis', [
+        $before = $this->snapshot();
+        $this->actingAs($this->guru)->from(route('kuis.edit', 'K001'))->put(route('kuis.update', 'K001'), $this->payload('kuis', [
             'id_tahun_ajaran' => 'TA999', 'id_user' => 'U001', 'id_kuis' => 'K999', 'status_publikasi' => 'terbit',
-        ]))->assertRedirect(route('kuis.index', ['mapel' => 'MP001']))->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('kuis', [
-            'id_kuis' => 'K001', 'id_tahun_ajaran' => 'TA001', 'id_user' => 'U002', 'status_publikasi' => 'draft',
-        ]);
-        $this->assertDatabaseCount('kuis', 1);
+        ]))->assertRedirect(route('kuis.edit', 'K001'))->assertSessionHasErrors('kelas');
+        $this->assertSame($before, $this->snapshot());
     }
 
     #[DataProvider('resources')]
@@ -561,21 +606,21 @@ class KuisMateriMapelTest extends TestCase
         $this->actingAs($this->guru)->post(route($resource.'.store'), $this->payload($resource))
             ->assertRedirect(route($resource.'.index', $resource === 'kuis' ? ['mapel' => 'MP001'] : []))->assertSessionHasNoErrors();
         $id = $resource === 'kuis' ? 'K011' : 'M011';
-        $this->assertDatabaseHas($resource, ['id_'.$resource => $id, 'id_mapel' => 'MP001', 'id_user' => 'U002']);
+        $this->assertDatabaseHas('tm_'.$resource, ['id_'.$resource => $id, 'id_mapel' => 'MP001', 'id_user' => 'U002']);
     }
 
     public function test_kuis_material_associations_sync_and_clear_without_changing_questions(): void
     {
-        $beforeQuestion = (array) DB::table('soal')->where('id_soal', 'S001')->first();
+        $beforeQuestion = (array) DB::table('tm_soal')->where('id_soal', 'S001')->first();
         $this->actingAs($this->guru)->put(route('kuis.update', 'K001'), $this->payload('kuis', ['materi' => ['M002']]))
             ->assertRedirect(route('kuis.index', ['mapel' => 'MP001']))->assertSessionHasNoErrors();
-        $this->assertDatabaseMissing('materi_kuis', ['id_kuis' => 'K001', 'id_materi' => 'M001']);
-        $this->assertDatabaseHas('materi_kuis', ['id_kuis' => 'K001', 'id_materi' => 'M002']);
+        $this->assertDatabaseMissing('tp_materi_kuis', ['id_kuis' => 'K001', 'id_materi' => 'M001']);
+        $this->assertDatabaseHas('tp_materi_kuis', ['id_kuis' => 'K001', 'id_materi' => 'M002']);
         $this->put(route('kuis.update', 'K001'), $this->payload('kuis'))
             ->assertRedirect(route('kuis.index', ['mapel' => 'MP001']))->assertSessionHasNoErrors();
-        $this->assertDatabaseCount('materi_kuis', 0);
-        $this->assertSame($beforeQuestion, (array) DB::table('soal')->where('id_soal', 'S001')->first());
-        $this->assertDatabaseCount('materi', 2);
+        $this->assertDatabaseCount('tp_materi_kuis', 0);
+        $this->assertSame($beforeQuestion, (array) DB::table('tm_soal')->where('id_soal', 'S001')->first());
+        $this->assertDatabaseCount('tm_materi', 2);
     }
 
     public static function invalidMaterials(): array
@@ -612,16 +657,16 @@ class KuisMateriMapelTest extends TestCase
         $this->assertSame('K002', $remedial->remedial->kuisRemedial->getKey());
         $this->assertCount(0, $remedial->materi);
         $this->assertCount(1, Kuis::findOrFail('K001')->remedialSebagaiAsal);
-        $beforeLink = (array) DB::table('remedial')->first();
+        $beforeLink = (array) DB::table('tr_remedial')->first();
         $this->makeKuis('K003');
         $payload['id_kuis_asal'] = 'K003';
         $payload['id_mapel'] = 'MP002';
         $payload['tingkat_kesulitan'] = 'sulit';
         $this->put(route('kuis.update', 'K002'), $payload)
             ->assertRedirect(route('kuis.index', ['mapel' => 'MP002']))->assertSessionHasNoErrors();
-        $this->assertSame($beforeLink, (array) DB::table('remedial')->first());
-        $this->assertDatabaseMissing('materi_kuis', ['id_kuis' => 'K002']);
-        $this->assertDatabaseHas('materi_kuis', ['id_kuis' => 'K001', 'id_materi' => 'M001']);
+        $this->assertSame($beforeLink, (array) DB::table('tr_remedial')->first());
+        $this->assertDatabaseMissing('tp_materi_kuis', ['id_kuis' => 'K002']);
+        $this->assertDatabaseHas('tp_materi_kuis', ['id_kuis' => 'K001', 'id_materi' => 'M001']);
     }
 
     public static function invalidRemedialOrigins(): array
@@ -647,7 +692,7 @@ class KuisMateriMapelTest extends TestCase
         ]);
         $this->actingAs($this->guru)->post(route('kuis.store'), $payload)
             ->assertRedirect(route('kuis.index', ['mapel' => 'MP001']))->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('kuis', [
+        $this->assertDatabaseHas('tm_kuis', [
             'id_kuis' => 'K002', 'kategori' => 'ulangan', 'status_publikasi' => 'draft',
             'waktu_mulai' => '2026-10-30 09:00:00', 'waktu_selesai' => '2026-10-30 10:00:00',
         ]);
@@ -660,11 +705,12 @@ class KuisMateriMapelTest extends TestCase
         $this->assertSame('2026-10-31 11:00:00', Kuis::findOrFail('K002')->waktu_selesai->format('Y-m-d H:i:s'));
         // Saat kategori diubah ke pre-test, hilangkan waktu_mulai/selesai dari payload agar jadwal dikosongkan
         $payload['kategori'] = 'pre-test';
+        $payload['materi'] = ['M001'];
         unset($payload['waktu_mulai'], $payload['waktu_selesai']);
         $this->put(route('kuis.update', 'K002'), $payload)
             ->assertRedirect(route('kuis.index', ['mapel' => 'MP001']))->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('kuis', ['id_kuis' => 'K002', 'waktu_mulai' => null, 'waktu_selesai' => null]);
-        $this->assertCount(2, Kuis::findOrFail('K002')->materi);
+        $this->assertDatabaseHas('tm_kuis', ['id_kuis' => 'K002', 'waktu_mulai' => null, 'waktu_selesai' => null]);
+        $this->assertCount(1, Kuis::findOrFail('K002')->materi);
     }
 
     public static function invalidSchedules(): array
@@ -723,7 +769,7 @@ class KuisMateriMapelTest extends TestCase
     {
         Kuis::findOrFail('K001')->update(['status_publikasi' => 'terbit', 'id_publisher' => 'U002']);
         $this->makeKuis('K002', ['kategori' => 'remedial']);
-        DB::table('remedial')->insert(['id_kuis_remedial' => 'K002', 'id_kuis_asal' => 'K001']);
+        DB::table('tr_remedial')->insert(['id_kuis_remedial' => 'K002', 'id_kuis_asal' => 'K001']);
         $before = $this->snapshot();
         $origin = route('kuis.show', 'K001');
         $this->actingAs($this->guru)->from($origin)->get(route('kuis.edit', 'K001'))
@@ -750,7 +796,7 @@ class KuisMateriMapelTest extends TestCase
         $this->assertStringStartsWith('materi/', $materi->isi_materi);
         Storage::disk('public')->assertExists($materi->isi_materi);
         $this->assertSame($pdf, Storage::disk('public')->get($materi->isi_materi));
-        $this->assertSame(Storage::disk('public')->url($materi->isi_materi), $materi->pdfUrl());
+        $this->assertSame(route('materi.pdf', 'M003', false), $materi->pdfUrl());
         $this->get(route('materi.show', 'M003'))->assertOk()->assertViewHas('pdfUrl', $materi->pdfUrl());
         Kuis::findOrFail('K001')->materi()->attach('M003');
         $oldPath = $materi->isi_materi;
@@ -774,19 +820,16 @@ class KuisMateriMapelTest extends TestCase
         Storage::disk('public')->assertMissing($oldPath);
         Storage::disk('public')->assertExists($materi->isi_materi);
         $this->assertSame($pdf.'% replacement', Storage::disk('public')->get($materi->isi_materi));
-        $this->assertDatabaseHas('materi_kuis', ['id_kuis' => 'K001', 'id_materi' => 'M003']);
-        $this->assertDatabaseMissing('materi', ['id_materi' => 'M999']);
+        $this->assertDatabaseHas('tp_materi_kuis', ['id_kuis' => 'K001', 'id_materi' => 'M003']);
+        $this->assertDatabaseMissing('tm_materi', ['id_materi' => 'M999']);
     }
 
-    public function test_materi_can_be_created_with_youtube_without_pdf_or_active_year(): void
+    public function test_materi_creation_requires_an_active_teaching_assignment(): void
     {
         TahunAjaran::query()->update(['is_aktif' => false]);
         $this->actingAs($this->guru)->post(route('materi.store'), $this->payload('materi'))
-            ->assertRedirect(route('materi.index'))->assertSessionHasNoErrors();
-        $materi = Materi::findOrFail('M003');
-        $this->assertNull($materi->isi_materi);
-        $this->assertNull($materi->pdfUrl());
-        $this->assertSame($this->payload('materi')['link_youtube'], $materi->link_youtube);
+            ->assertRedirect()->assertSessionHasErrors(['id_mapel', 'id_kelas.0']);
+        $this->assertDatabaseMissing('tm_materi', ['id_materi' => 'M003']);
         $this->assertSame([], Storage::disk('public')->allFiles());
     }
 
@@ -836,13 +879,13 @@ class KuisMateriMapelTest extends TestCase
         $original->update(['isi_materi' => 'materi/original.pdf']);
         $before = $this->snapshot();
         $payload = $this->payload('materi', [
-            'judul' => $original->judul, 'bab' => $original->bab, 'kelas' => $original->kelas,
+            'judul' => $original->judul, 'bab' => $original->bab, 'id_kelas' => ['KLS001'],
             'file_pdf' => UploadedFile::fake()->create('replacement.pdf', 32, 'application/pdf'),
         ]);
         $this->actingAs($this->guru)->from(route('materi.create'))->post(route('materi.store'), $payload)
-            ->assertRedirect(route('materi.create'))->assertSessionHas('error');
+            ->assertRedirect(route('materi.create'))->assertSessionHasErrors('bab');
         $this->from(route('materi.edit', 'M002'))->put(route('materi.update', 'M002'), $payload)
-            ->assertRedirect(route('materi.edit', 'M002'))->assertSessionHas('error');
+            ->assertRedirect(route('materi.edit', 'M002'))->assertSessionHasErrors('bab');
         $this->assertSame($before, $this->snapshot());
         $this->assertSame(['materi/original.pdf'], Storage::disk('public')->allFiles());
     }
@@ -943,7 +986,7 @@ class KuisMateriMapelTest extends TestCase
             ->assertSessionHas('error', 'Kategori kuis tidak valid.');
     }
 
-    public function test_kuis_create_without_materi_param_passes_null_materiDipreselect_to_view(): void
+    public function test_kuis_create_without_materi_param_passes_null_materi_dipreselect_to_view(): void
     {
         $response = $this->actingAs($this->guru)
             ->get(route('kuis.create'))

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 
 class Materi extends Model
@@ -19,7 +20,6 @@ class Materi extends Model
         'id_materi',
         'judul',
         'bab',
-        'kelas',
         'id_mapel',
         'deskripsi',
         'isi_materi',
@@ -45,6 +45,18 @@ class Materi extends Model
     public function mapel()
     {
         return $this->belongsTo(Mapel::class, 'id_mapel', 'id_mapel');
+    }
+
+    public function kelasTerkait(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Kelas::class,
+            'tp_materi_kelas',
+            'id_materi',
+            'id_kelas',
+            'id_materi',
+            'id_kelas'
+        );
     }
 
     public function kuis()

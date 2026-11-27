@@ -35,6 +35,7 @@ class Kuis extends Model
         'status_publikasi',
         'id_publisher',
         'is_aktif',
+        'diarsipkan_bersama',
         'tampil_jawaban',
     ];
 

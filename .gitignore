@@ -1,4 +1,4 @@
-﻿/vendor
+/vendor
 /node_modules
 /public/hot
 /public/build
@@ -46,3 +46,4 @@ Thumbs.db
 /.antigravity/
 .phpactor.json
 /public/fonts-manifest.dev.json
+!database/seeders/dummy/*.pdf

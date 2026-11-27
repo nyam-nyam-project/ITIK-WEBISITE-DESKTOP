@@ -163,7 +163,7 @@
                             <td><strong>{{ $m->judul }}</strong></td>
                             <td>{{ $m->mapel?->nama_mapel ?? '-' }}</td>
                             <td>
-                                {{ $m->bab ?? '-' }} &bull; Kelas {{ $m->kelas ?? '-' }}
+                                {{ $m->bab ?? '-' }} &bull; Kelas {{ $m->kelasTerkait->pluck('nama_kelas')->join(', ') ?: '-' }}
                             </td>
                             <td>
                                 @if($m->isi_materi)

@@ -5,15 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Mapel;
 use App\Models\Materi;
+use App\Models\User;
+use App\Services\MateriKelasService;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class GuruMateriController extends Controller
@@ -21,7 +21,7 @@ class GuruMateriController extends Controller
     public function index(): JsonResponse
     {
         $materi = Materi::query()
-            ->with('user:id_user,nama_lengkap')
+            ->with(['user:id_user,nama_lengkap', 'kelasTerkait:id_kelas,nama_kelas,tingkat'])
             ->orderByDesc('created_at')
             ->orderByDesc('id_materi')
             ->paginate(20);
@@ -47,14 +47,28 @@ class GuruMateriController extends Controller
         return response()->json(['data' => $mapel]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, MateriKelasService $materiKelasService): JsonResponse
     {
-        $validated = $request->validate($this->rules(), $this->messages());
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
 
-        $this->ensureUniqueMateri($validated);
+        $mapelIds = $materiKelasService->mapelIdsUntukGuru($user);
+        $idMapel = $request->input('id_mapel');
+        $kelasOptions = $materiKelasService->kelasUntukGuru($user, is_string($idMapel) ? $idMapel : null);
+        $validated = $request->validate(
+            $this->rules($mapelIds->all(), $kelasOptions->pluck('id_kelas')->all()),
+            $this->messages(),
+        );
+        $idKelasDipilih = array_values($validated['id_kelas']);
+
+        $materiKelasService->pastikanBabUnik(
+            $validated['bab'] ?? null,
+            $validated['id_mapel'],
+            $idKelasDipilih,
+        );
 
         $validated['id_materi'] = $this->nextId();
-        $validated['id_user'] = $request->user()->id_user;
+        $validated['id_user'] = $user->id_user;
         $path = null;
 
         try {
@@ -66,8 +80,13 @@ class GuruMateriController extends Controller
                 $validated['isi_materi'] = $path;
             }
 
-            unset($validated['file_pdf']);
-            $materi = Materi::create($validated);
+            unset($validated['file_pdf'], $validated['id_kelas']);
+            $materi = DB::transaction(function () use ($validated, $idKelasDipilih): Materi {
+                $materi = Materi::create($validated);
+                $materi->kelasTerkait()->sync($idKelasDipilih);
+
+                return $materi;
+            });
         } catch (Throwable $exception) {
             if (is_string($path)) {
                 $this->deletePdf($path, $validated['id_materi']);
@@ -85,15 +104,39 @@ class GuruMateriController extends Controller
     public function show(Materi $materi): JsonResponse
     {
         return response()->json([
-            'data' => $this->materiPayload($materi->load('user:id_user,nama_lengkap')),
+            'data' => $this->materiPayload(
+                $materi->load(['user:id_user,nama_lengkap', 'kelasTerkait:id_kelas,nama_kelas,tingkat']),
+            ),
         ]);
     }
 
-    public function update(Request $request, Materi $materi): JsonResponse
-    {
-        $validated = $request->validate($this->rules($materi), $this->messages());
+    public function update(
+        Request $request,
+        Materi $materi,
+        MateriKelasService $materiKelasService,
+    ): JsonResponse {
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
 
-        $this->ensureUniqueMateri($validated, $materi);
+        $mapelIds = $materiKelasService->mapelIdsUntukGuru($user);
+        $idMapel = $request->input('id_mapel', $materi->id_mapel);
+        $kelasOptions = $materiKelasService->kelasUntukGuru($user, is_string($idMapel) ? $idMapel : null);
+        if (! $request->has('id_kelas')) {
+            $request->merge(['id_kelas' => $materi->kelasTerkait()->pluck('tm_kelas.id_kelas')->all()]);
+        }
+        $validated = $request->validate(
+            $this->rules($mapelIds->all(), $kelasOptions->pluck('id_kelas')->all(), $materi),
+            $this->messages(),
+        );
+        $idKelasDipilih = array_values($validated['id_kelas']);
+
+        $materiKelasService->pastikanBabUnik(
+            $validated['bab'] ?? $materi->bab,
+            $validated['id_mapel'] ?? $materi->id_mapel,
+            $idKelasDipilih,
+            $materi,
+        );
+
         $oldPath = $materi->isi_materi;
         $newPath = null;
 
@@ -106,8 +149,11 @@ class GuruMateriController extends Controller
                 $validated['isi_materi'] = $newPath;
             }
 
-            unset($validated['file_pdf']);
-            $materi->update($validated);
+            unset($validated['file_pdf'], $validated['id_kelas']);
+            DB::transaction(function () use ($materi, $validated, $idKelasDipilih): void {
+                $materi->update($validated);
+                $materi->kelasTerkait()->sync($idKelasDipilih);
+            });
         } catch (Throwable $exception) {
             if (is_string($newPath)) {
                 $this->deletePdf($newPath, $materi->id_materi);
@@ -122,7 +168,9 @@ class GuruMateriController extends Controller
 
         return response()->json([
             'message' => 'Materi berhasil diperbarui.',
-            'data' => $this->materiPayload($materi->fresh()),
+            'data' => $this->materiPayload(
+                $materi->fresh()->load(['user:id_user,nama_lengkap', 'kelasTerkait:id_kelas,nama_kelas,tingkat']),
+            ),
         ]);
     }
 
@@ -143,24 +191,18 @@ class GuruMateriController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function rules(?Materi $materi = null): array
+    private function rules(array $mapelIds, array $kelasIds, ?Materi $materi = null): array
     {
-        $mapelRules = ['sometimes', 'nullable', 'string'];
-        if (Schema::hasColumn('tm_materi', 'id_mapel') && Schema::hasTable('tm_mapel')) {
-            $mapelRules[] = Rule::exists('tm_mapel', 'id_mapel')
-                ->where(fn (QueryBuilder $query) => $query
-                    ->where('is_aktif', true)
-                    ->when($materi !== null, fn (QueryBuilder $query) => $query
-                        ->orWhere('id_mapel', $materi->id_mapel)));
-        } else {
-            $mapelRules[] = 'prohibited';
-        }
-
         return [
-            'id_mapel' => $mapelRules,
+            'id_mapel' => [
+                $materi === null ? 'required' : 'sometimes',
+                'string',
+                Rule::in($mapelIds),
+            ],
             'judul' => ['required', 'string', 'max:150'],
             'bab' => ['nullable', 'string', 'max:50'],
-            'kelas' => ['nullable', 'string', 'max:50'],
+            'id_kelas' => ['required', 'array', 'min:1'],
+            'id_kelas.*' => ['required', 'string', 'distinct:strict', Rule::in($kelasIds)],
             'deskripsi' => ['nullable', 'string'],
             'file_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
             'link_youtube' => ['nullable', 'url', 'max:255'],
@@ -173,7 +215,10 @@ class GuruMateriController extends Controller
     private function messages(): array
     {
         return [
-            'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
+            'id_mapel.in' => 'Mata pelajaran tidak tersedia atau bukan penugasan Anda pada tahun ajaran aktif.',
+            'id_kelas.required' => 'Pilih minimal satu kelas.',
+            'id_kelas.min' => 'Pilih minimal satu kelas.',
+            'id_kelas.*.in' => 'Kelas yang dipilih tidak Anda ajar untuk mata pelajaran ini pada tahun ajaran aktif.',
             'file_pdf.mimes' => 'File materi harus berformat PDF.',
             'file_pdf.max' => 'Ukuran file PDF maksimal 10 MB.',
         ];
@@ -184,8 +229,15 @@ class GuruMateriController extends Controller
      */
     private function materiPayload(Materi $materi): array
     {
+        $payload = $materi->toArray();
+        unset($payload['kelas']);
+
+        $kelas = $materi->kelasTerkait;
+
         return [
-            ...$materi->toArray(),
+            ...$payload,
+            'id_kelas' => $kelas->pluck('id_kelas')->all(),
+            'kelas' => $kelas->pluck('nama_kelas')->all(),
             'pdf_url' => $materi->pdfUrl(),
         ];
     }
@@ -197,48 +249,6 @@ class GuruMateriController extends Controller
             Log::warning('Gagal menghapus file PDF materi.', [
                 'id_materi' => $materiId,
                 'path' => $path,
-            ]);
-        }
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    private function ensureUniqueMateri(array $data, ?Materi $materi = null): void
-    {
-        $idMapel = $data['id_mapel'] ?? $materi?->id_mapel;
-        $kelas = array_key_exists('kelas', $data) ? $data['kelas'] : $materi?->kelas;
-        $bab = array_key_exists('bab', $data) ? $data['bab'] : $materi?->bab;
-
-        if ($bab !== null && $bab !== '') {
-            $babQuery = Materi::query()
-                ->where('id_mapel', $idMapel)
-                ->where('kelas', $kelas)
-                ->where('bab', $bab);
-
-            if ($materi) {
-                $babQuery->where('id_materi', '!=', $materi->id_materi);
-            }
-
-            if ($babQuery->exists()) {
-                throw ValidationException::withMessages([
-                    'bab' => ['Bab tersebut sudah digunakan untuk mata pelajaran dan kelas ini.'],
-                ]);
-            }
-        }
-
-        $query = Materi::query()
-            ->where('judul', $data['judul'])
-            ->where('kelas', $kelas)
-            ->where('bab', $bab);
-
-        if ($materi) {
-            $query->where('id_materi', '!=', $materi->id_materi);
-        }
-
-        if ($query->exists()) {
-            throw ValidationException::withMessages([
-                'judul' => ['Materi dengan kelas, bab, dan judul tersebut sudah ada.'],
             ]);
         }
     }

@@ -3,18 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kelas;
+use App\Models\Kuis;
 use App\Models\Mapel;
 use App\Models\Materi;
 use App\Models\Pengajaran;
-use App\Models\TahunAjaran;
+use App\Models\User;
+use App\Services\MateriKelasService;
 use App\Support\MengaturPaginasi;
 use App\Support\MenghasilkanId;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use RuntimeException;
+use Throwable;
 
 class MateriController extends Controller
 {
@@ -57,9 +62,12 @@ class MateriController extends Controller
                 if ($mapelTerpilih) {
                     $materi = Materi::where('is_aktif', true)
                         ->where('id_mapel', $idMapel)
-                        ->with(['kuis' => fn ($query) => $query
-                            ->where('is_aktif', true)
-                            ->select('tm_kuis.id_kuis', 'tm_kuis.kategori')])
+                        ->with([
+                            'kelasTerkait' => fn ($query) => $query->orderBy('tingkat')->orderBy('nama_kelas'),
+                            'kuis' => fn ($query) => $query
+                                ->where('is_aktif', true)
+                                ->select('tm_kuis.id_kuis', 'tm_kuis.kategori'),
+                        ])
                         ->orderBy('bab')
                         ->orderBy('judul')
                         ->orderBy('id_materi')
@@ -82,6 +90,7 @@ class MateriController extends Controller
                 if ($mapelTerpilih) {
                     $materi = Materi::where('is_aktif', true)
                         ->where('id_mapel', $idMapel)
+                        ->with('kelasTerkait')
                         ->orderBy('bab')
                         ->orderBy('judul')
                         ->orderBy('id_materi')
@@ -94,44 +103,70 @@ class MateriController extends Controller
         return view('guru.materi.index', compact('materi', 'mapelAktif', 'mapelTerpilih', 'idMapel', 'tanpaPengajaran'));
     }
 
-    public function create()
+    public function create(Request $request, MateriKelasService $materiKelasService)
     {
-        $user = Auth::user();
-        if ($user && $user->role === 'guru') {
-            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
 
-            $mapel = Mapel::aktif()
-                ->when($mapelPengajaranIds->isNotEmpty(), fn ($q) => $q->whereIn('id_mapel', $mapelPengajaranIds), fn ($q) => $q->whereRaw('1 = 0'))
-                ->orderBy('nama_mapel')
-                ->get();
-        } else {
-            $mapel = Mapel::aktif()->orderBy('nama_mapel')->get();
-        }
+        $mapelPengajaranIds = $materiKelasService->mapelIdsUntukGuru($user);
+        $mapel = Mapel::aktif()
+            ->whereIn('id_mapel', $mapelPengajaranIds)
+            ->orderBy('nama_mapel')
+            ->get();
+        $idMapel = $request->query('mapel', $request->old('id_mapel'));
+        $kelasOptions = $materiKelasService->kelasUntukGuru($user, is_string($idMapel) ? $idMapel : null);
+        $kelasTerpilih = $request->old('id_kelas', []);
+        $kelasTerpilih = is_array($kelasTerpilih) ? $kelasTerpilih : [];
 
-        $kelasOptions = $this->kelasOptions();
-
-        return view('guru.materi.create', compact('mapel', 'kelasOptions'));
+        return view('guru.materi.create', compact('mapel', 'kelasOptions', 'idMapel', 'kelasTerpilih'));
     }
 
-    public function store(Request $request)
+    public function kelasUntukMapel(Request $request, MateriKelasService $materiKelasService): JsonResponse
     {
-        $user = Auth::user();
-        $kelasOptions = $this->kelasOptions();
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+
+        $idMapel = $request->string('id_mapel')->toString();
+        abort_unless(
+            $materiKelasService->mapelIdsUntukGuru($user)->contains($idMapel),
+            403,
+            'Anda tidak mengajar mata pelajaran tersebut pada tahun ajaran aktif.',
+        );
+
+        $kelas = $materiKelasService->kelasUntukGuru($user, $idMapel)
+            ->map(fn (Kelas $item): array => [
+                'id_kelas' => $item->id_kelas,
+                'nama_kelas' => $item->nama_kelas,
+                'tingkat' => $item->tingkat,
+            ])
+            ->values();
+
+        return response()->json(['data' => $kelas]);
+    }
+
+    public function store(Request $request, MateriKelasService $materiKelasService)
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+
+        $mapelPengajaranIds = $materiKelasService->mapelIdsUntukGuru($user);
+        $idMapel = $request->input('id_mapel');
+        $kelasOptions = $materiKelasService->kelasUntukGuru($user, is_string($idMapel) ? $idMapel : null);
+        $idKelasDiizinkan = $kelasOptions->pluck('id_kelas')->all();
 
         $validated = $request->validate([
             'id_mapel' => [
                 'required',
                 'string',
-                Rule::exists('tm_mapel', 'id_mapel')->where(function ($q) use ($user) {
-                    $q->where('is_aktif', 1);
-                    if ($user && $user->role === 'guru') {
-                        $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
-                    }
-                }),
+                Rule::exists('tm_mapel', 'id_mapel')
+                    ->where(fn ($query) => $query
+                        ->where('is_aktif', true)
+                        ->whereIn('id_mapel', $mapelPengajaranIds)),
             ],
             'judul' => 'required|string|max:150',
             'bab' => 'nullable|string|max:50',
-            'kelas' => $this->kelasRules($kelasOptions),
+            'id_kelas' => ['required', 'array', 'min:1'],
+            'id_kelas.*' => ['required', 'string', 'distinct:strict', Rule::in($idKelasDiizinkan)],
             'deskripsi' => 'nullable|string',
             'file_pdf' => 'nullable|file|mimes:pdf|max:10240',
             'link_youtube' => 'nullable|url|max:255',
@@ -140,51 +175,50 @@ class MateriController extends Controller
             'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
             'judul.required' => 'Judul materi wajib diisi.',
             'judul.max' => 'Judul materi maksimal 150 karakter.',
-            'kelas.in' => 'Kelas yang dipilih tidak tersedia.',
+            'id_kelas.required' => 'Pilih minimal satu kelas.',
+            'id_kelas.min' => 'Pilih minimal satu kelas.',
+            'id_kelas.*.in' => 'Kelas yang dipilih tidak Anda ajar untuk mata pelajaran ini pada tahun ajaran aktif.',
             'link_youtube.url' => 'Link YouTube harus berupa URL yang valid.',
             'file_pdf.mimes' => 'File materi harus berformat PDF.',
             'file_pdf.max' => 'Ukuran file PDF maksimal 10 MB.',
         ]);
 
-        if (isset($validated['bab']) && $validated['bab'] !== '') {
-            $duplikatBab = Materi::query()
-                ->where('id_mapel', $validated['id_mapel'])
-                ->where('kelas', $validated['kelas'] ?? null)
-                ->where('bab', $validated['bab'])
-                ->exists();
-
-            if ($duplikatBab) {
-                return back()
-                    ->withInput()
-                    ->with('error', 'Bab tersebut sudah digunakan untuk mata pelajaran dan kelas ini.');
-            }
-        }
-
-        $duplikat = Materi::where('kelas', $validated['kelas'] ?? null)
-            ->where('bab', $validated['bab'] ?? null)
-            ->where('judul', $validated['judul'])
-            ->exists();
-
-        if ($duplikat) {
-            return back()
-                ->withInput()
-                ->with('error', 'Materi dengan kelas, bab, dan judul tersebut sudah ada.');
-        }
+        $idKelasDipilih = array_values($validated['id_kelas']);
+        $materiKelasService->pastikanBabUnik(
+            $validated['bab'] ?? null,
+            $validated['id_mapel'],
+            $idKelasDipilih,
+        );
 
         $validated['id_materi'] = $this->idBerikutnya('tm_materi', 'id_materi', 'M');
+        $validated['id_user'] = $user->id_user;
 
-        $validated['id_user'] = Auth::user()->id_user;
-
+        $path = null;
         if ($request->hasFile('file_pdf')) {
-            $validated['isi_materi'] = $request->file('file_pdf')->store('materi', 'public');
+            $path = $request->file('file_pdf')->store('materi', 'public');
+            if ($path === false) {
+                throw new RuntimeException('File PDF materi gagal disimpan.');
+            }
+            $validated['isi_materi'] = $path;
         }
 
-        unset($validated['file_pdf']);
+        unset($validated['file_pdf'], $validated['id_kelas']);
 
-        Materi::create($validated);
+        try {
+            DB::transaction(function () use ($validated, $idKelasDipilih): void {
+                $materi = Materi::create($validated);
+                $materi->kelasTerkait()->sync($idKelasDipilih);
+            });
+        } catch (Throwable $exception) {
+            if ($path !== null) {
+                Storage::disk('public')->delete($path);
+            }
+
+            throw $exception;
+        }
 
         return redirect()
-            ->route('materi.index')
+            ->route('materi.index', ['mapel' => $validated['id_mapel']])
             ->with('success', 'Materi berhasil ditambahkan.');
     }
 
@@ -214,70 +248,86 @@ class MateriController extends Controller
             }
         }
 
-        $materi->load(['kuis' => fn ($query) => $query
-            ->where('is_aktif', true)
-            ->select('tm_kuis.id_kuis', 'tm_kuis.kategori')]);
+        $materi->load([
+            'mapel',
+            'kelasTerkait' => fn ($query) => $query->orderBy('tingkat')->orderBy('nama_kelas'),
+            'kuis' => fn ($query) => $query
+                ->where('is_aktif', true)
+                ->select('tm_kuis.id_kuis', 'tm_kuis.kategori'),
+        ]);
 
         $pdfUrl = $materi->pdfUrl();
 
         return view('guru.materi.show', compact('materi', 'pdfUrl'));
     }
 
-    public function edit($id)
+    public function edit(Request $request, $id, MateriKelasService $materiKelasService)
     {
         $materi = Materi::findOrFail($id);
-        $user = Auth::user();
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
 
-        if ($user && $user->role === 'guru') {
-            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
-
-            if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
-                abort(403, 'Anda tidak berhak mengubah materi di luar penugasan pengajaran Anda.');
-            }
+        $mapelPengajaranIds = $materiKelasService->mapelIdsUntukGuru($user);
+        if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
+            abort(403, 'Anda tidak berhak mengubah materi di luar penugasan pengajaran Anda.');
         }
 
-        $mapel = Mapel::where(fn ($q) => $q->where('is_aktif', 1)
+        $mapel = Mapel::where(fn ($query) => $query
+            ->where('is_aktif', true)
             ->orWhere('id_mapel', $materi->id_mapel))
-            ->when($user && $user->role === 'guru', function ($q) use ($user) {
-                $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
-            })
+            ->whereIn('id_mapel', $mapelPengajaranIds)
             ->orderBy('nama_mapel')
             ->get();
 
-        $kelasOptions = $this->kelasOptions($materi->kelas);
+        $idMapel = $request->old('id_mapel', $materi->id_mapel);
+        $kelasOptions = $materiKelasService->kelasUntukGuru(
+            $user,
+            is_string($idMapel) ? $idMapel : null,
+        );
+        $materi->load('kelasTerkait');
+        $kelasTerpilih = $request->old(
+            'id_kelas',
+            $materi->kelasTerkait->pluck('id_kelas')->all(),
+        );
+        $kelasTerpilih = is_array($kelasTerpilih) ? $kelasTerpilih : [];
 
-        return view('guru.materi.edit', compact('materi', 'mapel', 'kelasOptions'));
+        return view('guru.materi.edit', compact('materi', 'mapel', 'kelasOptions', 'idMapel', 'kelasTerpilih'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, MateriKelasService $materiKelasService)
     {
         $materi = Materi::findOrFail($id);
         $user = Auth::user();
 
-        if ($user && $user->role === 'guru') {
-            $mapelPengajaranIds = Pengajaran::mapelUntukGuru($user);
+        abort_unless($user instanceof User, 403);
+        $mapelPengajaranIds = $materiKelasService->mapelIdsUntukGuru($user);
 
-            if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
-                abort(403, 'Anda tidak berhak mengubah materi di luar penugasan pengajaran Anda.');
-            }
+        if (! $mapelPengajaranIds->contains($materi->id_mapel)) {
+            abort(403, 'Anda tidak berhak mengubah materi di luar penugasan pengajaran Anda.');
         }
 
-        $kelasOptions = $this->kelasOptions($materi->kelas);
+        $idMapel = $request->input('id_mapel', $materi->id_mapel);
+        $kelasOptions = $materiKelasService->kelasUntukGuru(
+            $user,
+            is_string($idMapel) ? $idMapel : null,
+        );
+        $idKelasDiizinkan = $kelasOptions->pluck('id_kelas')->all();
 
         $validated = $request->validate([
             'id_mapel' => [
                 'required',
                 'string',
-                Rule::exists('tm_mapel', 'id_mapel')->where(function ($q) use ($user, $materi) {
-                    if ($user && $user->role === 'guru') {
-                        $q->whereIn('id_mapel', Pengajaran::mapelUntukGuru($user));
-                    }
-                    $q->where(fn ($sub) => $sub->where('is_aktif', 1)->orWhere('id_mapel', $materi->id_mapel));
-                }),
+                Rule::exists('tm_mapel', 'id_mapel')
+                    ->where(fn ($query) => $query
+                        ->whereIn('id_mapel', $mapelPengajaranIds)
+                        ->where(fn ($subquery) => $subquery
+                            ->where('is_aktif', true)
+                            ->orWhere('id_mapel', $materi->id_mapel))),
             ],
             'judul' => 'required|string|max:150',
             'bab' => 'nullable|string|max:50',
-            'kelas' => $this->kelasRules($kelasOptions),
+            'id_kelas' => ['required', 'array', 'min:1'],
+            'id_kelas.*' => ['required', 'string', 'distinct:strict', Rule::in($idKelasDiizinkan)],
             'deskripsi' => 'nullable|string',
             'file_pdf' => 'nullable|file|mimes:pdf|max:10240',
             'link_youtube' => 'nullable|url|max:255',
@@ -286,59 +336,111 @@ class MateriController extends Controller
             'id_mapel.exists' => 'Mata pelajaran tidak tersedia.',
             'judul.required' => 'Judul materi wajib diisi.',
             'judul.max' => 'Judul materi maksimal 150 karakter.',
-            'kelas.in' => 'Kelas yang dipilih tidak tersedia.',
+            'id_kelas.required' => 'Pilih minimal satu kelas.',
+            'id_kelas.min' => 'Pilih minimal satu kelas.',
+            'id_kelas.*.in' => 'Kelas yang dipilih tidak Anda ajar untuk mata pelajaran ini pada tahun ajaran aktif.',
             'link_youtube.url' => 'Link YouTube harus berupa URL yang valid.',
             'file_pdf.mimes' => 'File materi harus berformat PDF.',
             'file_pdf.max' => 'Ukuran file PDF maksimal 10 MB.',
         ]);
 
-        if (isset($validated['bab']) && $validated['bab'] !== '') {
-            $duplikatBab = Materi::query()
-                ->where('id_mapel', $validated['id_mapel'])
-                ->where('kelas', $validated['kelas'] ?? null)
-                ->where('bab', $validated['bab'])
-                ->where('id_materi', '!=', $materi->id_materi)
-                ->exists();
+        $idKelasDipilih = array_values($validated['id_kelas']);
+        $materiKelasService->pastikanBabUnik(
+            $validated['bab'] ?? null,
+            $validated['id_mapel'],
+            $idKelasDipilih,
+            $materi,
+        );
 
-            if ($duplikatBab) {
-                return back()
-                    ->withInput()
-                    ->with('error', 'Bab tersebut sudah digunakan untuk mata pelajaran dan kelas ini.');
-            }
-        }
-
-        $duplikat = Materi::where('kelas', $validated['kelas'] ?? null)
-            ->where('bab', $validated['bab'] ?? null)
-            ->where('judul', $validated['judul'])
-            ->where('id_materi', '!=', $materi->id_materi)
-            ->exists();
-
-        if ($duplikat) {
-            return back()
-                ->withInput()
-                ->with('error', 'Materi dengan kelas, bab, dan judul tersebut sudah digunakan oleh materi lain.');
-        }
-
+        $oldPath = $materi->isi_materi;
+        $newPath = null;
         if ($request->hasFile('file_pdf')) {
-            if ($materi->isi_materi && Storage::disk('public')->exists($materi->isi_materi)) {
-                Storage::disk('public')->delete($materi->isi_materi);
+            $newPath = $request->file('file_pdf')->store('materi', 'public');
+            if ($newPath === false) {
+                throw new RuntimeException('File PDF materi gagal disimpan.');
             }
-
-            $validated['isi_materi'] = $request->file('file_pdf')->store('materi', 'public');
+            $validated['isi_materi'] = $newPath;
         }
 
-        unset($validated['file_pdf']);
+        unset($validated['file_pdf'], $validated['id_kelas']);
 
-        $materi->update($validated);
+        try {
+            DB::transaction(function () use ($materi, $validated, $idKelasDipilih): void {
+                $materi->update($validated);
+                $materi->kelasTerkait()->sync($idKelasDipilih);
+            });
+        } catch (Throwable $exception) {
+            if ($newPath !== null) {
+                Storage::disk('public')->delete($newPath);
+            }
+
+            throw $exception;
+        }
+
+        if ($newPath !== null && $oldPath && $oldPath !== $newPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
 
         return redirect()
-            ->route('materi.index')
+            ->route('materi.index', ['mapel' => $materi->id_mapel])
             ->with('success', 'Materi berhasil diperbarui.');
+    }
+
+    public function konfirmasiArsip(string $id)
+    {
+        $materi = Materi::with(['mapel', 'kelasTerkait'])->findOrFail($id);
+        $this->pastikanGuruBerhak($materi);
+
+        $kuisIkut = $this->kuisIkutDiarsipkan($materi);
+        $jumlahSiswaTerdampak = $this->jumlahSiswaTerdampak($materi);
+
+        return view('guru.materi.konfirmasi-arsip', compact(
+            'materi',
+            'kuisIkut',
+            'jumlahSiswaTerdampak'
+        ));
     }
 
     public function destroy($id)
     {
         $materi = Materi::findOrFail($id);
+        $this->pastikanGuruBerhak($materi);
+
+        $idMapel = $materi->id_mapel;
+
+        /*
+         * Soft delete / arsip dalam transaksi.
+         * File PDF dan data riwayat/nilai tetap disimpan agar riwayat belajar siswa terjaga.
+         * Pre-test, post-test, dan kuis harian yang tidak dipakai materi aktif lain ikut diarsipkan.
+         */
+        $jumlahKuisIkut = DB::transaction(function () use ($materi): int {
+            $kuisIkut = $this->kuisIkutDiarsipkan($materi);
+
+            $materi->update([
+                'is_aktif' => false,
+            ]);
+
+            foreach ($kuisIkut as $kuis) {
+                $kuis->update([
+                    'is_aktif' => false,
+                    'diarsipkan_bersama' => $materi->id_materi,
+                ]);
+            }
+
+            return $kuisIkut->count();
+        });
+
+        $pesan = $jumlahKuisIkut > 0
+            ? "Materi dan {$jumlahKuisIkut} kuis terkait berhasil diarsipkan."
+            : 'Materi berhasil diarsipkan.';
+
+        return redirect()
+            ->route('materi.index', ['mapel' => $idMapel])
+            ->with('success', $pesan);
+    }
+
+    private function pastikanGuruBerhak(Materi $materi): void
+    {
         $user = Auth::user();
 
         if ($user && $user->role === 'guru') {
@@ -348,64 +450,47 @@ class MateriController extends Controller
                 abort(403, 'Anda tidak berhak menghapus materi di luar penugasan pengajaran Anda.');
             }
         }
-
-        $idMapel = $materi->id_mapel;
-
-        /*
-         * Soft delete / arsip.
-         * File PDF dan data tetap disimpan agar riwayat belajar siswa terjaga,
-         * dan guru dapat memulihkannya sewaktu-waktu dari Kotak Arsip.
-         */
-        $materi->update([
-            'is_aktif' => false,
-        ]);
-
-        return redirect()
-            ->route('materi.index', ['mapel' => $idMapel])
-            ->with('success', 'Materi berhasil diarsipkan.');
     }
 
     /**
-     * @return Collection<int, string>
+     * @return Collection<int, Kuis>
      */
-    private function kelasOptions(?string $currentKelas = null): Collection
+    private function kuisIkutDiarsipkan(Materi $materi)
     {
-        if (! Schema::hasTable('tm_kelas')) {
-            return $currentKelas === null ? collect() : collect([$currentKelas]);
-        }
+        $kuisTerkait = $materi->kuis()
+            ->where('tm_kuis.is_aktif', true)
+            ->orderBy('tm_kuis.judul')
+            ->get();
 
-        $tahunAjaranAktif = Schema::hasTable('tm_tahun_ajaran')
-            ? TahunAjaran::aktif()
-            : null;
+        return $kuisTerkait->filter(function (Kuis $kuis) use ($materi): bool {
+            $kategori = mb_strtolower(trim((string) $kuis->kategori));
 
-        $kelasOptions = Kelas::query()
-            ->aktif()
-            ->when(
-                $tahunAjaranAktif !== null,
-                fn ($query) => $query->where('id_tahun_ajaran', $tahunAjaranAktif->id_tahun_ajaran)
-            )
-            ->orderBy('nama_kelas')
-            ->pluck('nama_kelas');
+            if (in_array($kategori, ['pre-test', 'post-test'], true)) {
+                return true;
+            }
 
-        if ($currentKelas !== null && ! $kelasOptions->contains($currentKelas)) {
-            $kelasOptions->push($currentKelas);
-        }
+            if ($kategori === 'kuis harian') {
+                $dipakaiMateriAktifLain = $kuis->materi()
+                    ->where('tm_materi.id_materi', '!=', $materi->id_materi)
+                    ->where('tm_materi.is_aktif', true)
+                    ->exists();
 
-        return $kelasOptions->values();
+                return ! $dipakaiMateriAktifLain;
+            }
+
+            return false;
+        })->values();
     }
 
-    /**
-     * @param  Collection<int, string>  $kelasOptions
-     * @return array<int, mixed>
-     */
-    private function kelasRules(Collection $kelasOptions): array
+    private function jumlahSiswaTerdampak(Materi $materi): int
     {
-        $rules = ['nullable', 'string', 'max:50'];
-
-        if (Schema::hasTable('tm_kelas')) {
-            $rules[] = Rule::in($kelasOptions->all());
-        }
-
-        return $rules;
+        return DB::table('tp_materi_kelas')
+            ->join('tp_anggota_kelas', 'tp_anggota_kelas.id_kelas', '=', 'tp_materi_kelas.id_kelas')
+            ->join('tm_user', 'tm_user.id_user', '=', 'tp_anggota_kelas.id_user')
+            ->where('tp_materi_kelas.id_materi', $materi->id_materi)
+            ->where('tm_user.role', 'siswa')
+            ->where('tm_user.status', 'aktif')
+            ->distinct()
+            ->count('tm_user.id_user');
     }
 }

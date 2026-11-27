@@ -97,7 +97,7 @@
                                 @if($item->bab)
                                     <strong>{{ $item->bab }}</strong> &bull;
                                 @endif
-                                Kelas {{ $item->kelas ?? '-' }}
+                                Kelas {{ $item->kelasTerkait->pluck('nama_kelas')->join(', ') ?: '-' }}
                                 @if($item->deskripsi)
                                     &bull; {{ Str::limit($item->deskripsi, 90) }}
                                 @endif
@@ -122,17 +122,9 @@
                         <a href="{{ route('materi.edit', $item->id_materi) }}" class="btn btn-secondary btn-small">
                             Edit
                         </a>
-                        <form class="u-display-inline"
-                            action="{{ route('materi.destroy', $item->id_materi) }}"
-                            method="POST"
-                            data-confirm="Arsipkan materi ini? Materi dapat dipulihkan kapan saja dari Kotak Arsip."
-                        >
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-small">
-                                Arsip
-                            </button>
-                        </form>
+                        <a href="{{ route('materi.konfirmasi-arsip', $item->id_materi) }}" class="btn btn-danger btn-small">
+                            Arsip
+                        </a>
                     </div>
                 </div>
             @endforeach

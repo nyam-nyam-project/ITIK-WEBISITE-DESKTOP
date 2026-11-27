@@ -180,6 +180,12 @@ class KelasController extends Controller
             return count($hasil['attached']);
         });
 
+        if ($jumlahBaru === 0) {
+            return redirect()
+                ->route('admin.kelas.show', $kelas)
+                ->with('error', 'Siswa yang dipilih sudah terdaftar di '.$kelas->nama_kelas.'.');
+        }
+
         return redirect()
             ->route('admin.kelas.show', $kelas)
             ->with('success', $jumlahBaru.' siswa berhasil dimasukkan ke '.$kelas->nama_kelas.'.');

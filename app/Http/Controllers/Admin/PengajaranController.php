@@ -198,7 +198,15 @@ class PengajaranController extends Controller
             $dibuat++;
         }
 
-        $pesan = "Penugasan pengajaran berhasil diproses: {$dibuat} dibuat, {$dilewati} dilewati.";
+        if ($dibuat === 0) {
+            throw ValidationException::withMessages([
+                'id_mapel' => 'Penugasan pengajaran untuk guru, kelas, dan mata pelajaran tersebut sudah ada. Tidak ada data baru yang ditambahkan.',
+            ]);
+        }
+
+        $pesan = $dilewati > 0
+            ? "Penugasan pengajaran berhasil ditambahkan: {$dibuat} dibuat, {$dilewati} dilewati."
+            : "Penugasan pengajaran berhasil ditambahkan ({$dibuat} dibuat).";
 
         return redirect()
             ->route('admin.pengajaran.index')

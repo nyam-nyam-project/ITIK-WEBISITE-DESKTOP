@@ -10,6 +10,7 @@ use App\Models\TahunAjaran;
 use App\Models\User;
 use App\Services\KelasMigrasiService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -1077,7 +1078,7 @@ class AdminPanelTest extends TestCase
             'id_user' => 'U002',
             'id_kelas' => 'KLS001',
             'id_mapel' => 'MP001',
-        ])->assertRedirect(route('admin.pengajaran.index'))->assertSessionHas('success');
+        ])->assertSessionHasErrors('id_mapel');
 
         $this->assertDatabaseCount('pengajaran', 1);
     }
@@ -1236,7 +1237,7 @@ class AdminPanelTest extends TestCase
             'is_aktif' => 0,
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
         DB::table('tahun_ajaran')->where('id_tahun_ajaran', 'TA002')->update(['is_aktif' => 1]);
     }
 }

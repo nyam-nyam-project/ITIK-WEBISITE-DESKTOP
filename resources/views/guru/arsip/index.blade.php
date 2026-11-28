@@ -115,14 +115,22 @@
                                         </button>
                                     </form>
 
-                                    <form action="{{ route('guru.arsip.kuis.hapus-permanen', $k->id_kuis) }}" method="POST"
-                                          data-confirm="YAKIN HAPUS PERMANEN kuis '{{ $k->judul }}'? Tindakan ini tidak dapat dibatalkan.">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn-force-delete" title="Hapus permanen dari database">
+                                    @if($k->mengerjakan_count > 0)
+                                        <a href="{{ route('guru.arsip.kuis.konfirmasi-hapus', $k->id_kuis) }}"
+                                           class="btn-force-delete"
+                                           title="Konfirmasi penghapusan permanen kuis berriwayat">
                                             @include('partials.icon', ['name' => 'trash']) Hapus Permanen
-                                        </button>
-                                    </form>
+                                        </a>
+                                    @else
+                                        <form action="{{ route('guru.arsip.kuis.hapus-permanen', $k->id_kuis) }}" method="POST"
+                                              data-confirm="YAKIN HAPUS PERMANEN kuis '{{ $k->judul }}'? Tindakan ini tidak dapat dibatalkan.">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn-force-delete" title="Hapus permanen dari database">
+                                                @include('partials.icon', ['name' => 'trash']) Hapus Permanen
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

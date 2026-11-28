@@ -160,6 +160,9 @@ Route::middleware(['auth', 'role:guru'])
         Route::patch('/arsip/kuis/{id}/pulihkan', [ArsipController::class, 'pulihkanKuis'])
             ->name('arsip.kuis.pulihkan');
 
+        Route::get('/arsip/kuis/{id}/konfirmasi-hapus', [ArsipController::class, 'konfirmasiHapusKuis'])
+            ->name('arsip.kuis.konfirmasi-hapus');
+
         Route::delete('/arsip/kuis/{id}/hapus-permanen', [ArsipController::class, 'hapusPermanenKuis'])
             ->name('arsip.kuis.hapus-permanen');
 

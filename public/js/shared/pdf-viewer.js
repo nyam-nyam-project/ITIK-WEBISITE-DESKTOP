@@ -119,10 +119,34 @@
 
     if (fullscreenBtn) {
         fullscreenBtn.addEventListener('click', function () {
-            if (container.requestFullscreen) {
-                container.requestFullscreen();
-            } else if (container.webkitRequestFullscreen) {
-                container.webkitRequestFullscreen();
+            if (!document.fullscreenElement) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        });
+
+        document.addEventListener('fullscreenchange', function () {
+            var isFullscreen = !!document.fullscreenElement;
+            var useEl = fullscreenBtn.querySelector('use');
+            if (useEl) {
+                var href = useEl.getAttribute('href') || useEl.getAttribute('xlink:href');
+                var base = href.replace(/#.*$/, '');
+                useEl.setAttribute('href', base + (isFullscreen ? '#minimize' : '#maximize'));
+            }
+            var textNodes = Array.from(fullscreenBtn.childNodes).filter(function (n) {
+                return n.nodeType === Node.TEXT_NODE;
+            });
+            if (textNodes.length > 0) {
+                textNodes[textNodes.length - 1].textContent = isFullscreen ? ' Perkecil' : ' Layar Penuh';
             }
         });
     }

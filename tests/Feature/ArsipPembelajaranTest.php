@@ -126,7 +126,7 @@ class ArsipPembelajaranTest extends TestCase
         $this->assertTrue((bool) $kuis->fresh()->is_aktif);
     }
 
-    public function test_kuis_dengan_riwayat_nilai_tidak_dapat_dihapus_permanen(): void
+    public function test_kuis_dengan_riwayat_nilai_tanpa_konfirmasi_diarahkan_ke_halaman_konfirmasi(): void
     {
         $kuis = Kuis::create([
             'id_kuis' => 'K02',
@@ -149,8 +149,117 @@ class ArsipPembelajaranTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->guru)->delete(route('guru.arsip.kuis.hapus-permanen', $kuis->id_kuis));
+        $response->assertRedirect(route('guru.arsip.kuis.konfirmasi-hapus', $kuis->id_kuis));
         $response->assertSessionHas('error');
         $this->assertDatabaseHas('tm_kuis', ['id_kuis' => $kuis->id_kuis]);
+        $this->assertDatabaseHas('tr_mengerjakan', ['id_kuis' => $kuis->id_kuis, 'id_user' => $this->siswa->id_user]);
+    }
+
+    public function test_halaman_konfirmasi_dan_hapus_permanen_kuis_berriwayat_dengan_cascade_delete(): void
+    {
+        $kuis = Kuis::create([
+            'id_kuis' => 'K02_CASCADE',
+            'judul' => 'Kuis Cascade Dihapus',
+            'kategori' => 'kuis harian',
+            'id_mapel' => $this->mapel->id_mapel,
+            'id_tahun_ajaran' => $this->tahunAjaran->id_tahun_ajaran,
+            'id_user' => $this->guru->id_user,
+            'status_publikasi' => 'terbit',
+            'is_aktif' => false,
+        ]);
+
+        $kuisLain = Kuis::create([
+            'id_kuis' => 'K02_LAIN',
+            'judul' => 'Kuis Lain Aman',
+            'kategori' => 'kuis harian',
+            'id_mapel' => $this->mapel->id_mapel,
+            'id_tahun_ajaran' => $this->tahunAjaran->id_tahun_ajaran,
+            'id_user' => $this->guru->id_user,
+            'status_publikasi' => 'terbit',
+            'is_aktif' => true,
+        ]);
+
+        DB::table('tm_soal')->insert([
+            ['id_soal' => 'S_DEL_1', 'id_kuis' => $kuis->id_kuis, 'pertanyaan' => 'Soal 1', 'tipe' => 'pilihan_ganda', 'bobot' => 100],
+            ['id_soal' => 'S_KEEP_1', 'id_kuis' => $kuisLain->id_kuis, 'pertanyaan' => 'Soal Aman', 'tipe' => 'pilihan_ganda', 'bobot' => 100],
+        ]);
+
+        DB::table('tp_kuis_kelas')->insert([
+            ['id_kuis' => $kuis->id_kuis, 'id_kelas' => 'K01'],
+            ['id_kuis' => $kuisLain->id_kuis, 'id_kelas' => 'K01'],
+        ]);
+
+        $mengerjakan = Mengerjakan::create([
+            'id_kuis' => $kuis->id_kuis,
+            'id_user' => $this->siswa->id_user,
+            'nilai' => 85,
+            'tanggal' => now(),
+            'percobaan_ke' => 1,
+            'status_pengerjaan' => 'final',
+        ]);
+
+        $mengerjakanLain = Mengerjakan::create([
+            'id_kuis' => $kuisLain->id_kuis,
+            'id_user' => $this->siswa->id_user,
+            'nilai' => 90,
+            'tanggal' => now(),
+            'percobaan_ke' => 1,
+            'status_pengerjaan' => 'final',
+        ]);
+
+        DB::table('tr_sesi_kuis')->insert([
+            ['id_kuis' => $kuis->id_kuis, 'id_user' => $this->siswa->id_user, 'percobaan_ke' => 1, 'waktu_mulai' => now()],
+            ['id_kuis' => $kuisLain->id_kuis, 'id_user' => $this->siswa->id_user, 'percobaan_ke' => 1, 'waktu_mulai' => now()],
+        ]);
+
+        DB::table('tr_draft_jawaban')->insert([
+            ['id_kuis' => $kuis->id_kuis, 'id_user' => $this->siswa->id_user, 'id_soal' => 'S_DEL_1', 'jawaban_dipilih' => 'A'],
+            ['id_kuis' => $kuisLain->id_kuis, 'id_user' => $this->siswa->id_user, 'id_soal' => 'S_KEEP_1', 'jawaban_dipilih' => 'B'],
+        ]);
+
+        DB::table('tr_nilai_essay')->insert([
+            ['id_mengerjakan' => $mengerjakan->id_mengerjakan, 'id_soal' => 'S_DEL_1', 'jawaban_teks' => 'Jawab 1'],
+            ['id_mengerjakan' => $mengerjakanLain->id_mengerjakan, 'id_soal' => 'S_KEEP_1', 'jawaban_teks' => 'Jawab 2'],
+        ]);
+
+        // Halaman konfirmasi menampilkan detail kuis & siswa terdampak
+        $resKonfirmasi = $this->actingAs($this->guru)->get(route('guru.arsip.kuis.konfirmasi-hapus', $kuis->id_kuis));
+        $resKonfirmasi->assertOk();
+        $resKonfirmasi->assertSee('Kuis Cascade Dihapus');
+        $resKonfirmasi->assertSee('Teknologi Jaringan');
+        $resKonfirmasi->assertSee('1 siswa');
+        $resKonfirmasi->assertSee('konfirmasi_hapus_nilai');
+
+        // Eksekusi hapus permanen dengan konfirmasi accepted
+        $resHapus = $this->actingAs($this->guru)->delete(route('guru.arsip.kuis.hapus-permanen', $kuis->id_kuis), [
+            'konfirmasi_hapus_nilai' => '1',
+        ]);
+        $resHapus->assertRedirect(route('guru.arsip.index', ['tab' => 'kuis']));
+        $resHapus->assertSessionHas('success');
+
+        // Semua data kuis yang dihapus hilang bersih
+        $this->assertDatabaseMissing('tm_kuis', ['id_kuis' => $kuis->id_kuis]);
+        $this->assertDatabaseMissing('tm_soal', ['id_kuis' => $kuis->id_kuis]);
+        $this->assertDatabaseMissing('tp_kuis_kelas', ['id_kuis' => $kuis->id_kuis]);
+        $this->assertDatabaseMissing('tr_mengerjakan', ['id_kuis' => $kuis->id_kuis]);
+        $this->assertDatabaseMissing('tr_sesi_kuis', ['id_kuis' => $kuis->id_kuis]);
+        $this->assertDatabaseMissing('tr_draft_jawaban', ['id_kuis' => $kuis->id_kuis]);
+        $this->assertDatabaseMissing('tr_nilai_essay', ['id_mengerjakan' => $mengerjakan->id_mengerjakan]);
+
+        // Kuis & nilai lain tetap utuh
+        $this->assertDatabaseHas('tm_kuis', ['id_kuis' => $kuisLain->id_kuis]);
+        $this->assertDatabaseHas('tm_soal', ['id_soal' => 'S_KEEP_1']);
+        $this->assertDatabaseHas('tr_mengerjakan', ['id_mengerjakan' => $mengerjakanLain->id_mengerjakan]);
+        $this->assertDatabaseHas('tr_sesi_kuis', ['id_kuis' => $kuisLain->id_kuis]);
+        $this->assertDatabaseHas('tr_draft_jawaban', ['id_kuis' => $kuisLain->id_kuis]);
+        $this->assertDatabaseHas('tr_nilai_essay', ['id_mengerjakan' => $mengerjakanLain->id_mengerjakan]);
+
+        // Pastikan view konfirmasi bebas CSS/JS inline
+        $isiView = file_get_contents(resource_path('views/guru/arsip/konfirmasi-hapus-kuis.blade.php'));
+        $this->assertIsString($isiView);
+        $this->assertStringNotContainsString('<script', $isiView);
+        $this->assertStringNotContainsString('<style', $isiView);
+        $this->assertStringNotContainsString('style=', $isiView);
     }
 
     public function test_kuis_tanpa_riwayat_siswa_dapat_dihapus_permanen(): void

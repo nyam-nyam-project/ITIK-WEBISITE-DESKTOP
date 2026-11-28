@@ -37,7 +37,7 @@
             $brandUrl = route('admin.dashboard');
             $brandSub = 'Administrasi sekolah';
             $caption = 'RUANG ADMIN';
-            $sidebarNote = 'Kelola data sekolah tanpa menghapus riwayat pembelajaran.';
+            $sidebarNote = '';
             $eyebrow = 'Portal administrasi';
             $profileUrl = route('admin.profil');
             $profileRole = 'Administrator ITIK';
@@ -114,7 +114,9 @@
                         @endforeach
                     </nav>
 
-                    <p class="sidebar-note">{{ $sidebarNote }}</p>
+                    @if($sidebarNote)
+                        <p class="sidebar-note">{{ $sidebarNote }}</p>
+                    @endif
 
                     <form action="{{ route('logout') }}" method="POST">
                         @csrf

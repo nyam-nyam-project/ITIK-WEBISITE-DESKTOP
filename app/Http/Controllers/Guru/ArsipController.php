@@ -11,7 +11,9 @@ use App\Support\MengaturPaginasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class ArsipController extends Controller
 {
@@ -95,7 +97,26 @@ class ArsipController extends Controller
             ->with('success', "Kuis \"{$kuis->judul}\" berhasil dipulihkan ke daftar aktif.");
     }
 
-    public function hapusPermanenKuis(string $id)
+    public function konfirmasiHapusKuis(string $id)
+    {
+        $kuis = Kuis::with('mapel')->findOrFail($id);
+        $user = Auth::user();
+
+        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+            abort(403, 'Anda tidak berhak menghapus kuis milik guru lain.');
+        }
+
+        $jumlahRiwayat = $kuis->mengerjakan()->count();
+        $jumlahSiswaTerdampak = $kuis->mengerjakan()->distinct('id_user')->count('id_user');
+
+        return view('guru.arsip.konfirmasi-hapus-kuis', compact(
+            'kuis',
+            'jumlahRiwayat',
+            'jumlahSiswaTerdampak'
+        ));
+    }
+
+    public function hapusPermanenKuis(Request $request, string $id)
     {
         $kuis = Kuis::findOrFail($id);
         $user = Auth::user();
@@ -105,22 +126,78 @@ class ArsipController extends Controller
         }
 
         if ($kuis->mengerjakan()->exists()) {
-            return redirect()
-                ->back()
-                ->with('error', "Kuis \"{$kuis->judul}\" tidak dapat dihapus permanen karena memiliki data riwayat pengerjaan siswa. Kuis tetap tersimpan di dalam arsip.");
+            $validator = Validator::make($request->all(), [
+                'konfirmasi_hapus_nilai' => ['accepted'],
+            ], [
+                'konfirmasi_hapus_nilai.accepted' => 'Anda harus mencentang persetujuan penghapusan nilai siswa terlebih dahulu.',
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()
+                    ->route('guru.arsip.kuis.konfirmasi-hapus', $kuis->id_kuis)
+                    ->withErrors($validator)
+                    ->with('error', "Kuis \"{$kuis->judul}\" memiliki riwayat pengerjaan siswa. Harap konfirmasi penghapusan nilai terlebih dahulu.");
+            }
         }
 
-        DB::transaction(function () use ($kuis) {
+        DB::transaction(function () use ($kuis): void {
+            $mengerjakanIds = $kuis->mengerjakan()->pluck('id_mengerjakan');
+            $soalIds = $kuis->soal()->pluck('id_soal');
+
+            if (Schema::hasTable('tr_nilai_essay')) {
+                DB::table('tr_nilai_essay')
+                    ->where(function ($query) use ($mengerjakanIds, $soalIds): void {
+                        if ($mengerjakanIds->isNotEmpty()) {
+                            $query->whereIn('id_mengerjakan', $mengerjakanIds);
+                        }
+                        if ($soalIds->isNotEmpty()) {
+                            $query->orWhereIn('id_soal', $soalIds);
+                        }
+                    })
+                    ->when($mengerjakanIds->isEmpty() && $soalIds->isEmpty(), fn ($q) => $q->whereRaw('1 = 0'))
+                    ->delete();
+            }
+
+            if (Schema::hasTable('tr_remedial_siswa')) {
+                DB::table('tr_remedial_siswa')
+                    ->where('id_kuis_remedial', $kuis->id_kuis)
+                    ->when($mengerjakanIds->isNotEmpty(), fn ($q) => $q->orWhereIn('id_mengerjakan_asal', $mengerjakanIds))
+                    ->delete();
+            }
+
+            if (Schema::hasTable('tr_remedial')) {
+                DB::table('tr_remedial')
+                    ->where('id_kuis_remedial', $kuis->id_kuis)
+                    ->orWhere('id_kuis_asal', $kuis->id_kuis)
+                    ->delete();
+            }
+
+            if (Schema::hasTable('tr_draft_jawaban')) {
+                DB::table('tr_draft_jawaban')
+                    ->where('id_kuis', $kuis->id_kuis)
+                    ->when($soalIds->isNotEmpty(), fn ($q) => $q->orWhereIn('id_soal', $soalIds))
+                    ->delete();
+            }
+
+            if (Schema::hasTable('tr_sesi_kuis')) {
+                DB::table('tr_sesi_kuis')
+                    ->where('id_kuis', $kuis->id_kuis)
+                    ->delete();
+            }
+
+            $kuis->mengerjakan()->delete();
             $kuis->materi()->detach();
-            if (method_exists($kuis, 'kelas')) {
+
+            if (Schema::hasTable('tp_kuis_kelas') && method_exists($kuis, 'kelas')) {
                 $kuis->kelas()->detach();
             }
+
             $kuis->soal()->delete();
             $kuis->delete();
         });
 
         return redirect()
-            ->back()
+            ->route('guru.arsip.index', ['tab' => 'kuis'])
             ->with('success', "Kuis \"{$kuis->judul}\" berhasil dihapus secara permanen.");
     }
 

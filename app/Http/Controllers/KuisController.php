@@ -446,7 +446,7 @@ class KuisController extends Controller
             unset($validated['izinkan_perulangan']);
         }
 
-        if (\Illuminate\Support\Facades\Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
+        if (Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
             $validated['izinkan_perulangan'] = $request->boolean('izinkan_perulangan', true);
         } else {
             unset($validated['izinkan_perulangan']);
@@ -602,7 +602,6 @@ class KuisController extends Controller
                 'soal' => 'prohibited',
                 'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
                 'izinkan_perulangan' => 'nullable|boolean',
-            'izinkan_perulangan' => 'nullable|boolean',
             ], [
                 'judul.required' => 'Judul kuis wajib diisi.',
                 'judul.max' => 'Judul kuis tidak boleh lebih dari 150 karakter.',
@@ -744,7 +743,7 @@ class KuisController extends Controller
             } else {
                 unset($validated['izinkan_perulangan']);
             }
-            if (\Illuminate\Support\Facades\Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
+            if (Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
                 $validated['izinkan_perulangan'] = $request->boolean('izinkan_perulangan', true);
             } else {
                 unset($validated['izinkan_perulangan']);

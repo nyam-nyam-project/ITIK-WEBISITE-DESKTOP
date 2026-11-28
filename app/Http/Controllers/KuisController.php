@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -102,7 +103,13 @@ class KuisController extends Controller
             $kuis = Kuis::where('is_aktif', true)
                 ->whereIn('id_mapel', $mapelIds)
                 ->when($idMapel, fn ($q) => $q->where('id_mapel', $idMapel))
-                ->with(['pembuat', 'mapel', 'soal', 'materi'])
+                ->with(array_filter([
+                    'pembuat',
+                    'mapel',
+                    'soal',
+                    'materi',
+                    Schema::hasTable('tp_kuis_kelas') ? 'kelas' : null,
+                ]))
                 ->latest('created_at')
                 ->orderBy('id_kuis')
                 ->paginate($this->batasPerHalaman($request))
@@ -739,7 +746,7 @@ class KuisController extends Controller
         $kuis = Kuis::findOrFail($id);
         $user = Auth::user();
 
-        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+        if ($user && ! $kuis->dapatDihapusOleh($user)) {
             abort(403, 'Anda tidak berhak menghapus kuis milik guru lain.');
         }
 

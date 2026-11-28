@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class Kuis extends Model
 {
@@ -37,12 +40,14 @@ class Kuis extends Model
         'is_aktif',
         'diarsipkan_bersama',
         'tampil_jawaban',
+        'izinkan_perulangan',
     ];
 
     protected $casts = [
         'waktu_mulai' => 'datetime',
         'waktu_selesai' => 'datetime',
         'is_aktif' => 'boolean',
+        'izinkan_perulangan' => 'boolean',
         'kkm' => 'decimal:2',
     ];
 
@@ -159,5 +164,92 @@ class Kuis extends Model
                 'status_publikasi' => 'draft',
                 'id_publisher' => null,
             ]);
+    }
+
+    /**
+     * Menentukan apakah kuis mengizinkan siswa mengerjakan ulang (percobaan > 1).
+     */
+    public function bolehDiulang(): bool
+    {
+        return (bool) ($this->izinkan_perulangan ?? true);
+    }
+
+    /**
+     * Menentukan apakah user berhak menghapus atau mengarsipkan kuis ini.
+     * Diizinkan untuk admin, guru pembuat kuis, atau guru dengan penugasan
+     * mengajar pada mata pelajaran dan kelas yang sama di tahun ajaran aktif.
+     */
+    public function dapatDihapusOleh(User $user): bool
+    {
+        if ($user->role !== 'guru') {
+            return true;
+        }
+
+        if ($this->id_user === $user->id_user) {
+            return true;
+        }
+
+        if (! Schema::hasTable('tr_pengajaran') || ! Schema::hasTable('tp_kuis_kelas')) {
+            return false;
+        }
+
+        $kuisKelasIds = $this->relationLoaded('kelas')
+            ? $this->kelas->pluck('id_kelas')
+            : DB::table('tp_kuis_kelas')
+                ->where('id_kuis', $this->id_kuis)
+                ->pluck('id_kelas');
+
+        if ($kuisKelasIds->isEmpty()) {
+            return false;
+        }
+
+        $tahunAktif = TahunAjaran::aktif();
+
+        $guruKelasQuery = Pengajaran::query()
+            ->where('tr_pengajaran.id_user', $user->id_user)
+            ->where('tr_pengajaran.id_mapel', $this->id_mapel)
+            ->whereIn('tr_pengajaran.id_kelas', $kuisKelasIds);
+
+        if ($tahunAktif && Schema::hasTable('tm_kelas')) {
+            $guruKelasQuery->join('tm_kelas', 'tr_pengajaran.id_kelas', '=', 'tm_kelas.id_kelas')
+                ->where('tm_kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran)
+                ->where('tm_kelas.is_aktif', true);
+        }
+
+        return $guruKelasQuery->exists();
+    }
+
+    /**
+     * Scope kuis yang dapat dikelola oleh guru di Kotak Arsip:
+     * buatan guru sendiri atau memiliki kecocokan mapel dan kelas ajar aktif.
+     */
+    public function scopeDapatDikelolaGuru(Builder $query, User $guru): Builder
+    {
+        $tahunAktif = TahunAjaran::aktif();
+        $hasPengajaran = Schema::hasTable('tr_pengajaran');
+        $hasKuisKelas = Schema::hasTable('tp_kuis_kelas');
+
+        return $query->where(function (Builder $sub) use ($guru, $tahunAktif, $hasPengajaran, $hasKuisKelas): void {
+            $sub->where('tm_kuis.id_user', $guru->id_user);
+
+            if ($hasPengajaran && $hasKuisKelas) {
+                $sub->orWhereExists(function ($exists) use ($guru, $tahunAktif): void {
+                    $exists->select(DB::raw(1))
+                        ->from('tp_kuis_kelas')
+                        ->join('tr_pengajaran', function ($join) use ($guru): void {
+                            $join->on('tr_pengajaran.id_kelas', '=', 'tp_kuis_kelas.id_kelas')
+                                ->where('tr_pengajaran.id_user', '=', $guru->id_user);
+                        })
+                        ->whereColumn('tp_kuis_kelas.id_kuis', 'tm_kuis.id_kuis')
+                        ->whereColumn('tr_pengajaran.id_mapel', 'tm_kuis.id_mapel');
+
+                    if ($tahunAktif && Schema::hasTable('tm_kelas')) {
+                        $exists->join('tm_kelas', 'tr_pengajaran.id_kelas', '=', 'tm_kelas.id_kelas')
+                            ->where('tm_kelas.id_tahun_ajaran', $tahunAktif->id_tahun_ajaran)
+                            ->where('tm_kelas.is_aktif', true);
+                    }
+                });
+            }
+        });
     }
 }

@@ -116,6 +116,16 @@
             <div class="meta-label">Tahun Ajaran</div>
             <div class="meta-val">{{ $kuis->tahunAjaran?->nama ?? '-' }}</div>
         </div>
+        <div class="meta-item">
+            <div class="meta-label">Perulangan Percobaan</div>
+            <div class="meta-val">
+                @if ($kuis->bolehDiulang())
+                    <span class="badge badge-success">Diizinkan</span>
+                @else
+                    <span class="badge badge-muted">Hanya 1 Kali</span>
+                @endif
+            </div>
+        </div>
         @if ($kuis->waktu_mulai || $kuis->waktu_selesai)
             <div class="meta-item">
                 <div class="meta-label">Waktu Mulai</div>

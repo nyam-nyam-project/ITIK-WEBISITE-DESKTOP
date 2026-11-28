@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -102,7 +103,13 @@ class KuisController extends Controller
             $kuis = Kuis::where('is_aktif', true)
                 ->whereIn('id_mapel', $mapelIds)
                 ->when($idMapel, fn ($q) => $q->where('id_mapel', $idMapel))
-                ->with(['pembuat', 'mapel', 'soal', 'materi'])
+                ->with(array_filter([
+                    'pembuat',
+                    'mapel',
+                    'soal',
+                    'materi',
+                    Schema::hasTable('tp_kuis_kelas') ? 'kelas' : null,
+                ]))
                 ->latest('created_at')
                 ->orderBy('id_kuis')
                 ->paginate($this->batasPerHalaman($request))
@@ -277,6 +284,7 @@ class KuisController extends Controller
             'soal' => 'prohibited',
 
             'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
+            'izinkan_perulangan' => 'nullable|boolean',
         ], [
             'judul.required' => 'Judul kuis wajib diisi.',
             'judul.max' => 'Judul kuis tidak boleh lebih dari 255 karakter.',
@@ -432,6 +440,18 @@ class KuisController extends Controller
         // Default tampil_jawaban jika tidak diisi
         $validated['tampil_jawaban'] = $validated['tampil_jawaban'] ?? 'setelah_submit';
 
+        if (Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
+            $validated['izinkan_perulangan'] = $request->boolean('izinkan_perulangan', true);
+        } else {
+            unset($validated['izinkan_perulangan']);
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
+            $validated['izinkan_perulangan'] = $request->boolean('izinkan_perulangan', true);
+        } else {
+            unset($validated['izinkan_perulangan']);
+        }
+
         $kuis = DB::transaction(function () use ($validated, $materiIds, $idKuisAsal, $kelasDipilih, $kuisPrePostUnik): Kuis {
             if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)) {
                 $kuisPrePostUnik->pastikanUnikUntukMateri($materiIds, $validated['kategori']);
@@ -581,6 +601,8 @@ class KuisController extends Controller
                 'materi.*' => 'exists:tm_materi,id_materi',
                 'soal' => 'prohibited',
                 'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
+                'izinkan_perulangan' => 'nullable|boolean',
+            'izinkan_perulangan' => 'nullable|boolean',
             ], [
                 'judul.required' => 'Judul kuis wajib diisi.',
                 'judul.max' => 'Judul kuis tidak boleh lebih dari 150 karakter.',
@@ -717,6 +739,16 @@ class KuisController extends Controller
             }
 
             unset($validated['materi'], $validated['soal'], $validated['kelas']);
+            if (Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
+                $validated['izinkan_perulangan'] = $request->boolean('izinkan_perulangan', true);
+            } else {
+                unset($validated['izinkan_perulangan']);
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
+                $validated['izinkan_perulangan'] = $request->boolean('izinkan_perulangan', true);
+            } else {
+                unset($validated['izinkan_perulangan']);
+            }
             $kuis->update($validated);
             $kuis->kelas()->sync($kelasDipilih);
 
@@ -739,7 +771,7 @@ class KuisController extends Controller
         $kuis = Kuis::findOrFail($id);
         $user = Auth::user();
 
-        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+        if ($user && ! $kuis->dapatDihapusOleh($user)) {
             abort(403, 'Anda tidak berhak menghapus kuis milik guru lain.');
         }
 

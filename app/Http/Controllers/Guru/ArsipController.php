@@ -40,7 +40,7 @@ class ArsipController extends Controller
         $kuisArsipQuery = Kuis::where('is_aktif', false)
             ->when($mapelPengajaranIds->isNotEmpty(), fn ($q) => $q->whereIn('id_mapel', $mapelPengajaranIds))
             ->when($idMapel, fn ($q) => $q->where('id_mapel', $idMapel))
-            ->when($user->role === 'guru', fn ($q) => $q->where('id_user', $user->id_user));
+            ->when($user->role === 'guru', fn ($q) => $q->dapatDikelolaGuru($user));
 
         $materiArsipQuery = Materi::where('is_aktif', false)
             ->when($mapelPengajaranIds->isNotEmpty(), fn ($q) => $q->whereIn('id_mapel', $mapelPengajaranIds))
@@ -102,7 +102,7 @@ class ArsipController extends Controller
         $kuis = Kuis::with('mapel')->findOrFail($id);
         $user = Auth::user();
 
-        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+        if ($user && ! $kuis->dapatDihapusOleh($user)) {
             abort(403, 'Anda tidak berhak menghapus kuis milik guru lain.');
         }
 
@@ -121,7 +121,7 @@ class ArsipController extends Controller
         $kuis = Kuis::findOrFail($id);
         $user = Auth::user();
 
-        if ($user && $user->role === 'guru' && $kuis->id_user !== $user->id_user) {
+        if ($user && ! $kuis->dapatDihapusOleh($user)) {
             abort(403, 'Anda tidak berhak menghapus kuis milik guru lain.');
         }
 

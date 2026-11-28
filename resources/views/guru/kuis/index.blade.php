@@ -185,11 +185,13 @@
                                                     @else
                                                         <a href="{{ route('kuis.edit', $item->id_kuis) }}" class="btn btn-secondary btn-small">Edit</a>
                                                     @endif
-                                                    <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini? Kuis dapat dipulihkan kapan saja dari Kotak Arsip.">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger btn-small">Arsip</button>
-                                                    </form>
+                                                    @if ($item->dapatDihapusOleh(Auth::user()))
+                                                        <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini? Kuis dapat dipulihkan kapan saja dari Kotak Arsip.">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-danger btn-small">Arsip</button>
+                                                        </form>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>
@@ -263,11 +265,13 @@
                                             @else
                                                 <a href="{{ route('kuis.edit', $item->id_kuis) }}" class="btn btn-secondary btn-small">Edit</a>
                                             @endif
-                                            <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini? Kuis dapat dipulihkan kapan saja dari Kotak Arsip.">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-small">Arsip</button>
-                                            </form>
+                                            @if ($item->dapatDihapusOleh(Auth::user()))
+                                                <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini? Kuis dapat dipulihkan kapan saja dari Kotak Arsip.">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-small">Arsip</button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -327,11 +331,13 @@
                                             @else
                                                 <a href="{{ route('kuis.edit', $item->id_kuis) }}" class="btn btn-secondary btn-small">Edit</a>
                                             @endif
-                                            <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini? Kuis dapat dipulihkan kapan saja dari Kotak Arsip.">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-small">Arsip</button>
-                                            </form>
+                                            @if ($item->dapatDihapusOleh(Auth::user()))
+                                                <form class="u-display-inline" action="{{ route('kuis.destroy', $item->id_kuis) }}" method="POST" data-confirm="Arsipkan kuis ini? Kuis dapat dipulihkan kapan saja dari Kotak Arsip.">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-small">Arsip</button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

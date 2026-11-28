@@ -220,19 +220,30 @@ class ArsipMateriKuisTest extends TestCase
         $this->assertDatabaseHas('tm_kuis', ['id_kuis' => 'K_ARSIP_MANUAL', 'is_aktif' => 0, 'diarsipkan_bersama' => null]);
     }
 
-    public function test_hapus_permanen_ditolak_untuk_kuis_berriwayat(): void
+    public function test_hapus_permanen_tanpa_konfirmasi_diarahkan_ke_konfirmasi_dan_dengan_konfirmasi_menghapus_berantai(): void
     {
         $guru = $this->seedSkenario();
 
         $this->actingAs($guru)->delete(route('materi.destroy', 'M01'))->assertRedirect();
 
+        // Tanpa konfirmasi -> diarahkan ke halaman konfirmasi, data aman
         $this->actingAs($guru)
             ->delete(route('guru.arsip.kuis.hapus-permanen', 'K_PRE'))
-            ->assertRedirect()
+            ->assertRedirect(route('guru.arsip.kuis.konfirmasi-hapus', 'K_PRE'))
             ->assertSessionHas('error');
 
         $this->assertDatabaseHas('tm_kuis', ['id_kuis' => 'K_PRE']);
         $this->assertDatabaseHas('tr_mengerjakan', ['id_kuis' => 'K_PRE', 'id_user' => 'S001']);
+
+        // Dengan konfirmasi accepted -> terhapus berantai
+        $this->actingAs($guru)
+            ->delete(route('guru.arsip.kuis.hapus-permanen', 'K_PRE'), ['konfirmasi_hapus_nilai' => '1'])
+            ->assertRedirect(route('guru.arsip.index', ['tab' => 'kuis']))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('tm_kuis', ['id_kuis' => 'K_PRE']);
+        $this->assertDatabaseMissing('tp_materi_kuis', ['id_kuis' => 'K_PRE']);
+        $this->assertDatabaseMissing('tr_mengerjakan', ['id_kuis' => 'K_PRE']);
     }
 
     public function test_konfirmasi_arsip_menampilkan_jumlah_kuis_dan_siswa_terdampak(): void

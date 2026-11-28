@@ -145,6 +145,10 @@
 }
 
 .btn-force-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
     background: var(--error-bg);
     color: var(--error-ink);
     border: 1px solid var(--error-border);

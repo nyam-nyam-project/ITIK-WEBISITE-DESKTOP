@@ -284,6 +284,7 @@ class KuisController extends Controller
             'soal' => 'prohibited',
 
             'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
+            'izinkan_perulangan' => 'nullable|boolean',
         ], [
             'judul.required' => 'Judul kuis wajib diisi.',
             'judul.max' => 'Judul kuis tidak boleh lebih dari 255 karakter.',
@@ -439,6 +440,18 @@ class KuisController extends Controller
         // Default tampil_jawaban jika tidak diisi
         $validated['tampil_jawaban'] = $validated['tampil_jawaban'] ?? 'setelah_submit';
 
+        if (Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
+            $validated['izinkan_perulangan'] = $request->boolean('izinkan_perulangan', true);
+        } else {
+            unset($validated['izinkan_perulangan']);
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
+            $validated['izinkan_perulangan'] = $request->boolean('izinkan_perulangan', true);
+        } else {
+            unset($validated['izinkan_perulangan']);
+        }
+
         $kuis = DB::transaction(function () use ($validated, $materiIds, $idKuisAsal, $kelasDipilih, $kuisPrePostUnik): Kuis {
             if (in_array($validated['kategori'], ['pre-test', 'post-test'], true)) {
                 $kuisPrePostUnik->pastikanUnikUntukMateri($materiIds, $validated['kategori']);
@@ -588,6 +601,8 @@ class KuisController extends Controller
                 'materi.*' => 'exists:tm_materi,id_materi',
                 'soal' => 'prohibited',
                 'tampil_jawaban' => ['nullable', Rule::in(self::PILIHAN_TAMPIL_JAWABAN)],
+                'izinkan_perulangan' => 'nullable|boolean',
+            'izinkan_perulangan' => 'nullable|boolean',
             ], [
                 'judul.required' => 'Judul kuis wajib diisi.',
                 'judul.max' => 'Judul kuis tidak boleh lebih dari 150 karakter.',
@@ -724,6 +739,16 @@ class KuisController extends Controller
             }
 
             unset($validated['materi'], $validated['soal'], $validated['kelas']);
+            if (Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
+                $validated['izinkan_perulangan'] = $request->boolean('izinkan_perulangan', true);
+            } else {
+                unset($validated['izinkan_perulangan']);
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('tm_kuis', 'izinkan_perulangan')) {
+                $validated['izinkan_perulangan'] = $request->boolean('izinkan_perulangan', true);
+            } else {
+                unset($validated['izinkan_perulangan']);
+            }
             $kuis->update($validated);
             $kuis->kelas()->sync($kelasDipilih);
 

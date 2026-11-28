@@ -228,6 +228,10 @@
                                 @if ($terkunci)
                                     <button class="btn btn-secondary u-width-100pct u-opacity-p6" disabled>@include('partials.icon', ['name' => 'lock']) Kuis Terkunci</button>
                                     <div class="kunci-info">@include('partials.icon', ['name' => 'info']) {{ $alasanKunci }}</div>
+                                @elseif ($sudahPernah && ! $item->bolehDiulang())
+                                    <a href="{{ route('siswa.kuis.hasil', $item->id_kuis) }}" class="btn btn-secondary u-width-100pct u-text-align-center">
+                                        @include('partials.icon', ['name' => 'check-circle']) Sudah Dikerjakan (Lihat Hasil)
+                                    </a>
                                 @elseif ($bisaUlang && $sudahPernah && !$lulus)
                                     <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
                                         <button type="submit" class="btn btn-warning u-width-100pct">@include('partials.icon', ['name' => 'rotate-ccw']) Kerjakan Ulang</button>
@@ -341,6 +345,10 @@
                                 @if ($terkunci)
                                     <button class="btn btn-secondary u-width-100pct u-opacity-p6" disabled>@include('partials.icon', ['name' => 'lock']) Kuis Terkunci</button>
                                     <div class="kunci-info">@include('partials.icon', ['name' => 'info']) {{ $alasanKunci }}</div>
+                                @elseif ($sudahPernah && ! $item->bolehDiulang())
+                                    <a href="{{ route('siswa.kuis.hasil', $item->id_kuis) }}" class="btn btn-secondary u-width-100pct u-text-align-center">
+                                        @include('partials.icon', ['name' => 'check-circle']) Sudah Dikerjakan (Lihat Hasil)
+                                    </a>
                                 @elseif ($bisaBabUlang && $sudahPernah && !$lulus)
                                     <form action="{{ route('siswa.kuis.mulai', $item->id_kuis) }}" method="GET">
                                         <button type="submit" class="btn btn-warning u-width-100pct">@include('partials.icon', ['name' => 'rotate-ccw']) Kerjakan Ulang</button>

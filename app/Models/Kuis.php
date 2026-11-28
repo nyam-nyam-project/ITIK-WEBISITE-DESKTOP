@@ -40,12 +40,14 @@ class Kuis extends Model
         'is_aktif',
         'diarsipkan_bersama',
         'tampil_jawaban',
+        'izinkan_perulangan',
     ];
 
     protected $casts = [
         'waktu_mulai' => 'datetime',
         'waktu_selesai' => 'datetime',
         'is_aktif' => 'boolean',
+        'izinkan_perulangan' => 'boolean',
         'kkm' => 'decimal:2',
     ];
 
@@ -162,6 +164,14 @@ class Kuis extends Model
                 'status_publikasi' => 'draft',
                 'id_publisher' => null,
             ]);
+    }
+
+    /**
+     * Menentukan apakah kuis mengizinkan siswa mengerjakan ulang (percobaan > 1).
+     */
+    public function bolehDiulang(): bool
+    {
+        return (bool) ($this->izinkan_perulangan ?? true);
     }
 
     /**

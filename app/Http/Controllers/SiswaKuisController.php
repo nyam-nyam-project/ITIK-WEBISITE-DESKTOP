@@ -341,6 +341,19 @@ class SiswaKuisController extends Controller
         |--------------------------------------------------------------------------
         */
         if (! $sesi) {
+            if (! $kuis->bolehDiulang()) {
+                $sudahSelesai = Mengerjakan::where('id_kuis', $kuis->id_kuis)
+                    ->where('id_user', $user->id_user)
+                    ->where('status_pengerjaan', 'final')
+                    ->exists();
+
+                if ($sudahSelesai) {
+                    return redirect()
+                        ->route('siswa.kuis.hasil', $kuis->id_kuis)
+                        ->with('error', 'Kuis ini hanya dapat dikerjakan 1 kali dan tidak mengizinkan perulangan percobaan.');
+                }
+            }
+
             DB::transaction(function () use ($kuis, $user) {
                 Kuis::whereKey($kuis->id_kuis)->lockForUpdate()->firstOrFail();
 

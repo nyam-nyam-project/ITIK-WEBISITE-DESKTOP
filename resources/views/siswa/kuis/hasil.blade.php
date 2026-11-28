@@ -19,7 +19,7 @@
     <div class="actions">
         @php
             $katKuis = strtolower(trim($kuis->kategori ?? ''));
-            $bolehUlang = in_array($katKuis, ['kuis harian', 'pre-test', 'post-test']);
+            $bolehUlang = $kuis->bolehDiulang() && in_array($katKuis, ['kuis harian', 'pre-test', 'post-test']);
         @endphp
 
         @if($katKuis === 'pre-test' && isset($materiTerkait))

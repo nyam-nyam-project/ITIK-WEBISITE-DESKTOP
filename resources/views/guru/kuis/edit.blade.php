@@ -267,6 +267,23 @@
             @error('tampil_jawaban') <div class="error">{{ $message }}</div> @enderror
         </div>
 
+        {{-- IZINKAN PERULANGAN --}}
+        <div class="field">
+            <label class="checkbox-label u-display-flex u-items-center u-gap-8px" for="izinkan_perulangan">
+                <input type="hidden" name="izinkan_perulangan" value="0">
+                <input
+                    type="checkbox"
+                    id="izinkan_perulangan"
+                    name="izinkan_perulangan"
+                    value="1"
+                    @checked((bool) old('izinkan_perulangan', $kuis->bolehDiulang()))
+                >
+                <span>Izinkan perulangan percobaan kuis</span>
+            </label>
+            <p class="help">Jika dicentang, siswa dapat mengerjakan kuis ini lebih dari 1 kali. Hapus centang jika kuis hanya boleh dikerjakan 1 kali.</p>
+            @error('izinkan_perulangan') <div class="error">{{ $message }}</div> @enderror
+        </div>
+
         <div class="form-actions">
             <a href="{{ route('kuis.index', ['mapel' => $kuis->id_mapel]) }}" class="btn btn-secondary">
                 Batal

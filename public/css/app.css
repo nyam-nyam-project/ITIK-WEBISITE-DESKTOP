@@ -3,6 +3,7 @@
 html, body {
     height: 100%;
     margin: 0;
+    overflow: hidden;
 }
 body {
     background: var(--bg);
@@ -29,14 +30,15 @@ button, input, select, textarea { font: inherit; }
 /* Flexbox Independent Scrolling */
 .layout {
     display: flex;
-    height: 100vh;
+    height: 100%;
     overflow: hidden;
 }
 .sidebar {
     width: 254px;
     flex-shrink: 0;
-    height: 100vh;
+    height: 100%;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 28px 18px;
     color: var(--sidebar-ink);
     background: linear-gradient(180deg, var(--sidebar-start), var(--sidebar-end));
@@ -49,8 +51,9 @@ button, input, select, textarea { font: inherit; }
 .content {
     flex: 1;
     min-width: 0;
-    height: 100vh;
+    height: 100%;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 28px 36px 40px;
 }
 
@@ -207,6 +210,7 @@ summary { padding: 12px 15px; cursor: pointer; color: var(--purple); font-weight
 }
 
 @media (max-width: 760px) {
+    html, body { height: auto; overflow-y: auto; overflow-x: hidden; }
     .layout { display: block; height: auto; overflow: visible; }
     .sidebar { width: 100%; height: auto; overflow-y: visible; padding: 16px; }
     .sidebar-inner { position: static; }
@@ -235,6 +239,7 @@ summary { padding: 12px 15px; cursor: pointer; color: var(--purple); font-weight
 }
 
 @media print {
+    html, body { height: auto; overflow: visible; }
     .sidebar, .topbar, .footer, .filter-form, .actions, .page-heading > .btn { display: none; }
     .layout { display: block; height: auto; overflow: visible; }
     .content { height: auto; overflow: visible; padding: 0; max-width: none; }
